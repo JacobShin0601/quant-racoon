@@ -1,0 +1,34 @@
+{
+  "timestamp": "20250716_231441",
+  "strategy_name": "rsi_bollinger_scalping",
+  "symbol": "PLTR",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "rsi_period": 6,
+    "rsi_oversold": 20,
+    "rsi_overbought": 75,
+    "bb_period": 25,
+    "bb_std": 1.5,
+    "volume_threshold": 1.8,
+    "min_holding_period": 3,
+    "max_holding_period": 4
+  },
+  "optimization_score": 0.0,
+  "evaluation_results": {
+    "total_return": -0.036182681353997756,
+    "sharpe_ratio": 0,
+    "max_drawdown": -0.07546962582337631,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "sqn": 0,
+    "total_trades": 1,
+    "avg_hold_duration": 144.0
+  },
+  "trades_summary": {
+    "total_trades": 1,
+    "profitable_trades": 0,
+    "losing_trades": 1,
+    "max_profit": -0.038131967872947224,
+    "max_loss": -0.038131967872947224
+  }
+}

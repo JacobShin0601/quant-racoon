@@ -1,0 +1,34 @@
+{
+  "timestamp": "20250716_231435",
+  "strategy_name": "vwap_macd_scalping",
+  "symbol": "NVDL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "vwap_period": 25,
+    "macd_fast": 16,
+    "macd_slow": 20,
+    "macd_signal": 7,
+    "volume_threshold": 1.2,
+    "atr_multiplier": 1.2,
+    "min_holding_period": 3,
+    "max_holding_period": 12
+  },
+  "optimization_score": 7.338391546082755,
+  "evaluation_results": {
+    "total_return": 0.21699254638016763,
+    "sharpe_ratio": 14.67678309216551,
+    "max_drawdown": -0.09452240444124857,
+    "win_rate": 0.5,
+    "profit_factor": 25.507772416578124,
+    "sqn": 1.3075117588304754,
+    "total_trades": 2,
+    "avg_hold_duration": 274.25
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 1,
+    "losing_trades": 1,
+    "max_profit": 0.2401154264045954,
+    "max_loss": -0.009413422014402893
+  }
+}

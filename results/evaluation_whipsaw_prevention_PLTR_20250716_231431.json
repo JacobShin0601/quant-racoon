@@ -1,0 +1,35 @@
+{
+  "timestamp": "20250716_231431",
+  "strategy_name": "whipsaw_prevention",
+  "symbol": "PLTR",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "ema_short": 8,
+    "ema_long": 15,
+    "rsi_period": 14,
+    "atr_period": 20,
+    "signal_confirmation_period": 5,
+    "volume_threshold": 1.5,
+    "volatility_threshold": 0.8,
+    "trend_strength_threshold": 0.02,
+    "min_holding_period": 10
+  },
+  "optimization_score": 0.0,
+  "evaluation_results": {
+    "total_return": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown": 0.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "sqn": 0.0,
+    "total_trades": 0,
+    "avg_hold_duration": 0.0
+  },
+  "trades_summary": {
+    "total_trades": 0,
+    "profitable_trades": 0,
+    "losing_trades": 0,
+    "max_profit": 0,
+    "max_loss": 0
+  }
+}

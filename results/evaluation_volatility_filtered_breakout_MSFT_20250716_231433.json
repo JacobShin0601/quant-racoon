@@ -1,0 +1,35 @@
+{
+  "timestamp": "20250716_231433",
+  "strategy_name": "volatility_filtered_breakout",
+  "symbol": "MSFT",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "breakout_period": 15,
+    "breakout_threshold": 0.015,
+    "atr_period": 14,
+    "volatility_lookback": 30,
+    "volatility_quantile": 0.3,
+    "volume_period": 20,
+    "volume_threshold": 1.2,
+    "confirmation_period": 1,
+    "min_holding_period": 7
+  },
+  "optimization_score": 72.20802659045303,
+  "evaluation_results": {
+    "total_return": 0.012935489433179318,
+    "sharpe_ratio": 144.41605318090606,
+    "max_drawdown": -0.014607023615062043,
+    "win_rate": 1.0,
+    "profit_factor": Infinity,
+    "sqn": 12.86560457507323,
+    "total_trades": 2,
+    "avg_hold_duration": 134.83333333333334
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 2,
+    "losing_trades": 0,
+    "max_profit": 0.007551708311039552,
+    "max_loss": 0.00605592899371729
+  }
+}

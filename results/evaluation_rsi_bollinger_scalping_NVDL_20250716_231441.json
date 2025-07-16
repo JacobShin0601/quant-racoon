@@ -1,0 +1,34 @@
+{
+  "timestamp": "20250716_231441",
+  "strategy_name": "rsi_bollinger_scalping",
+  "symbol": "NVDL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "rsi_period": 6,
+    "rsi_oversold": 25,
+    "rsi_overbought": 85,
+    "bb_period": 25,
+    "bb_std": 1.5,
+    "volume_threshold": 1.5,
+    "min_holding_period": 2,
+    "max_holding_period": 10
+  },
+  "optimization_score": 3.093362706507483,
+  "evaluation_results": {
+    "total_return": -0.9471012014372007,
+    "sharpe_ratio": 20.62241804338322,
+    "max_drawdown": -0.0826534007761219,
+    "win_rate": 1.0,
+    "profit_factor": Infinity,
+    "sqn": 1.8371910191705962,
+    "total_trades": 2,
+    "avg_hold_duration": 48.0
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 2,
+    "losing_trades": 0,
+    "max_profit": 0.05175875153214072,
+    "max_loss": 0.006733331562104297
+  }
+}

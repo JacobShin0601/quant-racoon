@@ -1,0 +1,35 @@
+{
+  "timestamp": "20250716_231434",
+  "strategy_name": "adaptive_whipsaw",
+  "symbol": "PLTR",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "ema_period": 25,
+    "rsi_period": 14,
+    "atr_period": 10,
+    "volatility_lookback": 70,
+    "trend_lookback": 15,
+    "volume_lookback": 20,
+    "base_volume_threshold": 1.5,
+    "base_volatility_threshold": 1.2,
+    "base_holding_period": 7
+  },
+  "optimization_score": 5.001483589029931,
+  "evaluation_results": {
+    "total_return": 0.05278503771034579,
+    "sharpe_ratio": 10.002967178059862,
+    "max_drawdown": -0.08042689745114039,
+    "win_rate": 0.6666666666666666,
+    "profit_factor": 6.274690334222159,
+    "sqn": 1.54349134513549,
+    "total_trades": 6,
+    "avg_hold_duration": 68.08333333333333
+  },
+  "trades_summary": {
+    "total_trades": 6,
+    "profitable_trades": 4,
+    "losing_trades": 2,
+    "max_profit": 0.035288132148256074,
+    "max_loss": -0.009622614631298626
+  }
+}

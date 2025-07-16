@@ -1,0 +1,371 @@
+{
+  "summary": {
+    "total_strategies": 120,
+    "total_execution_time": 1623.5541830062866,
+    "total_combinations_tested": 10920,
+    "average_score": -Infinity,
+    "best_score": 117.10478564153424,
+    "worst_score": -Infinity
+  },
+  "strategy_performance": {
+    "dual_momentum": {
+      "average_score": 28.897411683428444,
+      "max_score": 114.27446865901045,
+      "min_score": 0.0,
+      "std_score": 40.043499517558146,
+      "count": 6
+    },
+    "volatility_breakout": {
+      "average_score": 0.4730501989461125,
+      "max_score": 6.358912205903858,
+      "min_score": -4.383819625307134,
+      "std_score": 3.387746516049018,
+      "count": 6
+    },
+    "swing_ema": {
+      "average_score": 6.67047039288567,
+      "max_score": 13.164453287385326,
+      "min_score": 0.0,
+      "std_score": 3.847140583511601,
+      "count": 6
+    },
+    "swing_rsi": {
+      "average_score": 24.271609527256157,
+      "max_score": 63.02568745720808,
+      "min_score": 0.0,
+      "std_score": 25.262464646067894,
+      "count": 6
+    },
+    "swing_donchian": {
+      "average_score": 3.024751338106315,
+      "max_score": 9.212293361094767,
+      "min_score": 0.0,
+      "std_score": 3.794431625306541,
+      "count": 6
+    },
+    "stochastic": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "williams_r": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "cci": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "whipsaw_prevention": {
+      "average_score": 0.0,
+      "max_score": 0.0,
+      "min_score": 0.0,
+      "std_score": 0.0,
+      "count": 6
+    },
+    "donchian_rsi_whipsaw": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "volatility_filtered_breakout": {
+      "average_score": 17.083377240872082,
+      "max_score": 72.20802659045303,
+      "min_score": 0.0,
+      "std_score": 25.04428611888868,
+      "count": 6
+    },
+    "multi_timeframe_whipsaw": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "adaptive_whipsaw": {
+      "average_score": 4.810861889216844,
+      "max_score": 8.580428434483256,
+      "min_score": 0.0,
+      "std_score": 2.673595488145601,
+      "count": 6
+    },
+    "cci_bollinger": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "stoch_donchian": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    },
+    "vwap_macd_scalping": {
+      "average_score": 7.944596950660745,
+      "max_score": 15.816050512241903,
+      "min_score": 0.0,
+      "std_score": 4.6547197536617295,
+      "count": 6
+    },
+    "keltner_rsi_scalping": {
+      "average_score": 21.403117055949476,
+      "max_score": 117.10478564153424,
+      "min_score": 0.0,
+      "std_score": 42.98800884002095,
+      "count": 6
+    },
+    "absorption_scalping": {
+      "average_score": 0.0,
+      "max_score": 0.0,
+      "min_score": 0.0,
+      "std_score": 0.0,
+      "count": 6
+    },
+    "rsi_bollinger_scalping": {
+      "average_score": 0.830711304757558,
+      "max_score": 3.093362706507483,
+      "min_score": 0.0,
+      "std_score": 1.2250120668418134,
+      "count": 6
+    },
+    "mean_reversion": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 6
+    }
+  },
+  "symbol_performance": {
+    "TSLL": {
+      "average_score": -Infinity,
+      "max_score": 9.34462139142572,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 20
+    },
+    "NVDL": {
+      "average_score": -Infinity,
+      "max_score": 114.27446865901045,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 20
+    },
+    "PLTR": {
+      "average_score": -Infinity,
+      "max_score": 34.02561539882567,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 20
+    },
+    "CONL": {
+      "average_score": -Infinity,
+      "max_score": 117.10478564153424,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 20
+    },
+    "AAPL": {
+      "average_score": -Infinity,
+      "max_score": 0.0,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 20
+    },
+    "MSFT": {
+      "average_score": -Infinity,
+      "max_score": 72.20802659045303,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 20
+    }
+  },
+  "optimization_method_performance": {
+    "grid_search": {
+      "average_score": -Infinity,
+      "max_score": 117.10478564153424,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 120
+    }
+  },
+  "top_performers": [
+    {
+      "key": "keltner_rsi_scalping_CONL",
+      "strategy_name": "keltner_rsi_scalping",
+      "symbol": "CONL",
+      "score": 117.10478564153424,
+      "params": {
+        "keltner_period": 25,
+        "keltner_multiplier": 1.5,
+        "rsi_period": 12,
+        "rsi_oversold": 30,
+        "rsi_overbought": 65,
+        "volume_threshold": 1.5,
+        "min_holding_period": 1,
+        "max_holding_period": 6
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_NVDL",
+      "strategy_name": "dual_momentum",
+      "symbol": "NVDL",
+      "score": 114.27446865901045,
+      "params": {
+        "donchian_period": 20,
+        "rsi_period": 5,
+        "rsi_oversold": 35,
+        "rsi_overbought": 85,
+        "momentum_period": 5,
+        "momentum_threshold": 0.03
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "volatility_filtered_breakout_MSFT",
+      "strategy_name": "volatility_filtered_breakout",
+      "symbol": "MSFT",
+      "score": 72.20802659045303,
+      "params": {
+        "breakout_period": 15,
+        "breakout_threshold": 0.015,
+        "atr_period": 14,
+        "volatility_lookback": 30,
+        "volatility_quantile": 0.3,
+        "volume_period": 20,
+        "volume_threshold": 1.2,
+        "confirmation_period": 1,
+        "min_holding_period": 7
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "swing_rsi_NVDL",
+      "strategy_name": "swing_rsi",
+      "symbol": "NVDL",
+      "score": 63.02568745720808,
+      "params": {
+        "rsi_period": 20,
+        "rsi_oversold": 35,
+        "rsi_overbought": 75,
+        "min_holding_days": 10,
+        "max_holding_days": 7,
+        "rsi_momentum_period": 5,
+        "price_momentum_period": 7,
+        "volume_threshold": 0.5
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "swing_rsi_MSFT",
+      "strategy_name": "swing_rsi",
+      "symbol": "MSFT",
+      "score": 55.92423309800163,
+      "params": {
+        "rsi_period": 20,
+        "rsi_oversold": 25,
+        "rsi_overbought": 65,
+        "min_holding_days": 10,
+        "max_holding_days": 7,
+        "rsi_momentum_period": 3,
+        "price_momentum_period": 10,
+        "volume_threshold": 0.5
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_PLTR",
+      "strategy_name": "dual_momentum",
+      "symbol": "PLTR",
+      "score": 34.02561539882567,
+      "params": {
+        "donchian_period": 15,
+        "rsi_period": 10,
+        "rsi_oversold": 25,
+        "rsi_overbought": 65,
+        "momentum_period": 3,
+        "momentum_threshold": 0.02
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_CONL",
+      "strategy_name": "dual_momentum",
+      "symbol": "CONL",
+      "score": 19.852660616760108,
+      "params": {
+        "donchian_period": 15,
+        "rsi_period": 8,
+        "rsi_oversold": 25,
+        "rsi_overbought": 85,
+        "momentum_period": 5,
+        "momentum_threshold": 0.03
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "vwap_macd_scalping_MSFT",
+      "strategy_name": "vwap_macd_scalping",
+      "symbol": "MSFT",
+      "score": 15.816050512241903,
+      "params": {
+        "vwap_period": 25,
+        "macd_fast": 8,
+        "macd_slow": 26,
+        "macd_signal": 7,
+        "volume_threshold": 1.5,
+        "atr_multiplier": 0.8,
+        "min_holding_period": 1,
+        "max_holding_period": 8
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "swing_ema_CONL",
+      "strategy_name": "swing_ema",
+      "symbol": "CONL",
+      "score": 13.164453287385326,
+      "params": {
+        "ema_short_period": 20,
+        "ema_long_period": 60,
+        "min_holding_days": 7,
+        "max_holding_days": 15,
+        "slope_period": 10,
+        "volume_threshold": 1.2,
+        "volatility_threshold": 0.5
+      },
+      "method": "grid_search"
+    },
+    {
+      "key": "swing_rsi_CONL",
+      "strategy_name": "swing_rsi",
+      "symbol": "CONL",
+      "score": 13.095289308875254,
+      "params": {
+        "rsi_period": 20,
+        "rsi_oversold": 35,
+        "rsi_overbought": 65,
+        "min_holding_days": 5,
+        "max_holding_days": 20,
+        "rsi_momentum_period": 5,
+        "price_momentum_period": 3,
+        "volume_threshold": 0.9
+      },
+      "method": "grid_search"
+    }
+  ]
+}

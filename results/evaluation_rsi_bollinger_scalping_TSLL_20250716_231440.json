@@ -1,0 +1,34 @@
+{
+  "timestamp": "20250716_231440",
+  "strategy_name": "rsi_bollinger_scalping",
+  "symbol": "TSLL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "rsi_period": 8,
+    "rsi_oversold": 25,
+    "rsi_overbought": 75,
+    "bb_period": 25,
+    "bb_std": 1.5,
+    "volume_threshold": 1.2,
+    "min_holding_period": 2,
+    "max_holding_period": 4
+  },
+  "optimization_score": 1.8909051220378648,
+  "evaluation_results": {
+    "total_return": -0.9481347919110344,
+    "sharpe_ratio": 12.606034146919098,
+    "max_drawdown": -0.06360238035578379,
+    "win_rate": 0.5,
+    "profit_factor": 8.713713022584272,
+    "sqn": 1.1230347805653424,
+    "total_trades": 2,
+    "avg_hold_duration": 23.75
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 1,
+    "losing_trades": 1,
+    "max_profit": 0.04419698780824261,
+    "max_loss": -0.005072118819347447
+  }
+}

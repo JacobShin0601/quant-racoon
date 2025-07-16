@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231430",
+  "strategy_name": "swing_donchian",
+  "symbol": "MSFT",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "donchian_period": 20,
+    "min_holding_days": 15,
+    "max_holding_days": 10,
+    "volume_threshold": 1.2,
+    "volatility_threshold": 0.8,
+    "breakout_strength_threshold": 0.005
+  },
+  "optimization_score": 9.212293361094767,
+  "evaluation_results": {
+    "total_return": 0.021714002368802613,
+    "sharpe_ratio": 18.424586722189535,
+    "max_drawdown": -0.00781890907504117,
+    "win_rate": 0.6666666666666666,
+    "profit_factor": 236.4803155472833,
+    "sqn": 2.010287221493139,
+    "total_trades": 3,
+    "avg_hold_duration": 47.77777777777778
+  },
+  "trades_summary": {
+    "total_trades": 3,
+    "profitable_trades": 2,
+    "losing_trades": 1,
+    "max_profit": 0.015926605752804347,
+    "max_loss": -9.69380485962724e-05
+  }
+}

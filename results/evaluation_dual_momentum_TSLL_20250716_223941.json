@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_223941",
+  "strategy_name": "dual_momentum",
+  "symbol": "TSLL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "donchian_period": 10,
+    "rsi_period": 10,
+    "rsi_oversold": 35,
+    "rsi_overbought": 65,
+    "momentum_period": 10,
+    "momentum_threshold": 0.05
+  },
+  "optimization_score": 0.5927689460610546,
+  "evaluation_results": {
+    "total_return": 0.002615892250165634,
+    "sharpe_ratio": 1.1855378921221091,
+    "max_drawdown": -0.25941068324515837,
+    "win_rate": 0.6666666666666666,
+    "profit_factor": 1.1676131217723702,
+    "sqn": 0.12935278880685608,
+    "total_trades": 3,
+    "avg_hold_duration": 115.41666666666667
+  },
+  "trades_summary": {
+    "total_trades": 3,
+    "profitable_trades": 2,
+    "losing_trades": 1,
+    "max_profit": 0.11602111111543185,
+    "max_loss": -0.18073676987705933
+  }
+}

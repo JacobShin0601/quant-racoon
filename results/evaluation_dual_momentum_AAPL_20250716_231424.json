@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231424",
+  "strategy_name": "dual_momentum",
+  "symbol": "AAPL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "donchian_period": 8,
+    "rsi_period": 16,
+    "rsi_oversold": 35,
+    "rsi_overbought": 85,
+    "momentum_period": 8,
+    "momentum_threshold": 0.05
+  },
+  "optimization_score": 0.0,
+  "evaluation_results": {
+    "total_return": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown": 0.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "sqn": 0.0,
+    "total_trades": 0,
+    "avg_hold_duration": 0.0
+  },
+  "trades_summary": {
+    "total_trades": 0,
+    "profitable_trades": 0,
+    "losing_trades": 0,
+    "max_profit": 0,
+    "max_loss": 0
+  }
+}

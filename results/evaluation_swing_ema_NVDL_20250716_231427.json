@@ -1,0 +1,33 @@
+{
+  "timestamp": "20250716_231427",
+  "strategy_name": "swing_ema",
+  "symbol": "NVDL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "ema_short_period": 20,
+    "ema_long_period": 50,
+    "min_holding_days": 3,
+    "max_holding_days": 20,
+    "slope_period": 7,
+    "volume_threshold": 0.8,
+    "volatility_threshold": 0.9
+  },
+  "optimization_score": 7.15445322382506,
+  "evaluation_results": {
+    "total_return": 0.215722652968647,
+    "sharpe_ratio": 14.30890644765012,
+    "max_drawdown": -0.06267725329695087,
+    "win_rate": 0.6666666666666666,
+    "profit_factor": 8.730985372020626,
+    "sqn": 1.5612296882951984,
+    "total_trades": 3,
+    "avg_hold_duration": 150.25
+  },
+  "trades_summary": {
+    "total_trades": 3,
+    "profitable_trades": 2,
+    "losing_trades": 1,
+    "max_profit": 0.1718274183255412,
+    "max_loss": -0.028648636279552688
+  }
+}

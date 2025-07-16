@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231425",
+  "strategy_name": "volatility_breakout",
+  "symbol": "NVDL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "keltner_period": 30,
+    "keltner_multiplier": 1.5,
+    "volume_period": 20,
+    "volume_threshold": 1.2,
+    "volatility_period": 15,
+    "volatility_threshold": 0.5
+  },
+  "optimization_score": 2.7473497870018506,
+  "evaluation_results": {
+    "total_return": 0.11819826865828013,
+    "sharpe_ratio": 5.494699574003701,
+    "max_drawdown": -0.05174676134226496,
+    "win_rate": 0.3333333333333333,
+    "profit_factor": 2.8950445598318937,
+    "sqn": 0.8478505513040503,
+    "total_trades": 6,
+    "avg_hold_duration": 60.875
+  },
+  "trades_summary": {
+    "total_trades": 6,
+    "profitable_trades": 2,
+    "losing_trades": 4,
+    "max_profit": 0.1499144532129629,
+    "max_loss": -0.023868585129755704
+  }
+}

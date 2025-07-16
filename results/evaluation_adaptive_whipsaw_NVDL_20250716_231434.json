@@ -1,0 +1,35 @@
+{
+  "timestamp": "20250716_231434",
+  "strategy_name": "adaptive_whipsaw",
+  "symbol": "NVDL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "ema_period": 15,
+    "rsi_period": 20,
+    "atr_period": 10,
+    "volatility_lookback": 50,
+    "trend_lookback": 20,
+    "volume_lookback": 25,
+    "base_volume_threshold": 1.8,
+    "base_volatility_threshold": 1.0,
+    "base_holding_period": 3
+  },
+  "optimization_score": 6.844895102935022,
+  "evaluation_results": {
+    "total_return": 0.253631231266237,
+    "sharpe_ratio": 13.689790205870043,
+    "max_drawdown": -0.044206275318260504,
+    "win_rate": 0.8,
+    "profit_factor": 74.00044591191869,
+    "sqn": 1.9283307398053067,
+    "total_trades": 5,
+    "avg_hold_duration": 72.3
+  },
+  "trades_summary": {
+    "total_trades": 5,
+    "profitable_trades": 4,
+    "losing_trades": 1,
+    "max_profit": 0.15937592473188814,
+    "max_loss": -0.003436217115640671
+  }
+}

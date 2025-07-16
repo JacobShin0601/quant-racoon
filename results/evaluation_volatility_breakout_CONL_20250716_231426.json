@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231426",
+  "strategy_name": "volatility_breakout",
+  "symbol": "CONL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "keltner_period": 20,
+    "keltner_multiplier": 2.0,
+    "volume_period": 20,
+    "volume_threshold": 1.2,
+    "volatility_period": 20,
+    "volatility_threshold": 0.9
+  },
+  "optimization_score": 6.358912205903858,
+  "evaluation_results": {
+    "total_return": 0.5032649876218447,
+    "sharpe_ratio": 12.717824411807715,
+    "max_drawdown": -0.18133678438127074,
+    "win_rate": 0.6,
+    "profit_factor": 6.563757829282877,
+    "sqn": 1.791420568754914,
+    "total_trades": 5,
+    "avg_hold_duration": 82.75
+  },
+  "trades_summary": {
+    "total_trades": 5,
+    "profitable_trades": 3,
+    "losing_trades": 2,
+    "max_profit": 0.23774185276731563,
+    "max_loss": -0.08353310263826426
+  }
+}

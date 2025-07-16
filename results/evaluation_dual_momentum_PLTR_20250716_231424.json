@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231424",
+  "strategy_name": "dual_momentum",
+  "symbol": "PLTR",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "donchian_period": 15,
+    "rsi_period": 10,
+    "rsi_oversold": 25,
+    "rsi_overbought": 65,
+    "momentum_period": 3,
+    "momentum_threshold": 0.02
+  },
+  "optimization_score": 34.02561539882567,
+  "evaluation_results": {
+    "total_return": 0.03603285917943038,
+    "sharpe_ratio": 68.05123079765134,
+    "max_drawdown": -0.07962414371018806,
+    "win_rate": 1.0,
+    "profit_factor": Infinity,
+    "sqn": 6.062485485549773,
+    "total_trades": 2,
+    "avg_hold_duration": 240.625
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 2,
+    "losing_trades": 0,
+    "max_profit": 0.0232042616445983,
+    "max_loss": 0.014426114680996381
+  }
+}

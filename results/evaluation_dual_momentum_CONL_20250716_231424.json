@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231424",
+  "strategy_name": "dual_momentum",
+  "symbol": "CONL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "donchian_period": 15,
+    "rsi_period": 8,
+    "rsi_oversold": 25,
+    "rsi_overbought": 85,
+    "momentum_period": 5,
+    "momentum_threshold": 0.03
+  },
+  "optimization_score": 19.852660616760108,
+  "evaluation_results": {
+    "total_return": 0.35775411286468095,
+    "sharpe_ratio": 39.705321233520216,
+    "max_drawdown": -0.14903480604362374,
+    "win_rate": 1.0,
+    "profit_factor": Infinity,
+    "sqn": 4.3322057153605655,
+    "total_trades": 3,
+    "avg_hold_duration": 115.66666666666667
+  },
+  "trades_summary": {
+    "total_trades": 3,
+    "profitable_trades": 3,
+    "losing_trades": 0,
+    "max_profit": 0.16828293608950604,
+    "max_loss": 0.05684590844904962
+  }
+}

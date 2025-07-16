@@ -1,0 +1,67 @@
+================================================================================
+🔍 종합 최적화 결과 평가 리포트
+================================================================================
+생성 시간: 2025-07-16 23:14:42
+평가된 전략-심볼 조합: 120개
+
+🏆 상위 성과자 (최적화 점수 기준):
+--------------------------------------------------------------------------------
+ 1. keltner_rsi_scalping_CONL
+    최적화 점수: 117.1048
+    최적화 방법: grid_search
+    최적 파라미터: {'keltner_period': 25, 'keltner_multiplier': 1.5, 'rsi_period': 12, 'rsi_oversold': 30, 'rsi_overbought': 65, 'volume_threshold': 1.5, 'min_holding_period': 1, 'max_holding_period': 6}
+    실행 시간: 18.22초
+
+ 2. dual_momentum_NVDL
+    최적화 점수: 114.2745
+    최적화 방법: grid_search
+    최적 파라미터: {'donchian_period': 20, 'rsi_period': 5, 'rsi_oversold': 35, 'rsi_overbought': 85, 'momentum_period': 5, 'momentum_threshold': 0.03}
+    실행 시간: 16.93초
+
+ 3. volatility_filtered_breakout_MSFT
+    최적화 점수: 72.2080
+    최적화 방법: grid_search
+    최적 파라미터: {'breakout_period': 15, 'breakout_threshold': 0.015, 'atr_period': 14, 'volatility_lookback': 30, 'volatility_quantile': 0.3, 'volume_period': 20, 'volume_threshold': 1.2, 'confirmation_period': 1, 'min_holding_period': 7}
+    실행 시간: 29.41초
+
+ 4. swing_rsi_NVDL
+    최적화 점수: 63.0257
+    최적화 방법: grid_search
+    최적 파라미터: {'rsi_period': 20, 'rsi_oversold': 35, 'rsi_overbought': 75, 'min_holding_days': 10, 'max_holding_days': 7, 'rsi_momentum_period': 5, 'price_momentum_period': 7, 'volume_threshold': 0.5}
+    실행 시간: 17.78초
+
+ 5. swing_rsi_MSFT
+    최적화 점수: 55.9242
+    최적화 방법: grid_search
+    최적 파라미터: {'rsi_period': 20, 'rsi_oversold': 25, 'rsi_overbought': 65, 'min_holding_days': 10, 'max_holding_days': 7, 'rsi_momentum_period': 3, 'price_momentum_period': 10, 'volume_threshold': 0.5}
+    실행 시간: 27.87초
+
+ 6. dual_momentum_PLTR
+    최적화 점수: 34.0256
+    최적화 방법: grid_search
+    최적 파라미터: {'donchian_period': 15, 'rsi_period': 10, 'rsi_oversold': 25, 'rsi_overbought': 65, 'momentum_period': 3, 'momentum_threshold': 0.02}
+    실행 시간: 21.25초
+
+ 7. dual_momentum_CONL
+    최적화 점수: 19.8527
+    최적화 방법: grid_search
+    최적 파라미터: {'donchian_period': 15, 'rsi_period': 8, 'rsi_oversold': 25, 'rsi_overbought': 85, 'momentum_period': 5, 'momentum_threshold': 0.03}
+    실행 시간: 16.63초
+
+ 8. vwap_macd_scalping_MSFT
+    최적화 점수: 15.8161
+    최적화 방법: grid_search
+    최적 파라미터: {'vwap_period': 25, 'macd_fast': 8, 'macd_slow': 26, 'macd_signal': 7, 'volume_threshold': 1.5, 'atr_multiplier': 0.8, 'min_holding_period': 1, 'max_holding_period': 8}
+    실행 시간: 27.59초
+
+ 9. swing_ema_CONL
+    최적화 점수: 13.1645
+    최적화 방법: grid_search
+    최적 파라미터: {'ema_short_period': 20, 'ema_long_period': 60, 'min_holding_days': 7, 'max_holding_days': 15, 'slope_period': 10, 'volume_threshold': 1.2, 'volatility_threshold': 0.5}
+    실행 시간: 17.77초
+
+10. swing_rsi_CONL
+    최적화 점수: 13.0953
+    최적화 방법: grid_search
+    최적 파라미터: {'rsi_period': 20, 'rsi_oversold': 35, 'rsi_overbought': 65, 'min_holding_days': 5, 'max_holding_days': 20, 'rsi_momentum_period': 5, 'price_momentum_period': 3, 'volume_threshold': 0.9}
+    실행 시간: 17.55초

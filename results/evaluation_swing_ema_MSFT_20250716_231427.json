@@ -1,0 +1,33 @@
+{
+  "timestamp": "20250716_231427",
+  "strategy_name": "swing_ema",
+  "symbol": "MSFT",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "ema_short_period": 10,
+    "ema_long_period": 40,
+    "min_holding_days": 10,
+    "max_holding_days": 10,
+    "slope_period": 7,
+    "volume_threshold": 0.6,
+    "volatility_threshold": 0.9
+  },
+  "optimization_score": 7.272189207727162,
+  "evaluation_results": {
+    "total_return": 0.004142381620560191,
+    "sharpe_ratio": 14.544378415454323,
+    "max_drawdown": -0.008973649826661254,
+    "win_rate": 0.5,
+    "profit_factor": 22.86911718291775,
+    "sqn": 1.2957162127195272,
+    "total_trades": 2,
+    "avg_hold_duration": 17.5
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 1,
+    "losing_trades": 1,
+    "max_profit": 0.004579727112621626,
+    "max_loss": -0.0002002581505875743
+  }
+}

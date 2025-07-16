@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250716_231429",
+  "strategy_name": "swing_donchian",
+  "symbol": "CONL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "donchian_period": 30,
+    "min_holding_days": 10,
+    "max_holding_days": 15,
+    "volume_threshold": 1.8,
+    "volatility_threshold": 1.2,
+    "breakout_strength_threshold": 0.003
+  },
+  "optimization_score": 7.438506386139472,
+  "evaluation_results": {
+    "total_return": 0.8185052712670106,
+    "sharpe_ratio": 14.877012772278944,
+    "max_drawdown": -0.08339240103981392,
+    "win_rate": 0.7777777777777778,
+    "profit_factor": 19.11218347202283,
+    "sqn": 2.811491146212977,
+    "total_trades": 9,
+    "avg_hold_duration": 47.77777777777778
+  },
+  "trades_summary": {
+    "total_trades": 9,
+    "profitable_trades": 7,
+    "losing_trades": 2,
+    "max_profit": 0.19346269810343314,
+    "max_loss": -0.019316035380488348
+  }
+}

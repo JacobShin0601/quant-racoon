@@ -1,0 +1,33 @@
+{
+  "timestamp": "20250716_231427",
+  "strategy_name": "swing_ema",
+  "symbol": "CONL",
+  "optimization_method": "grid_search",
+  "best_params": {
+    "ema_short_period": 20,
+    "ema_long_period": 60,
+    "min_holding_days": 7,
+    "max_holding_days": 15,
+    "slope_period": 10,
+    "volume_threshold": 1.2,
+    "volatility_threshold": 0.5
+  },
+  "optimization_score": 13.164453287385326,
+  "evaluation_results": {
+    "total_return": 1.1867358697762573,
+    "sharpe_ratio": 26.328906574770652,
+    "max_drawdown": -0.11923438900899427,
+    "win_rate": 1.0,
+    "profit_factor": Infinity,
+    "sqn": 2.345565423123134,
+    "total_trades": 2,
+    "avg_hold_duration": 266.125
+  },
+  "trades_summary": {
+    "total_trades": 2,
+    "profitable_trades": 2,
+    "losing_trades": 0,
+    "max_profit": 0.8614725610290006,
+    "max_loss": 0.21339926516812685
+  }
+}
