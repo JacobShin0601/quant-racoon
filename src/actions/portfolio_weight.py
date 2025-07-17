@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class PortfolioWeightCalculator:
     """포트폴리오 비중 계산 클래스"""
 
-    def __init__(self, config_path: str = "../../config.json"):
+    def __init__(self, config_path: str = "../../config/config_long.json"):
         self.config = self._load_config(config_path)
         self.portfolio_config = self.config["portfolio"]
         self.weight_methods = self.config["portfolio"]["weight_methods"]
@@ -87,9 +87,17 @@ class PortfolioWeightCalculator:
 
         # 각 시점별로 비중 계산
         for i, date in enumerate(common_dates):
+            # date가 timezone-naive인지 확인하고 필요시 변환
+            if hasattr(date, "tz") and date.tz is not None:
+                date_naive = date.tz_localize(None)
+            else:
+                date_naive = date
+
             if i % self.rebalance_period == 0:  # 리밸런싱 시점
                 # 해당 시점까지의 데이터로 비중 계산
-                historical_data = self._get_historical_data(data_dict, date, symbols)
+                historical_data = self._get_historical_data(
+                    data_dict, date_naive, symbols
+                )
                 weights = self._calculate_weights_at_date(historical_data, symbols)
             else:
                 # 이전 비중 유지 (첫 번째 시점이 아닌 경우)
@@ -113,10 +121,26 @@ class PortfolioWeightCalculator:
 
     def _get_common_dates(self, data_dict: Dict[str, pd.DataFrame]) -> pd.DatetimeIndex:
         """모든 종목의 공통 날짜 찾기"""
+        if not isinstance(data_dict, dict):
+            logger.error(
+                f"data_dict 타입 오류: {type(data_dict)}. dict[str, pd.DataFrame]이어야 합니다."
+            )
+            return pd.DatetimeIndex([])
         date_sets = []
         for symbol, df in data_dict.items():
-            date_sets.append(set(df["datetime"]))
+            if not isinstance(df, pd.DataFrame) or "datetime" not in df.columns:
+                logger.warning(
+                    f"{symbol} 데이터가 DataFrame이 아니거나 datetime 컬럼이 없습니다."
+                )
+                continue
+            # datetime 컬럼을 안전하게 변환 (문자열, tz-aware 모두 처리)
+            dates = pd.to_datetime(df["datetime"], errors="coerce", utc=True)
+            if hasattr(dates, "dt") and dates.dt.tz is not None:
+                dates = dates.dt.tz_localize(None)
+            date_sets.append(set(dates))
 
+        if not date_sets:
+            return pd.DatetimeIndex([])
         common_dates = set.intersection(*date_sets)
         return pd.DatetimeIndex(sorted(common_dates))
 
@@ -131,7 +155,21 @@ class PortfolioWeightCalculator:
 
         for symbol in symbols:
             df = data_dict[symbol]
-            historical_df = df[df["datetime"] <= current_date].copy()
+
+            # datetime 컬럼의 timezone 처리 - 더 강력한 방법
+            df_dates = pd.to_datetime(df["datetime"], errors="coerce")
+            if hasattr(df_dates, "dt") and df_dates.dt.tz is not None:
+                # timezone-aware datetime을 timezone-naive로 변환
+                df_dates = df_dates.dt.tz_localize(None)
+
+            # current_date도 timezone-naive로 보장
+            if hasattr(current_date, "tz") and current_date.tz is not None:
+                current_date_naive = current_date.tz_localize(None)
+            else:
+                current_date_naive = current_date
+
+            # timezone-naive datetime으로 비교
+            historical_df = df[df_dates <= current_date_naive].copy()
             if len(historical_df) > 0:
                 historical_data[symbol] = historical_df
 
@@ -181,7 +219,7 @@ class PortfolioWeightCalculator:
 
                 # config_path를 절대 경로로 변환
                 config_path = os.path.join(
-                    os.path.dirname(__file__), "../../config.json"
+                    os.path.dirname(__file__), "../../config/config_long.json"
                 )
                 self.advanced_manager = AdvancedPortfolioManager(config_path)
 

@@ -126,11 +126,11 @@ class StrategyEvaluator:
         optimization_method_name = strategy_optimization_map.get(
             strategy_name, "sharpe_maximization"
         )
-        
+
         # portfolio_manager를 사용한 고급 포트폴리오 최적화
         try:
             from actions.portfolio_optimization import OptimizationMethod
-            
+
             # 문자열을 OptimizationMethod enum으로 변환
             method_map = {
                 "sharpe_maximization": OptimizationMethod.SHARPE_MAXIMIZATION,
@@ -139,43 +139,50 @@ class StrategyEvaluator:
                 "sortino_maximization": OptimizationMethod.SORTINO_MAXIMIZATION,
                 "maximum_diversification": OptimizationMethod.MAXIMUM_DIVERSIFICATION,
             }
-            
-            optimization_method = method_map.get(optimization_method_name, OptimizationMethod.SHARPE_MAXIMIZATION)
-            
+
+            optimization_method = method_map.get(
+                optimization_method_name, OptimizationMethod.SHARPE_MAXIMIZATION
+            )
+
             # portfolio_manager를 사용한 고급 최적화 실행
-            self.logger.log_info(f"🎯 {strategy_name} 전략에 맞는 최적화 방법: {optimization_method_name}")
-            
+            self.logger.log_info(
+                f"🎯 {strategy_name} 전략에 맞는 최적화 방법: {optimization_method_name}"
+            )
+
             # 수익률 데이터 준비
             returns_df = self.portfolio_manager.prepare_returns_data(data_dict)
-            
+
             # 포트폴리오 최적화 실행
             result = self.portfolio_manager.calculate_advanced_portfolio_weights(
                 data_dict, optimization_method
             )
-            
+
             if result and result.weights is not None:
                 # 결과를 DataFrame 형태로 변환
                 symbols = list(data_dict.keys())
-                weights_df = pd.DataFrame(
-                    [result.weights], 
-                    columns=symbols,
-                    index=[0]
-                )
-                
+                weights_df = pd.DataFrame([result.weights], columns=symbols, index=[0])
+
                 # 현금 비중 추가 (있는 경우)
-                if hasattr(result.constraints, 'cash_weight') and result.constraints.cash_weight > 0:
-                    weights_df['cash'] = result.constraints.cash_weight
-                
-                self.logger.log_success(f"✅ {strategy_name} 전략 최적화 완료 (샤프: {result.sharpe_ratio:.3f})")
+                if (
+                    hasattr(result.constraints, "cash_weight")
+                    and result.constraints.cash_weight > 0
+                ):
+                    weights_df["cash"] = result.constraints.cash_weight
+
+                self.logger.log_success(
+                    f"✅ {strategy_name} 전략 최적화 완료 (샤프: {result.sharpe_ratio:.3f})"
+                )
                 return weights_df
             else:
-                self.logger.log_warning(f"⚠️ {strategy_name} 최적화 실패, 기본 방법 사용")
+                self.logger.log_warning(
+                    f"⚠️ {strategy_name} 최적화 실패, 기본 방법 사용"
+                )
                 return self.weight_calculator.calculate_optimal_weights(data_dict)
-                
+
         except Exception as e:
             self.logger.log_error(f"❌ {strategy_name} 포트폴리오 최적화 중 오류: {e}")
             self.logger.log_info(f"🔄 기본 포트폴리오 비중 계산으로 fallback")
-            
+
             # 기존 방식으로 fallback
             original_method = self.weight_calculator.method
             self.weight_calculator.method = optimization_method_name
@@ -244,6 +251,16 @@ class StrategyEvaluator:
     def _calculate_signal_adjustment(self, signals: pd.DataFrame, symbol: str) -> float:
         """신호에 따른 비중 조정 팩터 계산"""
         try:
+            # dict 타입이면 DataFrame으로 변환
+            if isinstance(signals, dict):
+                signals = pd.DataFrame(signals)
+            # 신호가 DataFrame이 아니거나 columns 속성이 없으면 기본값 사용
+            if not hasattr(signals, "columns") or signals is None:
+                self.logger.log_warning(
+                    f"⚠️ {symbol}: 신호 데이터가 DataFrame이 아닙니다. 기본값 1.0 사용"
+                )
+                return 1.0
+
             # 신호 컬럼 확인
             if "signal" not in signals.columns:
                 self.logger.log_warning(
@@ -305,12 +322,17 @@ class StrategyEvaluator:
         config_symbols = self.config.get("data", {}).get("symbols", [])
         config_weights = self.config.get("data", {}).get("weights", None)
         if config_weights is None:
-            weights = [1.0 / len(config_symbols)] * len(config_symbols) if config_symbols else []
+            weights = (
+                [1.0 / len(config_symbols)] * len(config_symbols)
+                if config_symbols
+                else []
+            )
         else:
             weights = config_weights
         # numpy 배열일 경우 리스트로 변환
         try:
             import numpy as np
+
             if isinstance(weights, np.ndarray):
                 weights = weights.tolist()
         except ImportError:
@@ -319,7 +341,9 @@ class StrategyEvaluator:
             weights = list(weights)
 
         strategies = {
-            "buy_hold": FixedWeightRebalanceStrategy(self.params, config_symbols, weights),
+            "buy_hold": FixedWeightRebalanceStrategy(
+                self.params, config_symbols, weights
+            ),
             "dual_momentum": DualMomentumStrategy(self.params),
             "volatility_breakout": VolatilityAdjustedBreakoutStrategy(self.params),
             "swing_ema": SwingEMACrossoverStrategy(self.params),
@@ -332,7 +356,9 @@ class StrategyEvaluator:
             # 휩쏘 방지 전략들 등록
             "whipsaw_prevention": WhipsawPreventionStrategy(self.params),
             "donchian_rsi_whipsaw": DonchianRSIWhipsawStrategy(self.params),
-            "volatility_filtered_breakout": VolatilityFilteredBreakoutStrategy(self.params),
+            "volatility_filtered_breakout": VolatilityFilteredBreakoutStrategy(
+                self.params
+            ),
             "multi_timeframe_whipsaw": MultiTimeframeWhipsawStrategy(self.params),
             "adaptive_whipsaw": AdaptiveWhipsawStrategy(self.params),
             # 새로운 결합 전략들 등록
@@ -346,11 +372,22 @@ class StrategyEvaluator:
             # 평균회귀 전략 등록
             "mean_reversion": MeanReversionStrategy(self.params),
             # 실전형 전략들 등록 (config 기반)
-            "fixed_weight_rebalance": FixedWeightRebalanceStrategy(self.params, config_symbols, weights),
-            "etf_momentum_rotation": ETFMomentumRotationStrategy(self.params, top_n=min(2, len(config_symbols)), lookback_period=20, rebalance_period=20),
+            "fixed_weight_rebalance": FixedWeightRebalanceStrategy(
+                self.params, config_symbols, weights
+            ),
+            "etf_momentum_rotation": ETFMomentumRotationStrategy(
+                self.params,
+                top_n=min(2, len(config_symbols)),
+                lookback_period=20,
+                rebalance_period=20,
+            ),
             "trend_following_ma200": TrendFollowingMA200Strategy(self.params),
-            "return_stacking": ReturnStackingStrategy(self.params, config_symbols, weights),
-            "risk_parity_leverage": RiskParityLeverageStrategy(self.params, config_symbols),
+            "return_stacking": ReturnStackingStrategy(
+                self.params, config_symbols, weights
+            ),
+            "risk_parity_leverage": RiskParityLeverageStrategy(
+                self.params, config_symbols
+            ),
             "all": FixedWeightRebalanceStrategy(self.params, config_symbols, weights),
         }
         for name, strategy in strategies.items():
@@ -447,12 +484,16 @@ class StrategyEvaluator:
                         self.logger.log_info(f"  {symbol}: {weight*100:.1f}%")
 
                 # 포트폴리오 리스크 분석 (portfolio_manager 활용)
-                risk_analysis = self._analyze_portfolio_risk(strategy_name, data_dict, weights_df)
+                risk_analysis = self._analyze_portfolio_risk(
+                    strategy_name, data_dict, weights_df
+                )
                 if risk_analysis:
                     self.logger.log_info(f"🔍 리스크 분석 결과:")
-                    overall_risk = risk_analysis.get("risk_assessment", {}).get("overall_risk", "평가 불가")
+                    overall_risk = risk_analysis.get("risk_assessment", {}).get(
+                        "overall_risk", "평가 불가"
+                    )
                     self.logger.log_info(f"  종합 리스크 수준: {overall_risk}")
-                    
+
                     optimization_metrics = risk_analysis.get("optimization_metrics", {})
                     if optimization_metrics:
                         sharpe = optimization_metrics.get("sharpe_ratio", 0)
@@ -465,8 +506,12 @@ class StrategyEvaluator:
                 # 전략별 신호 생성 (포트폴리오 모드에서도 전략별 차이를 위해)
                 strategy_signals = {}
                 portfolio_strategies = [
-                    "buy_hold", "fixed_weight_rebalance", "etf_momentum_rotation",
-                    "trend_following_ma200", "return_stacking", "risk_parity_leverage"
+                    "buy_hold",
+                    "fixed_weight_rebalance",
+                    "etf_momentum_rotation",
+                    "trend_following_ma200",
+                    "return_stacking",
+                    "risk_parity_leverage",
                 ]
                 strategy = self.strategy_manager.strategies[strategy_name]
                 if strategy_name in portfolio_strategies:
@@ -517,10 +562,17 @@ class StrategyEvaluator:
 
                 # 전략 실행
                 strategy = self.strategy_manager.strategies[strategy_name]
-                
+
                 # 포트폴리오 전략들은 data_dict를 받아야 함
-                portfolio_strategies = ["buy_hold", "fixed_weight_rebalance", "etf_momentum_rotation", "trend_following_ma200", "return_stacking", "risk_parity_leverage"]
-                
+                portfolio_strategies = [
+                    "buy_hold",
+                    "fixed_weight_rebalance",
+                    "etf_momentum_rotation",
+                    "trend_following_ma200",
+                    "return_stacking",
+                    "risk_parity_leverage",
+                ]
+
                 if strategy_name in portfolio_strategies:
                     # 단일종목 모드에서 포트폴리오 전략 실행 시
                     # config의 모든 심볼에 대해 동일한 데이터를 사용하여 가짜 데이터 생성
@@ -528,7 +580,7 @@ class StrategyEvaluator:
                     fake_data_dict = {}
                     for symbol in config_symbols:
                         fake_data_dict[symbol] = data.copy()
-                    
+
                     signals = strategy.generate_signals(fake_data_dict)
                     # 단일종목 모드에서는 첫 번째 종목의 신호만 사용
                     if isinstance(signals, dict):
@@ -623,7 +675,9 @@ class StrategyEvaluator:
                     trades=trades,
                     portfolio_values=portfolio_values,
                     signals=strategy_signals,  # 전략별 신호 저장
-                    risk_analysis=risk_analysis if 'risk_analysis' in locals() else None,  # 리스크 분석 결과 저장
+                    risk_analysis=(
+                        risk_analysis if "risk_analysis" in locals() else None
+                    ),  # 리스크 분석 결과 저장
                 )
             else:
                 strategy_result = StrategyResult(
@@ -645,7 +699,8 @@ class StrategyEvaluator:
 
         except Exception as e:
             import traceback
-            print('==== 예외 발생! 전체 트레이스백 출력 ====', flush=True)
+
+            print("==== 예외 발생! 전체 트레이스백 출력 ====", flush=True)
             print(traceback.format_exc(), flush=True)
             self.logger.log_error(f"❌ {strategy_name} 전략 평가 중 오류: {e}")
             # 기본 결과 객체 반환 (예외 발생 시)
@@ -888,6 +943,7 @@ class StrategyEvaluator:
         """buy&hold 전략의 성과지표 계산 (단일종목/포트폴리오 모두 지원)"""
         import pandas as pd
         import numpy as np
+
         symbols = list(data_dict.keys())
         if len(symbols) == 1:
             # 단일 종목: 첫날 매수 후 마지막까지 보유
@@ -895,9 +951,16 @@ class StrategyEvaluator:
             prices = df["close"].values
             returns = pd.Series(prices).pct_change().dropna()
             total_return = (prices[-1] - prices[0]) / prices[0]
-            sharpe = (returns.mean() / returns.std() * np.sqrt(252)) if returns.std() > 0 else 0
+            sharpe = (
+                (returns.mean() / returns.std() * np.sqrt(252))
+                if returns.std() > 0
+                else 0
+            )
             cum_returns = (1 + returns).cumprod()
-            max_dd = ((cum_returns - cum_returns.expanding().max()) / cum_returns.expanding().max()).min()
+            max_dd = (
+                (cum_returns - cum_returns.expanding().max())
+                / cum_returns.expanding().max()
+            ).min()
             return {
                 "total_return": total_return,
                 "sharpe_ratio": sharpe,
@@ -912,32 +975,62 @@ class StrategyEvaluator:
         else:
             # 포트폴리오: 첫 리밸런싱 비중을 끝까지 고정
             # 모든 종목의 공통 기간
-            common_dates = set.intersection(*[set(df["datetime"]) for df in data_dict.values()])
+            common_dates = set.intersection(
+                *[set(df["datetime"]) for df in data_dict.values()]
+            )
             common_dates = sorted(list(common_dates))
             if not common_dates:
                 return None
             first_date = common_dates[0]
             last_date = common_dates[-1]
             # 첫날 종가 기준 비중 계산 (동일가중)
-            first_prices = np.array([data_dict[s].loc[data_dict[s]["datetime"] == first_date, "close"].values[0] for s in symbols])
+            first_prices = np.array(
+                [
+                    data_dict[s]
+                    .loc[data_dict[s]["datetime"] == first_date, "close"]
+                    .values[0]
+                    for s in symbols
+                ]
+            )
             weights = np.ones(len(symbols)) / len(symbols)
             # 초기 자본 1로 가정
             capital = 1.0
             shares = (capital * weights) / first_prices
             # 마지막날 종가
-            last_prices = np.array([data_dict[s].loc[data_dict[s]["datetime"] == last_date, "close"].values[0] for s in symbols])
+            last_prices = np.array(
+                [
+                    data_dict[s]
+                    .loc[data_dict[s]["datetime"] == last_date, "close"]
+                    .values[0]
+                    for s in symbols
+                ]
+            )
             final_value = np.sum(shares * last_prices)
             total_return = (final_value - capital) / capital
             # 포트폴리오 일별 수익률 계산
             port_vals = []
             for d in common_dates:
-                prices = np.array([data_dict[s].loc[data_dict[s]["datetime"] == d, "close"].values[0] for s in symbols])
+                prices = np.array(
+                    [
+                        data_dict[s]
+                        .loc[data_dict[s]["datetime"] == d, "close"]
+                        .values[0]
+                        for s in symbols
+                    ]
+                )
                 port_vals.append(np.sum(shares * prices))
             port_vals = pd.Series(port_vals)
             returns = port_vals.pct_change().dropna()
-            sharpe = (returns.mean() / returns.std() * np.sqrt(252)) if returns.std() > 0 else 0
+            sharpe = (
+                (returns.mean() / returns.std() * np.sqrt(252))
+                if returns.std() > 0
+                else 0
+            )
             cum_returns = (1 + returns).cumprod()
-            max_dd = ((cum_returns - cum_returns.expanding().max()) / cum_returns.expanding().max()).min()
+            max_dd = (
+                (cum_returns - cum_returns.expanding().max())
+                / cum_returns.expanding().max()
+            ).min()
             return {
                 "total_return": total_return,
                 "sharpe_ratio": sharpe,
@@ -950,7 +1043,11 @@ class StrategyEvaluator:
                 "name": "buy&hold",
             }
 
-    def generate_comparison_report(self, results: Dict[str, StrategyResult], data_dict: Dict[str, pd.DataFrame] = None) -> str:
+    def generate_comparison_report(
+        self,
+        results: Dict[str, StrategyResult],
+        data_dict: Dict[str, pd.DataFrame] = None,
+    ) -> str:
         """전략 비교 리포트 생성 (buy&hold baseline 항상 맨 위에 추가)"""
         if not results:
             return "평가 결과가 없습니다."
@@ -965,13 +1062,19 @@ class StrategyEvaluator:
             bh = self._calculate_buy_and_hold(data_dict)
             report_lines.append("\n📊 성과 지표 비교")
             report_lines.append("-" * 100)
-            report_lines.append(f"{'전략명':<20} {'수익률':<10} {'샤프비율':<10} {'최대낙폭':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<10}")
+            report_lines.append(
+                f"{'전략명':<20} {'수익률':<10} {'샤프비율':<10} {'최대낙폭':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<10}"
+            )
             report_lines.append("-" * 100)
-            report_lines.append(f"{'buy&hold':<20} {bh['total_return']*100:>8.2f}% {bh['sharpe_ratio']:>8.2f} {bh['max_drawdown']*100:>8.2f}% {'-':>6} {bh['total_trades']:>6d} {'보유중':<10}")
+            report_lines.append(
+                f"{'buy&hold':<20} {bh['total_return']*100:>8.2f}% {bh['sharpe_ratio']:>8.2f} {bh['max_drawdown']*100:>8.2f}% {'-':>6} {bh['total_trades']:>6d} {'보유중':<10}"
+            )
         else:
             report_lines.append("\n📊 성과 지표 비교")
             report_lines.append("-" * 100)
-            report_lines.append(f"{'전략명':<20} {'수익률':<10} {'샤프비율':<10} {'최대낙폭':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<10}")
+            report_lines.append(
+                f"{'전략명':<20} {'수익률':<10} {'샤프비율':<10} {'최대낙폭':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<10}"
+            )
             report_lines.append("-" * 100)
 
         # 기존 전략들
@@ -1039,7 +1142,6 @@ class StrategyEvaluator:
                 return "보유중"
         else:
             return "보유중"
-
 
     def plot_comparison(
         self, results: Dict[str, StrategyResult], save_path: str = None
@@ -1216,18 +1318,23 @@ class StrategyEvaluator:
             return None
 
     def _analyze_portfolio_risk(
-        self, strategy_name: str, data_dict: Dict[str, pd.DataFrame], weights_df: pd.DataFrame
+        self,
+        strategy_name: str,
+        data_dict: Dict[str, pd.DataFrame],
+        weights_df: pd.DataFrame,
     ) -> Dict[str, Any]:
         """포트폴리오 리스크 분석 - portfolio_manager 활용"""
         self.logger.log_info(f"🔍 {strategy_name} 포트폴리오 리스크 분석")
-        
+
         try:
             # portfolio_manager를 사용한 고급 리스크 분석
             returns_df = self.portfolio_manager.prepare_returns_data(data_dict)
-            
+
             # 모든 최적화 방법 비교하여 리스크 지표 분석
-            comparison_results = self.portfolio_manager.compare_all_optimization_methods(data_dict)
-            
+            comparison_results = (
+                self.portfolio_manager.compare_all_optimization_methods(data_dict)
+            )
+
             # 현재 전략의 리스크 지표 추출
             current_risk_metrics = {}
             if comparison_results:
@@ -1239,12 +1346,16 @@ class StrategyEvaluator:
                     "swing_rsi": "sortino_maximization",
                     "swing_donchian": "maximum_diversification",
                 }
-                
-                method_name = strategy_optimization_map.get(strategy_name, "sharpe_maximization")
-                
+
+                method_name = strategy_optimization_map.get(
+                    strategy_name, "sharpe_maximization"
+                )
+
                 # 해당 방법의 결과 찾기
                 for method, result in comparison_results.items():
-                    if method.value == method_name:
+                    # method가 enum인지 문자열인지 확인
+                    method_key = method.value if hasattr(method, "value") else method
+                    if method_key == method_name:
                         current_risk_metrics = {
                             "expected_return": result.expected_return,
                             "volatility": result.volatility,
@@ -1256,23 +1367,25 @@ class StrategyEvaluator:
                             "diversification_ratio": result.diversification_ratio,
                         }
                         break
-            
+
             # 포트폴리오 비중 기반 추가 리스크 지표 계산
             portfolio_risk_metrics = self._calculate_portfolio_risk_metrics(
                 returns_df, weights_df
             )
-            
+
             # 종합 리스크 분석 결과
             risk_analysis = {
                 "strategy_name": strategy_name,
                 "optimization_metrics": current_risk_metrics,
                 "portfolio_risk_metrics": portfolio_risk_metrics,
-                "risk_assessment": self._assess_risk_level(current_risk_metrics, portfolio_risk_metrics),
+                "risk_assessment": self._assess_risk_level(
+                    current_risk_metrics, portfolio_risk_metrics
+                ),
             }
-            
+
             self.logger.log_success(f"✅ {strategy_name} 리스크 분석 완료")
             return risk_analysis
-            
+
         except Exception as e:
             self.logger.log_error(f"❌ {strategy_name} 리스크 분석 중 오류: {e}")
             return {}
@@ -1284,42 +1397,58 @@ class StrategyEvaluator:
         try:
             # 평균 비중 계산
             avg_weights = weights_df.mean()
-            
+
             # 포트폴리오 수익률 계산
-            portfolio_returns = (returns_df * avg_weights.drop('cash', errors='ignore')).sum(axis=1)
-            
+            portfolio_returns = (
+                returns_df * avg_weights.drop("cash", errors="ignore")
+            ).sum(axis=1)
+
             # 리스크 지표 계산
             metrics = {
                 "portfolio_volatility": portfolio_returns.std() * np.sqrt(252),
-                "portfolio_sharpe": (portfolio_returns.mean() * 252) / (portfolio_returns.std() * np.sqrt(252)) if portfolio_returns.std() > 0 else 0,
-                "portfolio_sortino": (portfolio_returns.mean() * 252) / (portfolio_returns[portfolio_returns < 0].std() * np.sqrt(252)) if len(portfolio_returns[portfolio_returns < 0]) > 0 else 0,
-                "concentration_risk": (avg_weights ** 2).sum(),  # Herfindahl 지수
+                "portfolio_sharpe": (
+                    (portfolio_returns.mean() * 252)
+                    / (portfolio_returns.std() * np.sqrt(252))
+                    if portfolio_returns.std() > 0
+                    else 0
+                ),
+                "portfolio_sortino": (
+                    (portfolio_returns.mean() * 252)
+                    / (portfolio_returns[portfolio_returns < 0].std() * np.sqrt(252))
+                    if len(portfolio_returns[portfolio_returns < 0]) > 0
+                    else 0
+                ),
+                "concentration_risk": (avg_weights**2).sum(),  # Herfindahl 지수
                 "max_weight": avg_weights.max(),
                 "min_weight": avg_weights.min(),
                 "weight_spread": avg_weights.max() - avg_weights.min(),
             }
-            
+
             # VaR 및 CVaR 계산
             var_95 = np.percentile(portfolio_returns, 5)
             cvar_95 = portfolio_returns[portfolio_returns <= var_95].mean()
-            
-            metrics.update({
-                "var_95": var_95,
-                "cvar_95": cvar_95,
-            })
-            
+
+            metrics.update(
+                {
+                    "var_95": var_95,
+                    "cvar_95": cvar_95,
+                }
+            )
+
             return metrics
-            
+
         except Exception as e:
             self.logger.log_error(f"❌ 포트폴리오 리스크 지표 계산 중 오류: {e}")
             return {}
 
     def _assess_risk_level(
-        self, optimization_metrics: Dict[str, float], portfolio_metrics: Dict[str, float]
+        self,
+        optimization_metrics: Dict[str, float],
+        portfolio_metrics: Dict[str, float],
     ) -> Dict[str, str]:
         """리스크 수준 평가"""
         risk_assessment = {}
-        
+
         try:
             # 변동성 기반 리스크 평가
             volatility = optimization_metrics.get("volatility", 0)
@@ -1329,7 +1458,7 @@ class StrategyEvaluator:
                 risk_assessment["volatility_risk"] = "보통"
             else:
                 risk_assessment["volatility_risk"] = "높음"
-            
+
             # 샤프 비율 기반 수익성 평가
             sharpe = optimization_metrics.get("sharpe_ratio", 0)
             if sharpe > 1.0:
@@ -1338,7 +1467,7 @@ class StrategyEvaluator:
                 risk_assessment["return_risk"] = "보통"
             else:
                 risk_assessment["return_risk"] = "높음"
-            
+
             # 최대 낙폭 기반 손실 위험 평가
             max_dd = abs(optimization_metrics.get("max_drawdown", 0))
             if max_dd < 0.1:
@@ -1347,7 +1476,7 @@ class StrategyEvaluator:
                 risk_assessment["drawdown_risk"] = "보통"
             else:
                 risk_assessment["drawdown_risk"] = "높음"
-            
+
             # 집중도 위험 평가
             concentration = portfolio_metrics.get("concentration_risk", 1.0)
             if concentration < 0.3:
@@ -1356,7 +1485,7 @@ class StrategyEvaluator:
                 risk_assessment["concentration_risk"] = "보통"
             else:
                 risk_assessment["concentration_risk"] = "높음"
-            
+
             # 종합 리스크 평가
             risk_scores = {
                 "volatility_risk": {"낮음": 1, "보통": 2, "높음": 3},
@@ -1364,21 +1493,24 @@ class StrategyEvaluator:
                 "drawdown_risk": {"낮음": 1, "보통": 2, "높음": 3},
                 "concentration_risk": {"낮음": 1, "보통": 2, "높음": 3},
             }
-            
-            total_score = sum(risk_scores[risk_type][level] for risk_type, level in risk_assessment.items())
+
+            total_score = sum(
+                risk_scores[risk_type][level]
+                for risk_type, level in risk_assessment.items()
+            )
             avg_score = total_score / len(risk_assessment)
-            
+
             if avg_score <= 1.5:
                 risk_assessment["overall_risk"] = "낮음"
             elif avg_score <= 2.5:
                 risk_assessment["overall_risk"] = "보통"
             else:
                 risk_assessment["overall_risk"] = "높음"
-                
+
         except Exception as e:
             self.logger.log_error(f"❌ 리스크 수준 평가 중 오류: {e}")
             risk_assessment = {"overall_risk": "평가 불가"}
-        
+
         return risk_assessment
 
     def _compare_optimization_results(
@@ -1654,7 +1786,7 @@ def main():
         portfolio_method=args.portfolio_method,
         analysis_results_path=args.analysis_results,
     )
-    
+
     # UUID 설정
     if args.uuid:
         evaluator.execution_uuid = args.uuid

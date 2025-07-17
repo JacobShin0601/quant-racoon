@@ -522,13 +522,42 @@ class PortfolioOptimizer:
         """Kelly Criterion 최적화"""
         self.logger.info("Kelly Criterion 최적화 실행 중...")
 
+        # 종목 수가 2개 미만이면 경고 및 단순 비중 반환
+        if self.n_assets < 2:
+            self.logger.warning(
+                "Kelly Criterion requires at least 2 assets. 단일 종목이므로 100% 비중만 반환합니다."
+            )
+            kelly_weights = np.zeros(self.n_assets)
+            if self.n_assets == 1:
+                kelly_weights[0] = 1.0
+            metrics = self.calculate_performance_metrics(kelly_weights)
+            return OptimizationResult(
+                weights=kelly_weights,
+                method="Kelly Criterion",
+                constraints=constraints,
+                **metrics,
+                metadata={"kelly_ratios": kelly_weights},
+            )
+
         # Kelly Criterion: f = (μ - r) / σ²
         excess_returns = self.mean_returns.values - self.risk_free_rate / 252
         asset_variances = np.diag(self.cov_matrix.values)
 
-        # Kelly 비율 계산
-        kelly_weights = excess_returns / asset_variances
-        kelly_weights = np.maximum(kelly_weights, 0)  # 음수 비중 제거
+        # 분산이 0이거나 매우 작은 경우 처리
+        min_variance = 1e-8  # 최소 분산 임계값
+        asset_variances = np.maximum(asset_variances, min_variance)
+
+        # Kelly 비율 계산 (안전한 나눗셈)
+        kelly_weights = np.where(
+            asset_variances > min_variance, excess_returns / asset_variances, 0.0
+        )
+
+        # 비정상적으로 큰 값 제한
+        max_kelly_ratio = 10.0  # 최대 Kelly 비율 제한
+        kelly_weights = np.clip(kelly_weights, -max_kelly_ratio, max_kelly_ratio)
+
+        # 음수 비중 제거
+        kelly_weights = np.maximum(kelly_weights, 0)
 
         # 정규화
         if np.sum(kelly_weights) > 0:
@@ -557,7 +586,7 @@ class PortfolioOptimizer:
             method="Kelly Criterion",
             constraints=constraints,
             **metrics,
-            metadata={"kelly_ratios": excess_returns / asset_variances},
+            metadata={"kelly_ratios": kelly_weights},
         )
 
     def optimize_portfolio(

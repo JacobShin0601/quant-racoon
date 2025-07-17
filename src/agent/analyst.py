@@ -47,14 +47,31 @@ class QuantAnalyst:
         config_path: str = DEFAULT_CONFIG_PATH,
         return_type: str = "percentage",  # "percentage" or "log"
         top_features: int = 10,
-        analysis_dir: str = "analysis",  # 분석 결과 저장 디렉토리
+        analysis_dir: Optional[str] = None,  # 분석 결과 저장 디렉토리
     ):
         self.data_dir = data_dir
         self.config = load_config(config_path)
         self.return_type = return_type
         self.top_features = top_features
+
+        # analysis_dir이 None이면 config에서 가져오거나 기본값 사용
+        if analysis_dir is None:
+            # config에서 output.results_folder 기반으로 analysis 폴더 설정
+            results_folder = self.config.get("output", {}).get(
+                "results_folder", "results"
+            )
+            # results/long -> analysis/long로 변경
+            analysis_dir = results_folder.replace("results", "analysis")
+
+        # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원
+        time_horizon = self.config.get("time_horizon", "unknown")
+        if time_horizon and time_horizon != "unknown":
+            # analysis_dir에 시간대 하위폴더 추가
+            analysis_dir = os.path.join(analysis_dir, time_horizon)
+            print(f"📁 시간대별 분석 폴더 설정: {analysis_dir}")
+
         self.analysis_dir = analysis_dir
-        
+
         # config에서 로그 디렉토리 가져오기
         log_dir = self.config.get("output", {}).get("logs_folder", "log")
         self.logger = Logger(log_dir=log_dir)
@@ -62,7 +79,8 @@ class QuantAnalyst:
         self.execution_uuid = None  # UUID 초기화
 
         # 분석 폴더 구조 생성
-        create_analysis_folder_structure(analysis_dir)
+        if analysis_dir:
+            create_analysis_folder_structure(analysis_dir)
 
         # 분석기들 초기화
         self.correlation_analyzer = CorrelationAnalyzer()
@@ -82,21 +100,8 @@ class QuantAnalyst:
         """데이터 전처리 및 수익률 계산 (기술적 지표만 사용)"""
         self.logger.log_info("📊 기술적 지표 데이터 전처리 및 수익률 계산 중...")
 
-        # 기술적 지표 관련 컬럼들 (재무지표 제외)
-        technical_columns = {
-            "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume",
-            "sma_5", "sma_10", "sma_20", "sma_50", "sma_200",
-            "ema_5", "ema_10", "ema_20", "ema_50", "ema_200",
-            "rsi", "macd", "macd_signal", "macd_histogram",
-            "bb_upper", "bb_middle", "bb_lower", "bb_width", "bb_position",
-            "stoch_k", "stoch_d", "stoch_slow_k", "stoch_slow_d",
-            "atr", "adx", "cci", "williams_r", "mfi", "obv",
-        }
-
         # 제외할 컬럼들 (재무지표 및 기타)
-        excluded_columns = {
-            "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume",
-        }
+        excluded_columns = {"open", "high", "low", "close", "volume"}
 
         prepared_data = {}
 
@@ -120,18 +125,43 @@ class QuantAnalyst:
             # NaN 제거
             df = df.dropna()
 
-            # 기술적 지표 컬럼들만 선택 (재무지표 제외)
+            # 기술적 지표 컬럼들만 선택 (재무지표 제외, datetime 등은 남겨둠)
             feature_columns = []
             for col in df.columns:
                 if col not in excluded_columns and col != "return" and col != "returns":
                     # 재무지표가 아닌 컬럼만 선택 (pe_ratio, market_cap 등으로 시작하지 않는 컬럼)
-                    if not any(col.startswith(prefix) for prefix in [
-                        "pe_", "market_", "enterprise_", "return_on_", "debt_", "current_",
-                        "profit_", "operating_", "ebitda_", "revenue_", "earnings_",
-                        "dividend_", "payout_", "book_", "cash_", "total_", "quarterly_",
-                        "calculated_", "latest_", "beta", "fifty_", "two_hundred_",
-                        "shares_", "held_", "institutional_", "short_", "float_"
-                    ]):
+                    if not any(
+                        col.startswith(prefix)
+                        for prefix in [
+                            "pe_",
+                            "market_",
+                            "enterprise_",
+                            "return_on_",
+                            "debt_",
+                            "current_",
+                            "profit_",
+                            "operating_",
+                            "ebitda_",
+                            "revenue_",
+                            "earnings_",
+                            "dividend_",
+                            "payout_",
+                            "book_",
+                            "cash_",
+                            "total_",
+                            "quarterly_",
+                            "calculated_",
+                            "latest_",
+                            "beta",
+                            "fifty_",
+                            "two_hundred_",
+                            "shares_",
+                            "held_",
+                            "institutional_",
+                            "short_",
+                            "float_",
+                        ]
+                    ):
                         feature_columns.append(col)
 
             # 숫자형 데이터만 선택
@@ -143,11 +173,11 @@ class QuantAnalyst:
                 except (ValueError, TypeError):
                     self.logger.log_info(f"    {symbol}: {col} 컬럼 제외 (숫자가 아님)")
 
-            # 수익률을 마지막 컬럼으로 이동
-            columns_order = numeric_columns + ["return"]
+            # 수익률을 마지막 컬럼으로 이동 (datetime 등은 남겨둠)
+            columns_order = [col for col in df.columns if col != "return"] + ["return"]
             df = df[columns_order]
 
-            # 모든 컬럼을 숫자형으로 변환
+            # 모든 컬럼을 숫자형으로 변환 (datetime 등은 변환하지 않음)
             for col in numeric_columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
 
@@ -167,8 +197,16 @@ class QuantAnalyst:
         self.logger.log_info(f"🔍 {symbol} 상관관계 분석 실행...")
 
         data = self.prepared_data[symbol]
+        # 분석 시 datetime, date, time, timestamp 등은 제외
+        feature_columns = [
+            col
+            for col in data.columns
+            if col not in ["datetime", "date", "time", "timestamp", "return"]
+        ]
         result = self.correlation_analyzer.analyze(
-            data, target_column="return", top_n=self.top_features
+            data[feature_columns + ["return"]],
+            target_column="return",
+            top_n=self.top_features,
         )
 
         self.analysis_results[symbol] = {"correlation": result}
@@ -181,6 +219,12 @@ class QuantAnalyst:
         self.logger.log_info(f"📈 {symbol} 선형회귀 분석 실행...")
 
         data = self.prepared_data[symbol]
+        # 분석 시 datetime, date, time, timestamp 등은 제외
+        feature_columns = [
+            col
+            for col in data.columns
+            if col not in ["datetime", "date", "time", "timestamp", "return"]
+        ]
 
         # 상위 특성 선택
         if (
@@ -190,16 +234,16 @@ class QuantAnalyst:
             top_corr_features = self.analysis_results[symbol]["correlation"][
                 "top_features"
             ]
-            selected_features = top_corr_features[
+            selected_features = [f for f in top_corr_features if f in feature_columns][
                 : min(top_features, len(top_corr_features))
             ]
         else:
-            # 상관관계 분석이 없으면 모든 특성 사용
-            feature_columns = [col for col in data.columns if col != "return"]
             selected_features = feature_columns[:top_features]
 
         result = self.linear_regression_analyzer.analyze(
-            data, target_column="return", feature_columns=selected_features
+            data[selected_features + ["return"]],
+            target_column="return",
+            feature_columns=selected_features,
         )
 
         if symbol not in self.analysis_results:
@@ -212,10 +256,17 @@ class QuantAnalyst:
         self.logger.log_info(f"🎯 {symbol} Lasso 회귀 분석 실행...")
 
         data = self.prepared_data[symbol]
-        feature_columns = [col for col in data.columns if col != "return"]
+        # 분석 시 datetime, date, time, timestamp 등은 제외
+        feature_columns = [
+            col
+            for col in data.columns
+            if col not in ["datetime", "date", "time", "timestamp", "return"]
+        ]
 
         result = self.lasso_regression_analyzer.analyze(
-            data, target_column="return", feature_columns=feature_columns
+            data[feature_columns + ["return"]],
+            target_column="return",
+            feature_columns=feature_columns,
         )
 
         if symbol not in self.analysis_results:
@@ -228,10 +279,17 @@ class QuantAnalyst:
         self.logger.log_info(f"🌲 {symbol} 랜덤 포레스트 분석 실행...")
 
         data = self.prepared_data[symbol]
-        feature_columns = [col for col in data.columns if col != "return"]
+        # 분석 시 datetime, date, time, timestamp 등은 제외
+        feature_columns = [
+            col
+            for col in data.columns
+            if col not in ["datetime", "date", "time", "timestamp", "return"]
+        ]
 
         result = self.random_forest_analyzer.analyze(
-            data, target_column="return", feature_columns=feature_columns
+            data[feature_columns + ["return"]],
+            target_column="return",
+            feature_columns=feature_columns,
         )
 
         if symbol not in self.analysis_results:
@@ -244,10 +302,17 @@ class QuantAnalyst:
         self.logger.log_info(f"🧠 {symbol} MLP 분석 실행...")
 
         data = self.prepared_data[symbol]
-        feature_columns = [col for col in data.columns if col != "return"]
+        # 분석 시 datetime, date, time, timestamp 등은 제외
+        feature_columns = [
+            col
+            for col in data.columns
+            if col not in ["datetime", "date", "time", "timestamp", "return"]
+        ]
 
         result = self.mlp_analyzer.analyze(
-            data, target_column="return", feature_columns=feature_columns
+            data[feature_columns + ["return"]],
+            target_column="return",
+            feature_columns=feature_columns,
         )
 
         if symbol not in self.analysis_results:
@@ -350,7 +415,9 @@ class QuantAnalyst:
         if not self.analysis_results:
             return
 
-        self.logger.log_summary_section("📊 기술적 지표 기반 정량 분석 종합 요약 리포트")
+        self.logger.log_summary_section(
+            "📊 기술적 지표 기반 정량 분석 종합 요약 리포트"
+        )
 
         # 분석 설정
         self.logger.log_summary_subsection("📋 분석 설정")
@@ -491,10 +558,7 @@ class QuantAnalyst:
 
         # analysis 폴더에 저장
         saved_path = save_analysis_results(
-            serializable_results, 
-            "quant_analysis", 
-            output_path,
-            self.analysis_dir
+            serializable_results, "quant_analysis", output_path, self.analysis_dir
         )
 
         self.logger.log_success(f"✅ 분석 결과 저장: {saved_path}")
@@ -510,14 +574,31 @@ class FundamentalAnalyst:
         config_path: str = DEFAULT_CONFIG_PATH,
         return_type: str = "percentage",  # "percentage" or "log"
         top_features: int = 10,
-        analysis_dir: str = "analysis",  # 분석 결과 저장 디렉토리
+        analysis_dir: str = None,  # 분석 결과 저장 디렉토리
     ):
         self.data_dir = data_dir
         self.config = load_config(config_path)
         self.return_type = return_type
         self.top_features = top_features
+
+        # analysis_dir이 None이면 config에서 가져오거나 기본값 사용
+        if analysis_dir is None:
+            # config에서 output.results_folder 기반으로 analysis 폴더 설정
+            results_folder = self.config.get("output", {}).get(
+                "results_folder", "results"
+            )
+            # results/long -> analysis/long로 변경
+            analysis_dir = results_folder.replace("results", "analysis")
+
+        # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원
+        time_horizon = self.config.get("time_horizon", "unknown")
+        if time_horizon and time_horizon != "unknown":
+            # analysis_dir에 시간대 하위폴더 추가
+            analysis_dir = os.path.join(analysis_dir, time_horizon)
+            print(f"📁 시간대별 분석 폴더 설정: {analysis_dir}")
+
         self.analysis_dir = analysis_dir
-        
+
         # config에서 로그 디렉토리 가져오기
         log_dir = self.config.get("output", {}).get("logs_folder", "log")
         self.logger = Logger(log_dir=log_dir)
@@ -542,54 +623,168 @@ class FundamentalAnalyst:
 
         # 재무지표 관련 컬럼들
         financial_columns = {
-            "pe_ratio", "forward_pe", "peg_ratio", "price_to_book", "price_to_sales",
-            "ev_to_ebitda", "ev_to_revenue", "price_to_cashflow", "price_to_free_cashflow",
-            "return_on_equity", "return_on_assets", "return_on_capital", "return_on_invested_capital",
-            "profit_margin", "operating_margin", "gross_margin", "ebitda_margin", "net_income_margin",
-            "revenue_growth", "earnings_growth", "earnings_quarterly_growth", "revenue_quarterly_growth",
-            "earnings_annual_growth", "revenue_annual_growth", "revenue_per_employee", "revenue_per_share",
-            "debt_to_equity", "debt_to_assets", "current_ratio", "quick_ratio", "cash_ratio",
-            "interest_coverage", "total_cash", "total_debt", "net_debt", "cash_per_share",
-            "book_value", "tangible_book_value", "operating_cashflow", "free_cashflow",
-            "free_cashflow_yield", "operating_cashflow_per_share", "free_cashflow_per_share",
-            "cashflow_to_debt", "dividend_yield", "dividend_rate", "payout_ratio",
-            "dividend_payout_ratio", "five_year_avg_dividend_yield", "forward_dividend_yield",
-            "forward_dividend_rate", "earnings_ttm", "earnings_forward", "earnings_quarterly",
-            "earnings_annual", "eps_ttm", "eps_forward", "eps_quarterly", "eps_annual",
-            "total_revenue", "revenue_ttm", "revenue_forward", "revenue_quarterly", "revenue_annual",
-            "gross_profits", "ebitda", "ebit", "net_income", "net_income_ttm",
-            "shares_outstanding", "float_shares", "shares_short", "shares_short_prior_month",
-            "short_ratio", "short_percent_of_float", "shares_percent_shares_out",
-            "held_percent_insiders", "held_percent_institutions", "institutional_ownership",
-            "beta", "fifty_two_week_change", "fifty_day_average", "two_hundred_day_average",
-            "fifty_two_week_high", "fifty_two_week_low", "day_high", "day_low", "volume",
-            "average_volume", "market_cap", "enterprise_value",
+            "pe_ratio",
+            "forward_pe",
+            "peg_ratio",
+            "price_to_book",
+            "price_to_sales",
+            "ev_to_ebitda",
+            "ev_to_revenue",
+            "price_to_cashflow",
+            "price_to_free_cashflow",
+            "return_on_equity",
+            "return_on_assets",
+            "return_on_capital",
+            "return_on_invested_capital",
+            "profit_margin",
+            "operating_margin",
+            "gross_margin",
+            "ebitda_margin",
+            "net_income_margin",
+            "revenue_growth",
+            "earnings_growth",
+            "earnings_quarterly_growth",
+            "revenue_quarterly_growth",
+            "earnings_annual_growth",
+            "revenue_annual_growth",
+            "revenue_per_employee",
+            "revenue_per_share",
+            "debt_to_equity",
+            "debt_to_assets",
+            "current_ratio",
+            "quick_ratio",
+            "cash_ratio",
+            "interest_coverage",
+            "total_cash",
+            "total_debt",
+            "net_debt",
+            "cash_per_share",
+            "book_value",
+            "tangible_book_value",
+            "operating_cashflow",
+            "free_cashflow",
+            "free_cashflow_yield",
+            "operating_cashflow_per_share",
+            "free_cashflow_per_share",
+            "cashflow_to_debt",
+            "dividend_yield",
+            "dividend_rate",
+            "payout_ratio",
+            "dividend_payout_ratio",
+            "five_year_avg_dividend_yield",
+            "forward_dividend_yield",
+            "forward_dividend_rate",
+            "earnings_ttm",
+            "earnings_forward",
+            "earnings_quarterly",
+            "earnings_annual",
+            "eps_ttm",
+            "eps_forward",
+            "eps_quarterly",
+            "eps_annual",
+            "total_revenue",
+            "revenue_ttm",
+            "revenue_forward",
+            "revenue_quarterly",
+            "revenue_annual",
+            "gross_profits",
+            "ebitda",
+            "ebit",
+            "net_income",
+            "net_income_ttm",
+            "shares_outstanding",
+            "float_shares",
+            "shares_short",
+            "shares_short_prior_month",
+            "short_ratio",
+            "short_percent_of_float",
+            "shares_percent_shares_out",
+            "held_percent_insiders",
+            "held_percent_institutions",
+            "institutional_ownership",
+            "beta",
+            "fifty_two_week_change",
+            "fifty_day_average",
+            "two_hundred_day_average",
+            "fifty_two_week_high",
+            "fifty_two_week_low",
+            "day_high",
+            "day_low",
+            "volume",
+            "average_volume",
+            "market_cap",
+            "enterprise_value",
             # 분기별 데이터
-            "quarterly_revenue", "quarterly_net_income", "quarterly_operating_income",
-            "quarterly_ebitda", "quarterly_eps", "quarterly_gross_profit", "quarterly_ebit",
-            "quarterly_operating_expense", "quarterly_research_development",
-            "quarterly_selling_general_admin", "quarterly_total_assets", "quarterly_total_liabilities",
-            "quarterly_total_equity", "quarterly_cash", "quarterly_debt", "quarterly_current_assets",
-            "quarterly_current_liabilities", "quarterly_inventory", "quarterly_accounts_receivable",
-            "quarterly_accounts_payable", "quarterly_short_term_debt", "quarterly_long_term_debt",
-            "quarterly_goodwill", "quarterly_intangible_assets", "quarterly_property_plant_equipment",
-            "quarterly_operating_cashflow", "quarterly_investing_cashflow", "quarterly_financing_cashflow",
-            "quarterly_free_cashflow", "quarterly_capital_expenditure", "quarterly_dividends_paid",
-            "quarterly_net_income_cashflow", "quarterly_depreciation", "quarterly_change_in_cash",
-            "quarterly_change_in_receivables", "quarterly_change_in_inventory", "quarterly_change_in_payables",
+            "quarterly_revenue",
+            "quarterly_net_income",
+            "quarterly_operating_income",
+            "quarterly_ebitda",
+            "quarterly_eps",
+            "quarterly_gross_profit",
+            "quarterly_ebit",
+            "quarterly_operating_expense",
+            "quarterly_research_development",
+            "quarterly_selling_general_admin",
+            "quarterly_total_assets",
+            "quarterly_total_liabilities",
+            "quarterly_total_equity",
+            "quarterly_cash",
+            "quarterly_debt",
+            "quarterly_current_assets",
+            "quarterly_current_liabilities",
+            "quarterly_inventory",
+            "quarterly_accounts_receivable",
+            "quarterly_accounts_payable",
+            "quarterly_short_term_debt",
+            "quarterly_long_term_debt",
+            "quarterly_goodwill",
+            "quarterly_intangible_assets",
+            "quarterly_property_plant_equipment",
+            "quarterly_operating_cashflow",
+            "quarterly_investing_cashflow",
+            "quarterly_financing_cashflow",
+            "quarterly_free_cashflow",
+            "quarterly_capital_expenditure",
+            "quarterly_dividends_paid",
+            "quarterly_net_income_cashflow",
+            "quarterly_depreciation",
+            "quarterly_change_in_cash",
+            "quarterly_change_in_receivables",
+            "quarterly_change_in_inventory",
+            "quarterly_change_in_payables",
             # 배당 및 기업 행동 데이터
-            "latest_dividend_amount", "dividend_frequency", "latest_split_ratio", "split_frequency",
+            "latest_dividend_amount",
+            "dividend_frequency",
+            "latest_split_ratio",
+            "split_frequency",
             "latest_capital_gain",
             # 계산된 재무비율들
-            "calculated_roe", "calculated_roa", "calculated_debt_to_assets", "calculated_current_ratio",
-            "calculated_operating_margin", "calculated_net_margin", "calculated_ebitda_margin",
-            "calculated_asset_turnover", "calculated_inventory_turnover", "calculated_receivables_turnover",
-            "calculated_cashflow_to_debt", "calculated_fcf_yield", "calculated_dividend_payout"
+            "calculated_roe",
+            "calculated_roa",
+            "calculated_debt_to_assets",
+            "calculated_current_ratio",
+            "calculated_operating_margin",
+            "calculated_net_margin",
+            "calculated_ebitda_margin",
+            "calculated_asset_turnover",
+            "calculated_inventory_turnover",
+            "calculated_receivables_turnover",
+            "calculated_cashflow_to_debt",
+            "calculated_fcf_yield",
+            "calculated_dividend_payout",
         }
 
         # 제외할 컬럼들 (기술적 지표 및 기본 데이터)
         excluded_columns = {
-            "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume",
+            "datetime",
+            "date",
+            "time",
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
         }
 
         prepared_data = {}
@@ -619,13 +814,37 @@ class FundamentalAnalyst:
             for col in df.columns:
                 if col not in excluded_columns and col != "return" and col != "returns":
                     # 재무지표 컬럼만 선택
-                    if col in financial_columns or any(col.startswith(prefix) for prefix in [
-                        "pe_", "market_", "return_on_", "debt_", "current_",
-                        "profit_", "operating_", "ebitda_", "revenue_", "earnings_",
-                        "dividend_", "payout_", "book_", "cash_", "total_", "quarterly_",
-                        "calculated_", "latest_", "beta", "fifty_", "two_hundred_",
-                        "shares_", "held_", "institutional_", "short_", "float_"
-                    ]):
+                    if col in financial_columns or any(
+                        col.startswith(prefix)
+                        for prefix in [
+                            "pe_",
+                            "market_",
+                            "return_on_",
+                            "debt_",
+                            "current_",
+                            "profit_",
+                            "operating_",
+                            "ebitda_",
+                            "revenue_",
+                            "earnings_",
+                            "dividend_",
+                            "payout_",
+                            "book_",
+                            "cash_",
+                            "total_",
+                            "quarterly_",
+                            "calculated_",
+                            "latest_",
+                            "beta",
+                            "fifty_",
+                            "two_hundred_",
+                            "shares_",
+                            "held_",
+                            "institutional_",
+                            "short_",
+                            "float_",
+                        ]
+                    ):
                         feature_columns.append(col)
 
             # 숫자형 데이터만 선택
@@ -699,7 +918,9 @@ class FundamentalAnalyst:
         # 데이터 전처리
         prepared_data = self.prepare_data(data_dict)
         if not prepared_data:
-            self.logger.log_warning("재무지표가 있는 종목이 없어 재무분석을 건너뜁니다.")
+            self.logger.log_warning(
+                "재무지표가 있는 종목이 없어 재무분석을 건너뜁니다."
+            )
             return {}
 
         # 각 종목별 분석 실행
@@ -741,21 +962,29 @@ class FundamentalAnalyst:
 
             if "financial_analysis" in results:
                 financial_result = results["financial_analysis"]
-                
+
                 # 주요 재무지표 요약
                 if "key_metrics" in financial_result:
                     metrics = financial_result["key_metrics"]
-                    self.logger.log_summary_info(f"  P/E 비율: {metrics.get('pe_ratio', 'N/A')}")
+                    self.logger.log_summary_info(
+                        f"  P/E 비율: {metrics.get('pe_ratio', 'N/A')}"
+                    )
                     self.logger.log_summary_info(f"  ROE: {metrics.get('roe', 'N/A')}")
-                    self.logger.log_summary_info(f"  부채비율: {metrics.get('debt_to_equity', 'N/A')}")
-                    self.logger.log_summary_info(f"  배당수익률: {metrics.get('dividend_yield', 'N/A')}")
+                    self.logger.log_summary_info(
+                        f"  부채비율: {metrics.get('debt_to_equity', 'N/A')}"
+                    )
+                    self.logger.log_summary_info(
+                        f"  배당수익률: {metrics.get('dividend_yield', 'N/A')}"
+                    )
 
                 # 상관관계 분석 결과
                 if "correlation_analysis" in financial_result:
                     corr_result = financial_result["correlation_analysis"]
                     if "top_features" in corr_result:
                         top_features = corr_result["top_features"][:3]
-                        self.logger.log_summary_info(f"  상관관계 상위: {', '.join(top_features)}")
+                        self.logger.log_summary_info(
+                            f"  상관관계 상위: {', '.join(top_features)}"
+                        )
 
                 # 예측 모델 결과
                 if "prediction_models" in financial_result:
@@ -839,10 +1068,7 @@ class FundamentalAnalyst:
 
         # analysis 폴더에 저장
         saved_path = save_analysis_results(
-            serializable_results, 
-            "fundamental_analysis", 
-            output_path,
-            self.analysis_dir
+            serializable_results, "fundamental_analysis", output_path, self.analysis_dir
         )
 
         self.logger.log_success(f"✅ 분석 결과 저장: {saved_path}")
@@ -878,13 +1104,13 @@ def main():
         return_type=args.return_type,
         top_features=args.top_features,
     )
-    
+
     fundamental_analyst = FundamentalAnalyst(
         data_dir=args.data_dir,
         return_type=args.return_type,
         top_features=args.top_features,
     )
-    
+
     # UUID 설정
     if args.uuid:
         quant_analyst.execution_uuid = args.uuid
@@ -902,7 +1128,9 @@ def main():
 
     if args.analysis_type in ["fundamental", "both"]:
         print("💰 재무지표 기반 분석 시작...")
-        fundamental_results = fundamental_analyst.run_full_analysis(symbols=args.symbols)
+        fundamental_results = fundamental_analyst.run_full_analysis(
+            symbols=args.symbols
+        )
         fundamental_analyst.save_results()
         results["fundamental_analysis"] = fundamental_results
 

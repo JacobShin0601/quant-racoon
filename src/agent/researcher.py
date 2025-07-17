@@ -40,6 +40,7 @@ from actions.strategies import (
     KeltnerRSIScalpingStrategy,
     AbsorptionScalpingStrategy,
     RSIBollingerScalpingStrategy,
+    TrendFollowingMA200Strategy,
 )
 from actions.calculate_index import StrategyParams
 from actions.grid_search import HyperparameterOptimizer, OptimizationResult
@@ -62,6 +63,7 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 # 분석 결과 파일을 불러오는 함수 추가
 def load_analysis_results(analysis_dir, analysis_type, uuid=None):
     pattern = f"{analysis_dir}/{analysis_type}/{analysis_type}_results_*"
@@ -83,10 +85,10 @@ class HyperparameterResearcher:
         self,
         research_config_path: str = "config/config_research.json",
         trading_config_path: str = "config/config_research.json",  # research config 사용
-        data_dir: str = DEFAULT_DATA_DIR,
+        data_dir: str = "data/long",  # 기본값을 data/long으로 변경
         results_dir: str = "results",
         log_dir: str = "log",
-        analysis_dir: str = "analysis",  # 분석 결과 저장 디렉토리
+        analysis_dir: Optional[str] = None,  # 분석 결과 저장 디렉토리
         auto_detect_source_config: bool = True,  # 자동 감지 옵션 추가
     ):
         self.research_config = self._load_research_config(research_config_path)
@@ -94,6 +96,23 @@ class HyperparameterResearcher:
         self.data_dir = data_dir
         self.results_dir = results_dir
         self.log_dir = log_dir
+
+        # analysis_dir이 None이면 config에서 가져오거나 기본값 사용
+        if analysis_dir is None:
+            # config에서 output.results_folder 기반으로 analysis 폴더 설정
+            results_folder = self.trading_config.get("output", {}).get(
+                "results_folder", "results"
+            )
+            # results/long -> analysis/long로 변경
+            analysis_dir = results_folder.replace("results", "analysis")
+
+        # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원
+        time_horizon = self.trading_config.get("time_horizon", "unknown")
+        if time_horizon and time_horizon != "unknown" and analysis_dir:
+            analysis_dir = os.path.join(analysis_dir, time_horizon)
+            os.makedirs(analysis_dir, exist_ok=True)
+            logger.info(f"📁 시간대별 연구 결과 폴더 설정: {analysis_dir}")
+
         self.analysis_dir = analysis_dir
         self.auto_detect_source_config = auto_detect_source_config
         self.execution_uuid = None  # UUID 초기화
@@ -101,41 +120,54 @@ class HyperparameterResearcher:
         # 디렉토리 생성
         os.makedirs(self.results_dir, exist_ok=True)
         os.makedirs(self.log_dir, exist_ok=True)
-        
+
         # 분석 폴더 구조 생성
-        create_analysis_folder_structure(analysis_dir)
+        if analysis_dir:
+            create_analysis_folder_structure(analysis_dir)
 
         # source config 자동 감지 및 설정
         if self.auto_detect_source_config:
             # research_config에서 source_config가 "auto_detect"인지 확인
-            current_source_config = self.research_config.get("research_config", {}).get("source_config", "auto_detect")
+            current_source_config = self.research_config.get("research_config", {}).get(
+                "source_config", "auto_detect"
+            )
             if current_source_config == "auto_detect":
                 self._auto_detect_and_set_source_config()
             else:
-                logger.info(f"📁 수동 설정된 source_config 사용: {current_source_config}")
+                logger.info(
+                    f"📁 수동 설정된 source_config 사용: {current_source_config}"
+                )
 
         # source config에서 설정 로드
         source_settings = self._load_source_config_settings()
-        
+
         # 컴포넌트 초기화
         self.optimizer = HyperparameterOptimizer(research_config_path)
-        
+
         # source config 파일 경로 설정
-        source_config_name = self.research_config.get("research_config", {}).get("source_config")
-        source_config_path = os.path.join("config", source_config_name) if source_config_name else "config/config_default.json"
-        
+        source_config_name = self.research_config.get("research_config", {}).get(
+            "source_config"
+        )
+        source_config_path = (
+            os.path.join("config", source_config_name)
+            if source_config_name
+            else "config/config_default.json"
+        )
+
         # 절대 경로로 변환
         source_config_path = os.path.abspath(source_config_path)
-        
+
         # source config 파일 존재 확인
         if not os.path.exists(source_config_path):
-            logger.error(f"❌ source config 파일을 찾을 수 없습니다: {source_config_path}")
+            logger.error(
+                f"❌ source config 파일을 찾을 수 없습니다: {source_config_path}"
+            )
             # 기본 config 사용
             source_config_path = os.path.abspath("config/config_default.json")
             logger.info(f"📁 기본 config 사용: {source_config_path}")
-        
+
         logger.info(f"📁 StrategyEvaluator config 경로: {source_config_path}")
-        
+
         self.evaluator = StrategyEvaluator(
             data_dir=data_dir,
             log_mode="summary",
@@ -155,7 +187,7 @@ class HyperparameterResearcher:
         """연구 설정 파일 로드"""
         # config_path 저장 (나중에 업데이트할 때 사용)
         self.research_config_path = config_path
-        
+
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -169,90 +201,102 @@ class HyperparameterResearcher:
     def _auto_detect_and_set_source_config(self):
         """사용 가능한 config 파일들을 자동 감지하고 적절한 source_config 설정"""
         logger.info("🔍 사용 가능한 config 파일 자동 감지 중...")
-        
+
         # config 폴더에서 사용 가능한 config 파일들 찾기
         config_dir = "config"
         available_configs = []
-        
+
         try:
             for filename in os.listdir(config_dir):
                 if filename.startswith("config_") and filename.endswith(".json"):
                     config_name = filename.replace(".json", "")
                     config_path = os.path.join(config_dir, filename)
-                    
+
                     # config 파일 내용 확인
                     try:
                         with open(config_path, "r", encoding="utf-8") as f:
                             config_data = json.load(f)
-                        
+
                         # 심볼 정보 추출
                         symbols = config_data.get("data", {}).get("symbols", [])
                         time_horizon = config_data.get("time_horizon", "unknown")
-                        portfolio_mode = config_data.get("evaluator", {}).get("portfolio_mode", False)
-                        
-                        available_configs.append({
-                            "name": config_name,
-                            "filename": filename,
-                            "path": config_path,
-                            "symbols": symbols,
-                            "time_horizon": time_horizon,
-                            "portfolio_mode": portfolio_mode,
-                            "symbol_count": len(symbols)
-                        })
-                        
-                        logger.info(f"  📁 {config_name}: {len(symbols)}개 심볼, {time_horizon}, 포트폴리오: {portfolio_mode}")
-                        
+                        portfolio_mode = config_data.get("evaluator", {}).get(
+                            "portfolio_mode", False
+                        )
+
+                        available_configs.append(
+                            {
+                                "name": config_name,
+                                "filename": filename,
+                                "path": config_path,
+                                "symbols": symbols,
+                                "time_horizon": time_horizon,
+                                "portfolio_mode": portfolio_mode,
+                                "symbol_count": len(symbols),
+                            }
+                        )
+
+                        logger.info(
+                            f"  📁 {config_name}: {len(symbols)}개 심볼, {time_horizon}, 포트폴리오: {portfolio_mode}"
+                        )
+
                     except Exception as e:
                         logger.warning(f"  ⚠️ {filename} 읽기 실패: {e}")
                         continue
-                        
+
         except Exception as e:
             logger.error(f"❌ config 폴더 읽기 실패: {e}")
             return
-        
+
         if not available_configs:
             logger.warning("⚠️ 사용 가능한 config 파일이 없습니다. 기본값 사용")
             return
-        
+
         # 가장 적합한 config 선택 (우선순위: 심볼 수 > time_horizon)
         selected_config = self._select_best_source_config(available_configs)
-        
+
         if selected_config:
             # research_config 업데이트
-            self.research_config["research_config"]["source_config"] = selected_config["filename"]
-            
+            self.research_config["research_config"]["source_config"] = selected_config[
+                "filename"
+            ]
+
             # 업데이트된 config 저장
             try:
                 with open(self.research_config_path, "w", encoding="utf-8") as f:
                     json.dump(self.research_config, f, indent=2, ensure_ascii=False)
-                
+
                 logger.info(f"✅ source_config 자동 설정: {selected_config['name']}")
                 logger.info(f"  📊 심볼: {selected_config['symbols']}")
                 logger.info(f"  ⏰ 시간대: {selected_config['time_horizon']}")
-                logger.info(f"  📈 포트폴리오 모드: {selected_config['portfolio_mode']}")
-                
+                logger.info(
+                    f"  📈 포트폴리오 모드: {selected_config['portfolio_mode']}"
+                )
+
             except Exception as e:
                 logger.error(f"❌ research_config 업데이트 실패: {e}")
         else:
             logger.warning("⚠️ 적절한 source_config를 선택할 수 없습니다.")
 
-    def _select_best_source_config(self, available_configs: List[Dict]) -> Optional[Dict]:
+    def _select_best_source_config(
+        self, available_configs: List[Dict]
+    ) -> Optional[Dict]:
         """가장 적합한 source_config 선택"""
         if not available_configs:
             return None
-        
+
         # 우선순위 기준으로 정렬
         # 1. 심볼 수가 많은 것 (더 다양한 종목으로 테스트)
         # 2. time_horizon이 명확한 것
         # 3. 포트폴리오 모드가 활성화된 것
-        
+
         def config_score(config):
             score = 0
-            
+
             # 심볼 수 점수 (최대 50점)
             symbol_score = min(config["symbol_count"] * 10, 50)
             score += symbol_score
-            
+
             # time_horizon 점수 (최대 30점)
             horizon = config["time_horizon"].lower()
             if "long" in horizon:
@@ -263,50 +307,60 @@ class HyperparameterResearcher:
                 score += 20
             else:
                 score += 10
-            
+
             # 포트폴리오 모드 점수 (최대 20점)
             if config["portfolio_mode"]:
                 score += 20
-            
+
             return score
-        
+
         # 점수로 정렬
         sorted_configs = sorted(available_configs, key=config_score, reverse=True)
-        
+
         logger.info("📊 Config 파일 우선순위:")
         for i, config in enumerate(sorted_configs[:3], 1):
             score = config_score(config)
             logger.info(f"  {i}. {config['name']} (점수: {score})")
-        
+
         return sorted_configs[0] if sorted_configs else None
 
     def _load_source_config_symbols(self) -> List[str]:
         """source config에서 심볼 목록 로드"""
         try:
-            source_config_name = self.research_config.get("research_config", {}).get("source_config")
+            source_config_name = self.research_config.get("research_config", {}).get(
+                "source_config"
+            )
             if not source_config_name or source_config_name == "auto_detect":
-                logger.warning("source_config가 설정되지 않았거나 auto_detect입니다. 기본 심볼을 사용합니다.")
+                logger.warning(
+                    "source_config가 설정되지 않았거나 auto_detect입니다. 기본 심볼을 사용합니다."
+                )
                 return ["TSLL", "NVDL", "PLTR", "CONL", "AAPL", "MSFT"]
-            
+
             # config 폴더 내의 source config 파일 경로
             source_config_path = os.path.join("config", source_config_name)
-            
+
             with open(source_config_path, "r", encoding="utf-8") as f:
                 source_config = json.load(f)
-            
+
             symbols = source_config.get("data", {}).get("symbols", [])
             if not symbols:
-                logger.warning(f"{source_config_name}에서 심볼을 찾을 수 없습니다. 기본 심볼을 사용합니다.")
+                logger.warning(
+                    f"{source_config_name}에서 심볼을 찾을 수 없습니다. 기본 심볼을 사용합니다."
+                )
                 return ["TSLL", "NVDL", "PLTR", "CONL", "AAPL", "MSFT"]
-            
-            logger.info(f"📊 {source_config_name}에서 {len(symbols)}개 심볼 로드: {symbols}")
+
+            logger.info(
+                f"📊 {source_config_name}에서 {len(symbols)}개 심볼 로드: {symbols}"
+            )
             return symbols
-            
+
         except FileNotFoundError:
             logger.error(f"source config 파일을 찾을 수 없습니다: {source_config_name}")
             return ["TSLL", "NVDL", "PLTR", "CONL", "AAPL", "MSFT"]
         except json.JSONDecodeError:
-            logger.error(f"source config 파일 형식이 잘못되었습니다: {source_config_name}")
+            logger.error(
+                f"source config 파일 형식이 잘못되었습니다: {source_config_name}"
+            )
             return ["TSLL", "NVDL", "PLTR", "CONL", "AAPL", "MSFT"]
         except Exception as e:
             logger.error(f"source config 로드 중 오류: {str(e)}")
@@ -315,28 +369,34 @@ class HyperparameterResearcher:
     def _load_source_config_settings(self) -> Dict[str, Any]:
         """source config에서 설정 정보 로드"""
         try:
-            source_config_name = self.research_config.get("research_config", {}).get("source_config")
+            source_config_name = self.research_config.get("research_config", {}).get(
+                "source_config"
+            )
             if not source_config_name:
                 logger.warning("source_config가 설정되지 않았습니다.")
                 return {}
-            
+
             # config 폴더 내의 source config 파일 경로
             source_config_path = os.path.join("config", source_config_name)
-            
+
             with open(source_config_path, "r", encoding="utf-8") as f:
                 source_config = json.load(f)
-            
+
             settings = {
                 "symbols": source_config.get("data", {}).get("symbols", []),
-                "portfolio_mode": source_config.get("evaluator", {}).get("portfolio_mode", False),
+                "portfolio_mode": source_config.get("evaluator", {}).get(
+                    "portfolio_mode", False
+                ),
                 "interval": source_config.get("data", {}).get("interval", "1d"),
-                "lookback_days": source_config.get("data", {}).get("lookback_days", 365),
-                "time_horizon": source_config.get("time_horizon", "unknown")
+                "lookback_days": source_config.get("data", {}).get(
+                    "lookback_days", 365
+                ),
+                "time_horizon": source_config.get("time_horizon", "unknown"),
             }
-            
+
             logger.info(f"📊 {source_config_name}에서 설정 로드: {settings}")
             return settings
-            
+
         except Exception as e:
             logger.error(f"source config 설정 로드 중 오류: {str(e)}")
             return {}
@@ -365,54 +425,124 @@ class HyperparameterResearcher:
             "keltner_rsi_scalping": KeltnerRSIScalpingStrategy(params),
             "absorption_scalping": AbsorptionScalpingStrategy(params),
             "rsi_bollinger_scalping": RSIBollingerScalpingStrategy(params),
+            # 추가 전략들
+            "trend_following_ma200": TrendFollowingMA200Strategy(params),
+            "swing_macd": DualMomentumStrategy(
+                params
+            ),  # 임시 대체 (SwingMACDStrategy가 없음)
         }
 
         for name, strategy in strategies.items():
             self.strategy_manager.add_strategy(name, strategy)
 
     def create_evaluation_function(
-        self, strategy_name: str, data_dict: Dict[str, pd.DataFrame], symbol: str = None
+        self,
+        strategy_name: str,
+        data_dict: Dict[str, pd.DataFrame],
+        symbol: Optional[str] = None,
     ):
-        """전략 평가 함수 생성"""
-        
-        # 최고 점수 추적을 위한 변수
-        best_score = float("-inf")
-        best_params = None
+        """평가 함수 생성"""
 
         def evaluation_function(params: Dict[str, Any]) -> float:
-            """하이퍼파라미터 조합 평가 함수"""
-            nonlocal best_score, best_params
-            
             try:
-                # StrategyParams 객체 생성
-                strategy_params = StrategyParams(**params)
-
-                # 전략 인스턴스 생성 (새로운 파라미터로)
-                strategy_class = self.strategy_manager.strategies[
+                # 전략 인스턴스 생성
+                strategy_class = self.evaluator.strategy_manager.strategies[
                     strategy_name
                 ].__class__
+
+                # StrategyParams 객체 생성 (파라미터를 속성으로 설정)
+                strategy_params = StrategyParams()
+                for key, value in params.items():
+                    if hasattr(strategy_params, key):
+                        setattr(strategy_params, key, value)
+
                 strategy = strategy_class(strategy_params)
 
-                # 전략 평가
+                # source config 설정 가져오기
                 source_settings = self._load_source_config_settings()
-                if source_settings.get("portfolio_mode", False):
-                    # 포트폴리오 모드
+
+                # 🔥 핵심 수정: symbol이 None이면 포트폴리오 모드 강제 활성화
+                if symbol is None:
+                    logger.info(f"📊 {strategy_name} 포트폴리오 모드로 평가 실행")
+                    # 포트폴리오 모드 - datetime 컬럼 보존
+                    processed_data_dict = {}
+                    for sym, data in data_dict.items():
+                        df = data.copy()
+                        if "datetime" not in df.columns:
+                            if isinstance(df.index, pd.DatetimeIndex):
+                                df["datetime"] = df.index
+                            else:
+                                try:
+                                    df = df.reset_index()
+                                    if "index" in df.columns:
+                                        df["datetime"] = pd.to_datetime(df["index"])
+                                        df = df.drop("index", axis=1)
+                                    else:
+                                        df["datetime"] = pd.date_range(
+                                            start="2020-01-01",
+                                            periods=len(df),
+                                            freq="D",
+                                        )
+                                except:
+                                    df["datetime"] = pd.date_range(
+                                        start="2020-01-01", periods=len(df), freq="D"
+                                    )
+                        processed_data_dict[sym] = df
+
                     strategy_result = self.evaluator.evaluate_strategy(
-                        strategy_name, data_dict
+                        strategy_name, processed_data_dict
                     )
-                    if strategy_result is None:
-                        # 기본 결과 반환
-                        result = {
-                            "total_return": 0.0,
-                            "sharpe_ratio": 0.0,
-                            "max_drawdown": 0.0,
-                            "win_rate": 0.0,
-                            "profit_factor": 0.0,
-                            "sqn": 0.0,
-                            "total_trades": 0,
-                            "avg_hold_duration": 0.0,
-                        }
-                    else:
+                    if not strategy_result:
+                        logger.error(f"전략 평가 실패: {strategy_name}")
+                        return -999999.0
+
+                    result = {
+                        "total_return": strategy_result.total_return,
+                        "sharpe_ratio": strategy_result.sharpe_ratio,
+                        "max_drawdown": strategy_result.max_drawdown,
+                        "win_rate": strategy_result.win_rate,
+                        "profit_factor": strategy_result.profit_factor,
+                        "sqn": strategy_result.sqn,
+                        "total_trades": strategy_result.total_trades,
+                    }
+
+                else:
+                    # 단일 종목 모드 (기존 로직 유지)
+                    if source_settings.get("portfolio_mode", False):
+                        # 포트폴리오 모드 - datetime 컬럼 보존
+                        processed_data_dict = {}
+                        for sym, data in data_dict.items():
+                            df = data.copy()
+                            if "datetime" not in df.columns:
+                                if isinstance(df.index, pd.DatetimeIndex):
+                                    df["datetime"] = df.index
+                                else:
+                                    try:
+                                        df = df.reset_index()
+                                        if "index" in df.columns:
+                                            df["datetime"] = pd.to_datetime(df["index"])
+                                            df = df.drop("index", axis=1)
+                                        else:
+                                            df["datetime"] = pd.date_range(
+                                                start="2020-01-01",
+                                                periods=len(df),
+                                                freq="D",
+                                            )
+                                    except:
+                                        df["datetime"] = pd.date_range(
+                                            start="2020-01-01",
+                                            periods=len(df),
+                                            freq="D",
+                                        )
+                            processed_data_dict[sym] = df
+
+                        strategy_result = self.evaluator.evaluate_strategy(
+                            strategy_name, processed_data_dict
+                        )
+                        if not strategy_result:
+                            logger.error(f"전략 평가 실패: {strategy_name}")
+                            return -999999.0
+
                         result = {
                             "total_return": strategy_result.total_return,
                             "sharpe_ratio": strategy_result.sharpe_ratio,
@@ -421,23 +551,51 @@ class HyperparameterResearcher:
                             "profit_factor": strategy_result.profit_factor,
                             "sqn": strategy_result.sqn,
                             "total_trades": strategy_result.total_trades,
-                            "avg_hold_duration": strategy_result.avg_hold_duration,
                         }
-                else:
-                    # 단일 종목 모드
-                    if symbol:
-                        symbol_data = data_dict[symbol]
+
                     else:
-                        symbol_data = list(data_dict.values())[0]
+                        # 단일 종목 모드
+                        if symbol:
+                            symbol_data = data_dict[symbol].copy()
+                        else:
+                            symbol_data = list(data_dict.values())[0].copy()
 
-                    # 신호 생성
-                    signals = strategy.generate_signals(symbol_data)
+                        # datetime 컬럼이 있는지 확인하고 없으면 복원
+                        if "datetime" not in symbol_data.columns:
+                            if isinstance(symbol_data.index, pd.DatetimeIndex):
+                                symbol_data["datetime"] = symbol_data.index
+                            else:
+                                # 인덱스를 datetime으로 설정 시도
+                                try:
+                                    symbol_data = symbol_data.reset_index()
+                                    if "index" in symbol_data.columns:
+                                        symbol_data["datetime"] = pd.to_datetime(
+                                            symbol_data["index"]
+                                        )
+                                        symbol_data = symbol_data.drop("index", axis=1)
+                                    else:
+                                        # 기본 datetime 생성
+                                        symbol_data["datetime"] = pd.date_range(
+                                            start="2020-01-01",
+                                            periods=len(symbol_data),
+                                            freq="D",
+                                        )
+                                except:
+                                    # 최후의 수단: 기본 datetime 생성
+                                    symbol_data["datetime"] = pd.date_range(
+                                        start="2020-01-01",
+                                        periods=len(symbol_data),
+                                        freq="D",
+                                    )
 
-                    # 시뮬레이션 실행
-                    simulation_result = self.evaluator.simulator.simulate_trading(
-                        symbol_data, signals, strategy_name
-                    )
-                    result = simulation_result["results"]
+                        # 신호 생성
+                        signals = strategy.generate_signals(symbol_data)
+
+                        # 시뮬레이션 실행
+                        simulation_result = self.evaluator.simulator.simulate_trading(
+                            symbol_data, signals, strategy_name
+                        )
+                        result = simulation_result["results"]
 
                 # 평가 지표 추출
                 primary_metric = self.research_config.get("research_config", {}).get(
@@ -480,54 +638,27 @@ class HyperparameterResearcher:
                 if total_trades < min_trades:
                     score *= 0.5  # 페널티 적용
 
-                # 최소 수익률 필터
-                min_return = self.research_config.get("evaluation_settings", {}).get(
-                    "min_return", -0.5
-                )
-                if total_return < min_return:
-                    score *= 0.3  # 강한 페널티
-
-                # 최고 점수 갱신 시에만 로그 출력
-                if score > best_score:
-                    best_score = score
-                    best_params = params.copy()
-                    
-                    # 주요 지표들만 로그에 출력
-                    logger.info(f"🏆 새로운 최고 점수 갱신!")
-                    logger.info(f"  전략: {strategy_name}")
-                    if symbol:
-                        logger.info(f"  심볼: {symbol}")
-                    logger.info(f"  점수: {score:.4f}")
-                    logger.info(f"  주요 지표:")
-                    logger.info(f"    - 샤프 비율: {sharpe:.4f}")
-                    logger.info(f"    - 총 수익률: {total_return*100:.2f}%")
-                    logger.info(f"    - 승률: {win_rate*100:.1f}%")
-                    logger.info(f"    - 최대 낙폭: {max_dd*100:.2f}%")
-                    logger.info(f"    - 총 거래 수: {total_trades}")
-                    logger.info(f"  파라미터: {params}")
-
                 return score
 
             except Exception as e:
-                logger.warning(f"평가 함수 실행 중 오류: {str(e)}")
-                return float("-inf")
+                logger.error(f"평가 함수 실행 중 오류: {str(e)}")
+                return -999999.0
 
         return evaluation_function
 
     def optimize_single_strategy(
         self,
         strategy_name: str,
-        symbol: str = None,
+        symbol: Optional[str] = None,
         optimization_method: str = "grid_search",
-    ) -> OptimizationResult:
+    ) -> Optional[OptimizationResult]:
         """단일 전략 최적화"""
 
         logger.info(f"🔬 {strategy_name} 전략 최적화 시작")
 
         # 데이터 로드
-        data_dict = load_and_preprocess_data(
-            self.data_dir, [symbol] if symbol else None
-        )
+        symbols_to_load = [symbol] if symbol else []
+        data_dict = load_and_preprocess_data(self.data_dir, symbols_to_load)
         if not data_dict:
             logger.error(f"데이터를 로드할 수 없습니다: {self.data_dir}")
             return None
@@ -589,7 +720,7 @@ class HyperparameterResearcher:
             return None
 
         # 심볼 정보 추가
-        if result:
+        if result and symbol:
             result.symbol = symbol
 
         logger.info(f"✅ {strategy_name} 전략 최적화 완료")
@@ -597,8 +728,8 @@ class HyperparameterResearcher:
 
     def run_comprehensive_research(
         self,
-        strategies: List[str] = None,
-        symbols: List[str] = None,
+        strategies: Optional[List[str]] = None,
+        symbols: Optional[List[str]] = None,
         optimization_method: str = "grid_search",
     ) -> Dict[str, OptimizationResult]:
         """종합 연구 실행"""
@@ -608,137 +739,181 @@ class HyperparameterResearcher:
         # 설정에서 전략과 심볼 가져오기
         if strategies is None:
             strategies = list(self.research_config.get("strategies", {}).keys())
+        else:
+            # 전략 이름 매핑 (클래스 이름 -> 소문자 언더스코어 형태)
+            strategy_name_mapping = {
+                "DualMomentumStrategy": "dual_momentum",
+                "VolatilityBreakoutStrategy": "volatility_breakout",
+                "SwingEMA": "swing_ema",
+                "SwingRSI": "swing_rsi",
+                "SwingDonchian": "swing_donchian",
+                "SwingMACD": "dual_momentum",  # SwingMACD는 dual_momentum으로 매핑
+                "RiskParityLeverageStrategy": "risk_parity_leverage",
+                "FixedWeightRebalanceStrategy": "fixed_weight_rebalance",
+                "ETFMomentumRotationStrategy": "etf_momentum_rotation",
+                "TrendFollowingMA200Strategy": "trend_following_ma200",
+                "ReturnStackingStrategy": "return_stacking",
+            }
+
+            # 전략 이름 변환
+            mapped_strategies = []
+            for strategy in strategies:
+                mapped_name = strategy_name_mapping.get(strategy, strategy)
+                if mapped_name in self.research_config.get("strategies", {}):
+                    mapped_strategies.append(mapped_name)
+                else:
+                    logger.warning(
+                        f"전략 '{strategy}' (매핑: '{mapped_name}')이 research config에 없습니다."
+                    )
+            strategies = mapped_strategies
 
         if symbols is None:
             symbols = self._load_source_config_symbols()
+        else:
+            logger.info(f"📊 명령행에서 전달된 심볼 사용: {symbols}")
 
         logger.info(f"📊 연구 대상 전략: {len(strategies)}개")
         logger.info(f"📈 연구 대상 심볼: {len(symbols)}개")
         logger.info(f"🔧 최적화 방법: {optimization_method}")
 
         # 분석 결과 불러오기 (quant_analysis 기준)
-        print(f"[DEBUG] run_comprehensive_research: analysis_dir={self.analysis_dir}, analysis_type=quant_analysis, uuid={self.execution_uuid}")
+        print(
+            f"[DEBUG] run_comprehensive_research: analysis_dir={self.analysis_dir}, analysis_type=quant_analysis, uuid={self.execution_uuid}"
+        )
         try:
-            quant_analysis = load_analysis_results(self.analysis_dir, "quant_analysis", self.execution_uuid)
+            quant_analysis = load_analysis_results(
+                self.analysis_dir, "quant_analysis", self.execution_uuid
+            )
         except Exception as e:
             logger.error(f"분석 결과 로드 실패: {e}")
             return {}
 
+        # 🔥 핵심 수정: 모든 심볼을 한 번에 로드
+        logger.info(f"📊 모든 심볼 데이터 로드 중: {symbols}")
+        data_dict = load_and_preprocess_data(self.data_dir, symbols)
+        if not data_dict:
+            logger.error(f"데이터를 로드할 수 없습니다: {self.data_dir}")
+            return {}
+
+        logger.info(f"✅ 로드된 종목 수: {len(data_dict)}개")
+        logger.info(f"📊 로드된 종목: {list(data_dict.keys())}")
+
         all_results = {}
-        total_strategies = len(strategies) * len(symbols)
+        total_strategies = len(strategies)
         completed = 0
 
+        # 🔥 핵심 수정: 전략별로만 반복 (심볼별 반복 제거)
         for strategy_name in strategies:
-            for symbol in symbols:
-                try:
-                    logger.info(f"🔄 진행률: {completed + 1}/{total_strategies}")
-                    logger.info(f"  전략: {strategy_name}, 심볼: {symbol}")
+            try:
+                logger.info(f"🔄 진행률: {completed + 1}/{total_strategies}")
+                logger.info(f"  전략: {strategy_name}")
 
-                    # 분석 결과에서 해당 심볼 데이터 추출
-                    if symbol not in quant_analysis:
-                        logger.warning(f"{symbol} 분석 결과 없음, 스킵")
-                        completed += 1
-                        continue
-                    analysis_data = quant_analysis[symbol]
-
-                    # 기존 optimize_single_strategy에서 data_dict 대신 analysis_data 활용
-                    # (예시: feature importance, 상관계수 등 활용 가능)
-                    # 아래는 기존 방식과의 호환을 위해 data_dict에 analysis_data를 래핑
-                    data_dict = {symbol: analysis_data}
-
-                    # 전략 설정 가져오기
-                    strategy_config = self.research_config.get("strategies", {}).get(
-                        strategy_name, {}
-                    )
-                    if not strategy_config:
-                        logger.error(f"전략 설정을 찾을 수 없습니다: {strategy_name}")
-                        completed += 1
-                        continue
-
-                    param_ranges = strategy_config.get("param_ranges", {})
-                    if not param_ranges:
-                        logger.error(f"파라미터 범위를 찾을 수 없습니다: {strategy_name}")
-                        completed += 1
-                        continue
-
-                    # 평가 함수 생성 (analysis_data 활용)
-                    evaluation_function = self.create_evaluation_function(
-                        strategy_name, data_dict, symbol
-                    )
-
-                    # 최적화 설정
-                    optimization_settings = self.research_config.get("optimization_settings", {})
-
-                    # 최적화 실행 (기존 방식 유지)
-                    if optimization_method == "grid_search":
-                        grid_settings = optimization_settings.get("grid_search", {})
-                        result = self.optimizer.grid_search(
-                            strategy_name=strategy_name,
-                            param_ranges=param_ranges,
-                            evaluation_function=evaluation_function,
-                            max_combinations=grid_settings.get("max_combinations", 50),
-                            random_sampling=grid_settings.get("random_sampling", True),
-                            sampling_ratio=grid_settings.get("sampling_ratio", 0.3),
-                        )
-                    elif optimization_method == "bayesian_optimization":
-                        bayesian_settings = optimization_settings.get("bayesian_optimization", {})
-                        result = self.optimizer.bayesian_optimization(
-                            strategy_name=strategy_name,
-                            param_ranges=param_ranges,
-                            evaluation_function=evaluation_function,
-                            n_trials=bayesian_settings.get("n_trials", 100),
-                            n_startup_trials=bayesian_settings.get("n_startup_trials", 10),
-                        )
-                    elif optimization_method == "genetic_algorithm":
-                        ga_settings = optimization_settings.get("genetic_algorithm", {})
-                        result = self.optimizer.genetic_algorithm(
-                            strategy_name=strategy_name,
-                            param_ranges=param_ranges,
-                            evaluation_function=evaluation_function,
-                            population_size=ga_settings.get("population_size", 50),
-                            generations=ga_settings.get("generations", 20),
-                            mutation_rate=ga_settings.get("mutation_rate", 0.1),
-                            crossover_rate=ga_settings.get("crossover_rate", 0.8),
-                        )
-                    else:
-                        logger.error(f"지원하지 않는 최적화 방법: {optimization_method}")
-                        completed += 1
-                        continue
-
-                    # 심볼 정보 추가
-                    if result and result.best_score != float('-inf'):
-                        result.symbol = symbol
-                        key = f"{strategy_name}_{symbol}"
-                        all_results[key] = result
-                        logger.info(f"  ✅ 완료 - 최고 점수: {result.best_score:.4f}")
-                    else:
-                        logger.warning(f"  ⚠️ 최적화 실패 또는 유효하지 않은 결과")
-                        # 실패한 경우에도 기본 결과 객체 생성
-                        if result is None:
-                            result = OptimizationResult(
-                                strategy_name=strategy_name,
-                                best_params={},
-                                best_score=float('-inf'),
-                                optimization_method=optimization_method,
-                                execution_time=0.0,
-                                n_combinations_tested=0
-                            )
-                            result.symbol = symbol
-                            key = f"{strategy_name}_{symbol}"
-                            all_results[key] = result
-
-                    completed += 1
-
-                except Exception as e:
-                    logger.error(f"  ❌ 오류: {str(e)}")
+                # 전략 설정 가져오기
+                strategy_config = self.research_config.get("strategies", {}).get(
+                    strategy_name, {}
+                )
+                if not strategy_config:
+                    logger.error(f"전략 설정을 찾을 수 없습니다: {strategy_name}")
                     completed += 1
                     continue
+
+                param_ranges = strategy_config.get("param_ranges", {})
+                if not param_ranges:
+                    logger.error(f"파라미터 범위를 찾을 수 없습니다: {strategy_name}")
+                    completed += 1
+                    continue
+
+                # 🔥 핵심 수정: 포트폴리오 모드로 평가 함수 생성
+                evaluation_function = self.create_evaluation_function(
+                    strategy_name,
+                    data_dict,
+                    symbol=None,  # symbol=None으로 포트폴리오 모드
+                )
+
+                # 최적화 설정
+                optimization_settings = self.research_config.get(
+                    "optimization_settings", {}
+                )
+
+                # 최적화 실행
+                if optimization_method == "grid_search":
+                    grid_settings = optimization_settings.get("grid_search", {})
+                    result = self.optimizer.grid_search(
+                        strategy_name=strategy_name,
+                        param_ranges=param_ranges,
+                        evaluation_function=evaluation_function,
+                        max_combinations=grid_settings.get("max_combinations", 50),
+                        random_sampling=grid_settings.get("random_sampling", True),
+                        sampling_ratio=grid_settings.get("sampling_ratio", 0.3),
+                    )
+                elif optimization_method == "bayesian_optimization":
+                    bayesian_settings = optimization_settings.get(
+                        "bayesian_optimization", {}
+                    )
+                    result = self.optimizer.bayesian_optimization(
+                        strategy_name=strategy_name,
+                        param_ranges=param_ranges,
+                        evaluation_function=evaluation_function,
+                        n_trials=bayesian_settings.get("n_trials", 100),
+                        n_startup_trials=bayesian_settings.get("n_startup_trials", 10),
+                    )
+                elif optimization_method == "genetic_algorithm":
+                    ga_settings = optimization_settings.get("genetic_algorithm", {})
+                    result = self.optimizer.genetic_algorithm(
+                        strategy_name=strategy_name,
+                        param_ranges=param_ranges,
+                        evaluation_function=evaluation_function,
+                        population_size=ga_settings.get("population_size", 50),
+                        generations=ga_settings.get("generations", 20),
+                        mutation_rate=ga_settings.get("mutation_rate", 0.1),
+                        crossover_rate=ga_settings.get("crossover_rate", 0.8),
+                    )
+                else:
+                    logger.error(f"지원하지 않는 최적화 방법: {optimization_method}")
+                    completed += 1
+                    continue
+
+                # 🔥 핵심 수정: 포트폴리오 결과로 저장
+                if result and result.best_score != -999999.0:
+                    result.symbol = "PORTFOLIO"  # 포트폴리오 모드임을 표시
+                    key = f"{strategy_name}_PORTFOLIO"
+                    all_results[key] = result
+                    logger.info(f"  ✅ 완료 - 최고 점수: {result.best_score:.4f}")
+                else:
+                    logger.warning(f"  ⚠️ 최적화 실패 또는 유효하지 않은 결과")
+                    # 실패한 경우에도 기본 결과 객체 생성
+                    if result is None:
+                        result = OptimizationResult(
+                            strategy_name=strategy_name,
+                            best_params={},
+                            best_score=-999999.0,
+                            optimization_method=optimization_method,
+                            execution_time=0.0,
+                            n_combinations_tested=0,
+                            all_results=[],
+                        )
+                        result.symbol = "PORTFOLIO"
+                        key = f"{strategy_name}_PORTFOLIO"
+                        all_results[key] = result
+
+                completed += 1
+
+            except Exception as e:
+                logger.error(f"  ❌ 오류: {str(e)}")
+                completed += 1
+                continue
 
         # 결과 저장 및 리포트 생성 등 기존 로직 유지
         self.save_research_results(all_results)
         self.generate_research_report(all_results)
         self.run_comprehensive_evaluation(all_results)
+
         print_section_header("🎉 하이퍼파라미터 종합 연구 완료")
+
+        logger.info(
+            f"🎉 연구 완료! 총 {len(all_results)}개 전략-포트폴리오 조합 최적화 완료"
+        )
+
         return all_results
 
     def save_research_results(self, results: Dict[str, OptimizationResult]):
@@ -758,12 +933,12 @@ class HyperparameterResearcher:
         # 추가 분석 결과를 analysis 폴더에 저장
         analysis_results = self._analyze_results(results)
         analysis_filename = f"research_analysis_{timestamp}{uuid_suffix}.json"
-        
+
         analysis_path = save_analysis_results(
-            analysis_results, 
-            "researcher_results", 
+            analysis_results,
+            "researcher_results",
             analysis_filename,
-            self.analysis_dir
+            self.analysis_dir or "analysis",
         )
 
         logger.info(f"📁 연구 결과 저장 완료:")
@@ -777,8 +952,8 @@ class HyperparameterResearcher:
         """결과 분석"""
 
         # 유효한 결과만 필터링
-        valid_results = {k: v for k, v in results.items() if v.best_score != float('-inf')}
-        
+        valid_results = {k: v for k, v in results.items() if v.best_score != -999999.0}
+
         if not valid_results:
             # 모든 결과가 실패한 경우
             analysis = {
@@ -786,9 +961,9 @@ class HyperparameterResearcher:
                     "total_strategies": len(results),
                     "total_execution_time": 0.0,
                     "total_combinations_tested": 0,
-                    "average_score": float('-inf'),
-                    "best_score": float('-inf'),
-                    "worst_score": float('-inf'),
+                    "average_score": -999999.0,
+                    "best_score": -999999.0,
+                    "worst_score": -999999.0,
                     "valid_results": 0,
                     "failed_results": len(results),
                 },
@@ -798,15 +973,19 @@ class HyperparameterResearcher:
                 "top_performers": [],
             }
             return analysis
-        
+
         analysis = {
             "summary": {
                 "total_strategies": len(results),
-                "total_execution_time": sum(r.execution_time for r in valid_results.values()),
+                "total_execution_time": sum(
+                    r.execution_time for r in valid_results.values()
+                ),
                 "total_combinations_tested": sum(
                     r.n_combinations_tested for r in valid_results.values()
                 ),
-                "average_score": np.mean([r.best_score for r in valid_results.values()]),
+                "average_score": np.mean(
+                    [r.best_score for r in valid_results.values()]
+                ),
                 "best_score": max([r.best_score for r in valid_results.values()]),
                 "worst_score": min([r.best_score for r in valid_results.values()]),
                 "valid_results": len(valid_results),
@@ -894,16 +1073,20 @@ class HyperparameterResearcher:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         uuid_suffix = f"_{self.execution_uuid}" if self.execution_uuid else ""
-        report_path = os.path.join(self.results_dir, f"research_report_{timestamp}{uuid_suffix}.txt")
+        report_path = os.path.join(
+            self.results_dir, f"research_report_{timestamp}{uuid_suffix}.txt"
+        )
 
         # 최적화기 리포트 생성
         results_list = list(results.values())
-        
+
         # 유효한 결과가 있는지 확인
-        valid_results_list = [r for r in results_list if r.best_score != float('-inf')]
-        
+        valid_results_list = [r for r in results_list if r.best_score != -999999.0]
+
         if valid_results_list:
-            report_content = self.optimizer.generate_optimization_report(valid_results_list)
+            report_content = self.optimizer.generate_optimization_report(
+                valid_results_list
+            )
         else:
             report_content = "모든 최적화가 실패했습니다. 분석 결과가 없습니다."
 
@@ -1014,15 +1197,17 @@ class HyperparameterResearcher:
 
         try:
             # 데이터 로드
-            data_dict = load_and_preprocess_data(
-                self.data_dir, [symbol] if symbol else None
-            )
+            symbols_to_load = [symbol] if symbol else []
+            data_dict = load_and_preprocess_data(self.data_dir, symbols_to_load)
             if not data_dict:
                 logger.error(f"데이터를 로드할 수 없습니다: {self.data_dir}")
                 return
 
             # StrategyParams 객체 생성 (최적화된 파라미터로)
-            strategy_params = StrategyParams(**best_params)
+            strategy_params = StrategyParams()
+            for key, value in best_params.items():
+                if hasattr(strategy_params, key):
+                    setattr(strategy_params, key, value)
 
             # 전략 인스턴스 생성
             strategy_class = self.strategy_manager.strategies[strategy_name].__class__
@@ -1135,10 +1320,10 @@ class HyperparameterResearcher:
         # analysis 폴더에 저장
         filename = f"evaluation_{result.name}_{optimization_result.symbol}_{timestamp}{uuid_suffix}.json"
         filepath = save_analysis_results(
-            evaluation_result, 
-            "strategy_optimization", 
+            evaluation_result,
+            "strategy_optimization",
             filename,
-            self.analysis_dir
+            self.analysis_dir or "analysis",
         )
 
         logger.info(f"📁 평가 결과 저장: {filepath}")
@@ -1150,8 +1335,8 @@ class HyperparameterResearcher:
         evaluation_results = {}
 
         # 유효한 결과만 평가
-        valid_results = {k: v for k, v in results.items() if v.best_score != float('-inf')}
-        
+        valid_results = {k: v for k, v in results.items() if v.best_score != -999999.0}
+
         if not valid_results:
             logger.warning("평가할 유효한 결과가 없습니다.")
             return evaluation_results
@@ -1260,7 +1445,7 @@ def main():
         log_dir=args.log_dir,
         auto_detect_source_config=not args.no_auto_detect,  # 자동 감지 옵션 적용
     )
-    
+
     # UUID 설정
     if args.uuid:
         researcher.execution_uuid = args.uuid

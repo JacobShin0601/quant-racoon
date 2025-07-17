@@ -1,5 +1,5 @@
 {
-  "time_horizon": "short-term",
+  "time_horizon": "scalping",
   "strategies": [
     "VWAPMACDScalpingStrategy",
     "KeltnerRSIScalpingStrategy",

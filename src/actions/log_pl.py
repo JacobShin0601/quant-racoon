@@ -21,7 +21,7 @@ class TradingSimulator:
 
     def __init__(
         self,
-        config_path: str = "../../config.json",
+        config_path: str = "../../config/config_long.json",
     ):
         self.config = self._load_config(config_path)
         self.initial_capital = self.config["trading"]["initial_capital"]
@@ -111,18 +111,19 @@ class TradingSimulator:
         strategy_name: str,
         strategy_signals: Dict[str, pd.DataFrame] = None,
     ) -> Dict[str, Any]:
-        """멀티-에셋 포트폴리오 매매 시뮬레이션"""
+        """
+        포트폴리오 기반 시뮬레이션 실행
+        """
         self.reset()
         log_lines = []
-
-        log_lines.append(f"=== {strategy_name} 포트폴리오 매매 시뮬레이션 시작 ===")
+        log_lines.append(f"=== {strategy_name} 포트폴리오 시뮬레이션 시작 ===")
         log_lines.append(f"초기 자본: ${self.initial_capital:,.2f}")
-        log_lines.append(f"분석 종목: {list(data_dict.keys())}")
         log_lines.append(
             f"슬리피지: {self.fee_config['slippage_settings']['default_slippage']*100:.3f}%"
         )
         log_lines.append("=" * 50)
 
+        current_portfolio_value = self.initial_capital  # 항상 초기화
         # 포트폴리오 상태 초기화
         self.portfolio_positions = {symbol: 0 for symbol in data_dict.keys()}
         self.portfolio_entry_prices = {symbol: 0 for symbol in data_dict.keys()}
@@ -175,7 +176,9 @@ class TradingSimulator:
         # 최종 성과 계산
         results = self._calculate_portfolio_performance_metrics()
 
-        # 최종 로그 출력
+        # 최종 로그 출력 전, current_portfolio_value가 정의되어 있는지 확인
+        if not hasattr(locals(), "current_portfolio_value"):
+            current_portfolio_value = self.initial_capital
         log_lines.append("=" * 50)
         log_lines.append(f"=== {strategy_name} 포트폴리오 시뮬레이션 완료 ===")
         log_lines.append(f"최종 포트폴리오 가치: ${current_portfolio_value:,.2f}")
@@ -579,19 +582,27 @@ class TradingSimulator:
 
         for symbol, signal_df in strategy_signals.items():
             if symbol in current_prices and symbol in target_weights:
+                # dict 타입이면 DataFrame으로 변환
+                if isinstance(signal_df, dict):
+                    signal_df = pd.DataFrame(signal_df)
+                # 신호가 DataFrame이 아니거나 columns 속성이 없으면 기본값 사용
+                if not hasattr(signal_df, "columns") or signal_df is None:
+                    continue
                 # 해당 날짜의 신호 찾기
-                current_signal = signal_df[signal_df["datetime"] == date]
+                current_signal = (
+                    signal_df[signal_df["datetime"] == date]
+                    if not signal_df.empty
+                    else pd.DataFrame()
+                )
                 if not current_signal.empty:
                     signal_value = current_signal.iloc[0]["signal"]
 
                     # 신호에 따른 비중 조정
                     if signal_value > 0:  # 매수 신호
-                        # 비중 증가 (최대 1.5배)
                         adjusted_weights[symbol] = min(
                             target_weights[symbol] * 1.5, target_weights[symbol] + 0.1
                         )
                     elif signal_value < 0:  # 매도 신호
-                        # 비중 감소 (최소 0.5배)
                         adjusted_weights[symbol] = max(
                             target_weights[symbol] * 0.5, target_weights[symbol] - 0.1
                         )

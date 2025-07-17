@@ -1,5 +1,5 @@
 {
-  "time_horizon": "long-term",
+  "time_horizon": "long",
   "strategies": [
     "RiskParityLeverageStrategy",
     "FixedWeightRebalanceStrategy",
@@ -41,12 +41,15 @@
   "trading": {
     "initial_capital": 100000,
     "commission": 0.0005,
-    "slippage": 0.0002
+    "slippage": 0.0002,
+    "slippage_settings": {
+      "default_slippage": 0.0005
+    }
   },
   "cleaner": {
     "run_cleaner": true,
     "action": "clean-and-recreate",
-    "folders": ["data", "log", "results", "analysis"]
+    "folders": ["data/long","log/long", "results/long", "analysis/long"]
   },
   "automation": {
     "auto_clean": true,
