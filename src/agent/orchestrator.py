@@ -20,6 +20,7 @@ from agent.helper import Logger, load_config
 class FlowOrchestrator:
     """전체 퀀트 분석 파이프라인을 관리하는 클래스"""
     def __init__(self, config_path: str = "../../config/config_default.json", time_horizon: str = None):
+        self.config_path = config_path  # config_path를 인스턴스 변수로 저장
         self.config = load_config(config_path)
         self.time_horizon = time_horizon
         self.logger = Logger()
@@ -216,6 +217,10 @@ class FlowOrchestrator:
             cleaner_config = self.config.get("cleaner", {})
             action = cleaner_config.get("action", "create")  # 기본값을 create로 변경
             run_cleaner = cleaner_config.get("run_cleaner", False)  # cleaner 실행 여부 제어
+            folders = cleaner_config.get(
+                "folders",
+                ["data", "log", "results", "analysis", "researcher_results"]
+            )
             
             # cleaner 실행을 건너뛰는 경우
             if not run_cleaner:
@@ -223,12 +228,19 @@ class FlowOrchestrator:
                 self.execution_results["cleaner"] = {"status": "skipped", "reason": "disabled in config"}
                 return True
             
-            # 전략별 폴더만 정리 (data 폴더는 건드리지 않음)
+            # 확장된 cleaner.py 사용 - folders 인자 전달
             cmd = [sys.executable, "-m", "agent.cleaner",
-                   "--action", action,
-                   "--data-dir", "data",  # data 폴더는 그대로 유지
-                   "--log-dir", self.logs_folder,
-                   "--results-dir", self.results_folder]
+                   "--action", action]
+            
+            # folders 인자 추가
+            if folders:
+                cmd.extend(["--folders"] + folders)
+            else:
+                # 기존 방식 (하위 호환성)
+                cmd.extend(["--data-dir", "data",
+                           "--log-dir", self.logs_folder,
+                           "--results-dir", self.results_folder])
+            
             self.logger.log_info(f"실행 명령어: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
@@ -279,11 +291,24 @@ class FlowOrchestrator:
             # research config에서 source_config를 현재 config로 업데이트
             self._update_research_source_config(current_config_name)
             
+            # 전략과 심볼 정보 가져오기
+            strategies = self.config.get("strategies", [])
+            symbols = self.config.get("data", {}).get("symbols", [])
+            
             cmd = [sys.executable, "-m", "agent.researcher", "--config", research_config_path, "--uuid", self.execution_uuid]
+            
+            # 전략과 심볼 인자 추가
+            if strategies:
+                cmd.extend(["--strategies"] + strategies)
+            if symbols:
+                cmd.extend(["--symbols"] + symbols)
+            
             env = os.environ.copy()
             env["PYTHONPATH"] = "src"
             self.logger.log_info(f"실행 명령어: PYTHONPATH=src {' '.join(cmd)}")
             self.logger.log_info(f"📊 Research source config: {current_config_name}")
+            self.logger.log_info(f"📊 Research strategies: {strategies}")
+            self.logger.log_info(f"📊 Research symbols: {symbols}")
             result = subprocess.run(cmd, capture_output=True, text=True, env=env)
             if result.returncode == 0:
                 self.logger.log_success("✅ Researcher 단계 완료")
@@ -338,10 +363,13 @@ class FlowOrchestrator:
             cmd.extend(["--strategies"] + strategies)
             
             # 결과 폴더 지정
-            cmd.extend(["--output-dir", self.results_folder])
+            cmd.extend(["--results_dir", self.results_folder])
             
             # UUID 추가
             cmd.extend(["--uuid", self.execution_uuid])
+            
+            # config 경로 추가
+            cmd.extend(["--config", self.config_path])
             
             env = os.environ.copy()
             env["PYTHONPATH"] = "src"

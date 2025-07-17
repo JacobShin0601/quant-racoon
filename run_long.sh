@@ -4,7 +4,7 @@
 # 1일봉 데이터 기반 장기 투자 전략
 
 echo "🚀 장기 전략 실행 시작..."
-echo "📊 데이터: 1일봉, 기간: 1095일 (3년)"
+echo "📊 데이터: 1일봉, 기간: 365일 (1년)"
 echo "🎯 전략: RiskParityLeverage, FixedWeightRebalance, ETFMomentumRotation, TrendFollowingMA200, ReturnStacking"
 echo "💼 포트폴리오 모드: 활성화"
 echo ""
@@ -16,9 +16,9 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
 START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 echo "⏰ 시작 시간: $START_TIME"
 
-# 전체 파이프라인 실행 (cleaner → scrapper → analyzer → researcher → evaluator → portfolio_manager)
+# 전체 파이프라인 실행 (cleaner → scrapper → analyzer → researcher → evaluator with portfolio_manager)
 echo "🔄 전체 파이프라인 실행 중..."
-echo "📋 단계: cleaner → scrapper → analyzer → researcher → evaluator → portfolio_manager"
+echo "📋 단계: cleaner → scrapper → analyzer → researcher → evaluator(w/portfolio_manager)"
 python -m src.agent.orchestrator --time-horizon long
 
 # 실행 결과 확인

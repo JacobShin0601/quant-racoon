@@ -16,16 +16,17 @@ def main():
     # 명령행 인자 파싱
     parser = argparse.ArgumentParser(description="데이터 수집 시스템")
     parser.add_argument("--data-dir", default="data", help="데이터 저장 디렉토리")
-    parser.add_argument("--config", default="../../config/config_long.json", help="설정 파일 경로")
+    parser.add_argument("--config", default="../../config/config_default.json", help="설정 파일 경로")
     parser.add_argument("--uuid", help="실행 UUID")
     args = parser.parse_args()
     
-        # Logger 초기화
-    logger = Logger()
-
     # config.json 경로
     config_path = os.path.abspath(args.config)
     config = load_config(config_path)
+    
+    # Logger 초기화 - config에서 로그 디렉토리 가져오기
+    log_dir = config.get("output", {}).get("logs_folder", "log")
+    logger = Logger(log_dir=log_dir)
     
     # UUID 설정
     if args.uuid:

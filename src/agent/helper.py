@@ -666,7 +666,7 @@ def print_subsection_header(title: str, width: int = 50):
 
 
 # 공통 상수
-DEFAULT_CONFIG_PATH = "../../config.json"
+DEFAULT_CONFIG_PATH = "../../config/config_default.json"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_REBALANCE_PERIOD = 4
 DEFAULT_RISK_FREE_RATE = 0.02

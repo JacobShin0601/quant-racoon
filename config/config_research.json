@@ -1067,5 +1067,56 @@
     ],
     "create_summary_report": true,
     "include_parameter_importance": true
+  },
+  "portfolio": {
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "SPY",
+      "TLT",
+      "GLD",
+      "QQQ",
+      "DBMF",
+      "SHY"
+    ],
+    "weight_calculation_method": "risk_parity",
+    "weight_methods": {
+      "equal_weight": {
+        "enabled": true
+      },
+      "volatility_inverse": {
+        "enabled": true,
+        "lookback_period": 30
+      },
+      "risk_parity": {
+        "enabled": true,
+        "target_volatility": 0.15,
+        "max_iterations": 1000
+      },
+      "momentum_weight": {
+        "enabled": true,
+        "momentum_period": 20,
+        "top_n_symbols": 3
+      },
+      "min_variance": {
+        "enabled": true,
+        "lookback_period": 60
+      }
+    },
+    "rebalance_period": 60,
+    "risk_free_rate": 0.02,
+    "target_volatility": 0.15,
+    "min_weight": 0.0,
+    "max_weight": 0.6
+  },
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "slippage": 0.0002
+  },
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
   }
 }

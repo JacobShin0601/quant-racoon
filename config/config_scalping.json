@@ -17,7 +17,8 @@
   },
   "cleaner": {
     "run_cleaner": false,
-    "action": "create"
+    "action": "create",
+    "folders": ["data", "log", "results", "analysis", "researcher_results"]
   },
   "automation": {
     "auto_clean": true,
@@ -40,5 +41,24 @@
     "stages": ["cleaner", "scrapper", "evaluator"],
     "stop_on_error": true,
     "enable_research": false
+  },
+  "portfolio": {
+    "symbols": ["BTCUSDT", "ETHUSDT", "KRW-ETH"],
+    "weight_method": "equal_weight",
+    "rebalance_period": 5,
+    "risk_free_rate": 0.02,
+    "target_volatility": 0.30,
+    "min_weight": 0.0,
+    "max_weight": 0.9
+  },
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "slippage": 0.0002
+  },
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
   }
 } 

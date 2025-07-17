@@ -1641,6 +1641,7 @@ def main():
     )
     parser.add_argument("--results_dir", default="results", help="최적화 결과 디렉토리")
     parser.add_argument("--uuid", help="실행 UUID")
+    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="설정 파일 경로")
 
     args = parser.parse_args()
 
@@ -1649,6 +1650,7 @@ def main():
         data_dir=args.data_dir,
         log_mode=args.log,
         portfolio_mode=args.portfolio,
+        config_path=args.config,
         portfolio_method=args.portfolio_method,
         analysis_results_path=args.analysis_results,
     )

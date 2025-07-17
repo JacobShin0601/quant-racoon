@@ -68,6 +68,7 @@ def load_analysis_results(analysis_dir, analysis_type, uuid=None):
     if uuid:
         pattern += f"_{uuid}"
     pattern += ".json"
+    print(f"[DEBUG] load_analysis_results pattern: {pattern}")
     files = sorted(glob.glob(pattern), reverse=True)
     if not files:
         raise FileNotFoundError(f"분석 결과 파일을 찾을 수 없습니다: {pattern}")
@@ -81,7 +82,7 @@ class HyperparameterResearcher:
     def __init__(
         self,
         research_config_path: str = "config/config_research.json",
-        trading_config_path: str = DEFAULT_CONFIG_PATH,
+        trading_config_path: str = "config/config_research.json",  # research config 사용
         data_dir: str = DEFAULT_DATA_DIR,
         results_dir: str = "results",
         log_dir: str = "log",
@@ -125,6 +126,15 @@ class HyperparameterResearcher:
         
         # 절대 경로로 변환
         source_config_path = os.path.abspath(source_config_path)
+        
+        # source config 파일 존재 확인
+        if not os.path.exists(source_config_path):
+            logger.error(f"❌ source config 파일을 찾을 수 없습니다: {source_config_path}")
+            # 기본 config 사용
+            source_config_path = os.path.abspath("config/config_default.json")
+            logger.info(f"📁 기본 config 사용: {source_config_path}")
+        
+        logger.info(f"📁 StrategyEvaluator config 경로: {source_config_path}")
         
         self.evaluator = StrategyEvaluator(
             data_dir=data_dir,
@@ -607,6 +617,7 @@ class HyperparameterResearcher:
         logger.info(f"🔧 최적화 방법: {optimization_method}")
 
         # 분석 결과 불러오기 (quant_analysis 기준)
+        print(f"[DEBUG] run_comprehensive_research: analysis_dir={self.analysis_dir}, analysis_type=quant_analysis, uuid={self.execution_uuid}")
         try:
             quant_analysis = load_analysis_results(self.analysis_dir, "quant_analysis", self.execution_uuid)
         except Exception as e:

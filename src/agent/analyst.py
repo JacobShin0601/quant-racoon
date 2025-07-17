@@ -54,7 +54,10 @@ class QuantAnalyst:
         self.return_type = return_type
         self.top_features = top_features
         self.analysis_dir = analysis_dir
-        self.logger = Logger()
+        
+        # config에서 로그 디렉토리 가져오기
+        log_dir = self.config.get("output", {}).get("logs_folder", "log")
+        self.logger = Logger(log_dir=log_dir)
         self.analysis_start_time = datetime.now()
         self.execution_uuid = None  # UUID 초기화
 
@@ -514,7 +517,10 @@ class FundamentalAnalyst:
         self.return_type = return_type
         self.top_features = top_features
         self.analysis_dir = analysis_dir
-        self.logger = Logger()
+        
+        # config에서 로그 디렉토리 가져오기
+        log_dir = self.config.get("output", {}).get("logs_folder", "log")
+        self.logger = Logger(log_dir=log_dir)
         self.analysis_start_time = datetime.now()
         self.execution_uuid = None  # UUID 초기화
 

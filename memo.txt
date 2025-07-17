@@ -1,0 +1,1 @@
+PYTHONPATH=src python3 -m agent.researcher --config config/config_research.json --uuid 46bd9cc3

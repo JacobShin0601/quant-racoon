@@ -5,7 +5,7 @@
     "stop_on_error": false
   },
   "cleaner": {
-    "folders": ["data", "log", "results"],
+    "folders": ["data", "log", "results", "analysis", "researcher_results"],
     "action": "clean-and-recreate"
   },
   "scrapper": {
@@ -66,6 +66,22 @@
       "rsi_oversold": [25, 30, 35],
       "rsi_overbought": [65, 70, 75]
     }
+  },
+  "portfolio": {
+    "symbols": ["TSLL", "NVDL", "PLTR", "CONL"],
+    "weight_calculation_method": "equal_weight",
+    "weight_methods": {
+      "equal_weight": {"enabled": true},
+      "volatility_inverse": {"enabled": true, "lookback_period": 30},
+      "risk_parity": {"enabled": true, "target_volatility": 0.15, "max_iterations": 1000},
+      "momentum_weight": {"enabled": true, "momentum_period": 20, "top_n_symbols": 3},
+      "min_variance": {"enabled": true, "lookback_period": 60}
+    },
+    "rebalance_period": 60,
+    "risk_free_rate": 0.02,
+    "target_volatility": 0.15,
+    "min_weight": 0.0,
+    "max_weight": 0.6
   },
   "portfolio_manager": {
     "initial_capital": 100000,

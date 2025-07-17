@@ -17,7 +17,8 @@
   },
   "cleaner": {
     "run_cleaner": false,
-    "action": "create"
+    "action": "create",
+    "folders": ["data", "log", "results", "analysis", "researcher_results"]
   },
   "automation": {
     "auto_clean": true,
@@ -42,9 +43,20 @@
     "enable_research": true
   },
   "portfolio": {
-    "initial_capital": 100000,
-    "commission": 0.0005,
-    "slippage": 0.0002
+    "symbols": ["AAPL", "QQQ", "SPY"],
+    "weight_calculation_method": "equal_weight",
+    "weight_methods": {
+      "equal_weight": {"enabled": true},
+      "volatility_inverse": {"enabled": true, "lookback_period": 30},
+      "risk_parity": {"enabled": true, "target_volatility": 0.15, "max_iterations": 1000},
+      "momentum_weight": {"enabled": true, "momentum_period": 20, "top_n_symbols": 3},
+      "min_variance": {"enabled": true, "lookback_period": 60}
+    },
+    "rebalance_period": 20,
+    "risk_free_rate": 0.02,
+    "target_volatility": 0.20,
+    "min_weight": 0.0,
+    "max_weight": 0.8
   },
   "trading": {
     "initial_capital": 100000,

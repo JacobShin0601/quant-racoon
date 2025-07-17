@@ -17,141 +17,146 @@ logger = logging.getLogger(__name__)
 class StrategyParams:
     """전략 하이퍼파라미터를 저장하는 데이터클래스"""
 
-    # ATR 파라미터
-    atr_period: int = 14
+    # 최적화용 lookback 기간
+    lookback_period: int = 60
 
-    # EMA 파라미터
-    ema_short: int = 12
-    ema_long: int = 26
-
-    # RSI 파라미터
-    rsi_period: int = 14
-    rsi_oversold: float = 30.0
-    rsi_overbought: float = 70.0
-
-    # MACD 파라미터
-    macd_fast: int = 12
-    macd_slow: int = 26
-    macd_signal: int = 9
-
-    # Bollinger Bands 파라미터
-    bb_period: int = 20
-    bb_std: float = 2.0
-
-    # Stochastic 파라미터
-    stoch_k_period: int = 14
-    stoch_d_period: int = 3
-
-    # Williams %R 파라미터
-    williams_r_period: int = 14
-
-    # CCI (Commodity Channel Index) 파라미터
-    cci_period: int = 20
-
-    # ADX (Average Directional Index) 파라미터
-    adx_period: int = 14
-
-    # OBV (On-Balance Volume) 파라미터
-    obv_smooth_period: int = 20
-
-    # Donchian Channel 파라미터
+    # 포트폴리오 최적화 파라미터
+    rebalance_period: int = 60
+    max_leverage: float = 2.0
+    
+    # 리스크 관리 파라미터
+    risk_free_rate: float = 0.02
+    min_weight: float = 0.0
+    max_weight: float = 1.0
+    
+    # 추가 최적화 파라미터들
+    momentum_period: int = 20
+    top_n_symbols: int = 3
+    max_iterations: int = 1000
+    
+    # Dual Momentum 전략 파라미터
     donchian_period: int = 20
-
-    # Keltner Channel 파라미터
+    rsi_period: int = 14
+    rsi_oversold: int = 30
+    rsi_overbought: int = 70
+    momentum_threshold: float = 0.02
+    
+    # Volatility Breakout 전략 파라미터
     keltner_period: int = 20
     keltner_multiplier: float = 2.0
-
-    # 변동성 파라미터
-    volatility_period: int = 30
-    volatility_target: float = 0.15  # 15% 연간 변동성 타겟
-    target_volatility: float = 0.15  # 타겟 변동성 (기존 volatility_target와 동일)
-
-    # 포지션 관리 파라미터
-    stop_loss_atr_multiplier: float = 2.0
-    take_profit_atr_multiplier: float = 3.0
-
-    # 듀얼 모멘텀 전략 파라미터
-    momentum_period: int = 10
-    momentum_threshold: float = 0.02
-
-    # 스윙 트레이딩 파라미터
-    min_holding_days: int = 5
-    max_holding_days: int = 15
-
-    # 스윙 EMA 파라미터
+    volume_period: int = 20
+    volume_threshold: float = 1.0
+    volatility_period: int = 20
+    volatility_threshold: float = 0.5
+    
+    # Swing EMA 전략 파라미터
     ema_short_period: int = 20
     ema_long_period: int = 50
+    min_holding_days: int = 5
+    max_holding_days: int = 15
     slope_period: int = 5
-
-    # 스윙 RSI 파라미터
+    
+    # Swing RSI 전략 파라미터
     rsi_momentum_period: int = 3
     price_momentum_period: int = 5
-
-    # 볼륨 및 변동성 필터 파라미터
-    volume_period: int = 20
-    volume_threshold: float = 0.8
-    volatility_threshold: float = 0.5
-
-    # 브레이크아웃 파라미터
+    
+    # Swing Donchian 전략 파라미터
     breakout_strength_threshold: float = 0.005
-
-    # 휩쏘 방지 파라미터
+    
+    # Stochastic 전략 파라미터
+    k_period: int = 14
+    d_period: int = 3
+    low_threshold: int = 20
+    high_threshold: int = 80
+    
+    # Williams %R 전략 파라미터
+    period: int = 14
+    low_threshold: int = -80
+    high_threshold: int = -20
+    
+    # CCI 전략 파라미터
+    threshold: int = 100
+    
+    # Whipsaw Prevention 전략 파라미터
+    ema_short: int = 10
+    ema_long: int = 20
+    atr_period: int = 14
     signal_confirmation_period: int = 3
     trend_strength_threshold: float = 0.02
     min_holding_period: int = 5
-
-    # Donchian RSI 휩쏘 방지 파라미터
+    
+    # Donchian RSI Whipsaw 전략 파라미터
     breakout_confirmation_period: int = 2
-
-    # 변동성 필터링 파라미터
+    atr_threshold: float = 1.0
+    
+    # Volatility Filtered Breakout 전략 파라미터
     breakout_period: int = 20
     breakout_threshold: float = 0.01
     volatility_lookback: int = 50
     volatility_quantile: float = 0.5
     confirmation_period: int = 2
-
-    # 다중 시간 프레임 파라미터
+    
+    # Multi Timeframe Whipsaw 전략 파라미터
     short_period: int = 5
     medium_period: int = 10
     long_period: int = 20
-
-    # 적응형 휩쏘 방지 파라미터
+    
+    # Adaptive Whipsaw 전략 파라미터
     ema_period: int = 20
     trend_lookback: int = 20
     volume_lookback: int = 20
     base_volume_threshold: float = 1.2
     base_volatility_threshold: float = 0.8
     base_holding_period: int = 5
-
-    # CCI 파라미터
-    cci_oversold: float = -100.0
-    cci_overbought: float = 100.0
-
-    # Stochastic 파라미터
-    stoch_low_threshold: float = 20.0
-    stoch_high_threshold: float = 80.0
-
-    # Williams %R 파라미터
-    williams_r_low_threshold: float = -80.0
-    williams_r_high_threshold: float = -20.0
-
-    # CCI 임계값
-    cci_threshold: float = 100.0
-
-    # 스켈핑 파라미터
+    
+    # CCI Bollinger 전략 파라미터
+    cci_period: int = 20
+    cci_oversold: int = -100
+    cci_overbought: int = 100
+    bb_period: int = 20
+    bb_std: float = 2.0
+    
+    # Stoch Donchian 전략 파라미터
+    stoch_k_period: int = 14
+    stoch_d_period: int = 3
+    stoch_low_threshold: int = 20
+    stoch_high_threshold: int = 80
+    
+    # VWAP MACD Scalping 전략 파라미터
     vwap_period: int = 20
-    atr_multiplier: float = 1.0
+    macd_fast: int = 12
+    macd_slow: int = 26
+    macd_signal: int = 9
     max_holding_period: int = 10
-
-    # 흡수 패턴 파라미터
-    absorption_lookback: int = 5
-    volume_ratio_threshold: float = 2.0
-    price_rejection_threshold: float = 0.005
+    
+    # Keltner RSI Scalping 전략 파라미터
+    
+    # Absorption Scalping 전략 파라미터
+    price_momentum_period: int = 5
+    momentum_threshold: float = 0.01
+    
+    # RSI Bollinger Scalping 전략 파라미터
+    
+    # Buy Hold 전략 파라미터 (없음)
+    
+    # Fixed Weight Rebalance 전략 파라미터
+    weight_method: str = "equal"
+    
+    # ETF Momentum Rotation 전략 파라미터
+    top_n: int = 5
+    
+    # Trend Following MA20 전략 파라미터
+    ma_period: int = 20
+    atr_multiplier: float = 2.0
+    
+    # Return Stacking 전략 파라미터
+    volatility_period: int = 60
+    
+    # Risk Parity Leverage 전략 파라미터
+    target_volatility: float = 0.15
+    
+    # Fibonacci 레벨 파라미터
     fibonacci_levels: List[float] = None
-
-    # EMA 스켈핑 파라미터
-    ema_short: int = 5
-    ema_long: int = 10
 
     def __post_init__(self):
         """초기화 후 실행되는 메서드"""
