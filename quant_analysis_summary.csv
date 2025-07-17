@@ -1,4 +1,0 @@
-Symbol,Top_1_Feature,Top_1_Correlation,Top_2_Feature,Top_2_Correlation,Top_3_Feature,Top_3_Correlation,Linear_R2,RF_R2,Bayesian_Ridge_R2,ARD_R2,Lasso_R2,VaR_95,CVaR_95,Volatility_Mean
-TSLL,cci,0.4129700871708205,stoch_k,0.3282164817113118,williams_r,0.3282164817113118,float,float,0,0,float,-1.0738620770446239,0,0
-NVDL,cci,0.38504441317858734,stoch_k,0.3268476483633148,williams_r,0.3268476483633148,float,float,0,0,float,-0.5280331610607591,0,0
-PLTR,stoch_k,0.31612986461045944,williams_r,0.31612986461045944,cci,0.31303663846530383,float,float,0,0,float,-0.4637724537584931,0,0

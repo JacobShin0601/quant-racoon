@@ -1,0 +1,59 @@
+{
+  "time_horizon": "swing",
+  "strategies": [
+    "DualMomentumStrategy",
+    "VolatilityAdjustedBreakoutStrategy",
+    "SwingEMACrossoverStrategy",
+    "SwingRSIReversalStrategy",
+    "DonchianSwingBreakoutStrategy"
+  ],
+  "data": {
+    "symbols": ["AAPL", "QQQ", "SPY"],
+    "interval": "15m",
+    "lookback_days": 60
+  },
+  "evaluator": {
+    "portfolio_mode": false
+  },
+  "cleaner": {
+    "run_cleaner": false,
+    "action": "create"
+  },
+  "automation": {
+    "auto_clean": true,
+    "auto_backup": true,
+    "notification": false
+  },
+  "logging": {
+    "level": "INFO",
+    "file_rotation": true,
+    "max_file_size": "10MB",
+    "backup_count": 5
+  },
+  "output": {
+    "results_folder": "results/swing",
+    "logs_folder": "log/swing",
+    "backup_folder": "backup/swing",
+    "separate_strategy_results": true
+  },
+  "flow": {
+    "stages": ["cleaner", "scrapper", "analyzer", "researcher", "evaluator", "portfolio_manager"],
+    "stop_on_error": true,
+    "enable_research": true
+  },
+  "portfolio": {
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "slippage": 0.0002
+  },
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "slippage": 0.0002
+  },
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
+  }
+} 

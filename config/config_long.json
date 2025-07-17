@@ -1,0 +1,83 @@
+{
+  "time_horizon": "long-term",
+  "strategies": [
+    "RiskParityLeverageStrategy",
+    "FixedWeightRebalanceStrategy",
+    "ETFMomentumRotationStrategy",
+    "TrendFollowingMA200Strategy",
+    "ReturnStackingStrategy"
+  ],
+  "data": {
+    "symbols": ["AAPL", "MSFT", "SPY", "TLT", "GLD", "QQQ", "DBMF", "SHY"],
+    "interval": "1d",
+    "lookback_days": 365
+  },
+  "evaluator": {
+    "portfolio_mode": true
+  },
+  "portfolio": {
+    "weight_calculation_method": "equal_weight",
+    "rebalance_period": 60,
+    "weight_methods": {
+      "equal_weight": {
+        "enabled": true
+      },
+      "risk_parity": {
+        "enabled": true
+      },
+      "sharpe_maximization": {
+        "enabled": true
+      },
+      "sortino_maximization": {
+        "enabled": true
+      }
+    },
+    "constraints": {
+      "min_weight": 0.0,
+      "max_weight": 0.6,
+      "cash_weight": 0.05,
+      "leverage": 1.0
+    },
+    "risk_management": {
+      "stop_loss": 0.1,
+      "take_profit": 0.2,
+      "max_drawdown_limit": 0.25
+    }
+  },
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "slippage": 0.0002
+  },
+  "cleaner": {
+    "run_cleaner": false,
+    "action": "create"
+  },
+  "automation": {
+    "auto_clean": true,
+    "auto_backup": true,
+    "notification": false
+  },
+  "logging": {
+    "level": "INFO",
+    "file_rotation": true,
+    "max_file_size": "10MB",
+    "backup_count": 5
+  },
+  "output": {
+    "results_folder": "results/long",
+    "logs_folder": "log/long",
+    "backup_folder": "backup/long",
+    "separate_strategy_results": true
+  },
+  "flow": {
+    "stages": ["cleaner", "scrapper", "analyzer", "researcher", "evaluator", "portfolio_manager"],
+    "stop_on_error": true,
+    "enable_research": true
+  },
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
+  }
+} 

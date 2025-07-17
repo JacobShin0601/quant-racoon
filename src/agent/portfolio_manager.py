@@ -15,14 +15,14 @@ import json
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from behavior.portfolio_optimization import (
+from actions.portfolio_optimization import (
     PortfolioOptimizer,
     OptimizationMethod,
     OptimizationConstraints,
     OptimizationResult,
 )
-from behavior.portfolio_weight import PortfolioWeightCalculator
-from behavior.calculate_index import StrategyParams
+from actions.portfolio_weight import PortfolioWeightCalculator
+from actions.calculate_index import StrategyParams
 from .helper import (
     PortfolioConfig,
     PortfolioWeights,

@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-07-17T15:30:20.041300",
+  "time_horizon": "long",
+  "config_file": "default",
+  "total_stages": 3,
+  "successful_stages": 1,
+  "failed_stages": 1,
+  "skipped_stages": 1,
+  "results": {
+    "cleaner": {
+      "status": "skipped",
+      "reason": "disabled in config"
+    },
+    "scrapper": {
+      "status": "success",
+      "output": "🆔 스크래퍼 UUID 설정: 8d2b9b38\n[Logger] 로그 파일 생성: log/scrapper_data_collection_AAPL_MSFT_SPY_etc5_20250717_152944.log\n✅ 로그 데이터이 log/data_collection_20250717_153019.json에 저장되었습니다.\n"
+    },
+    "analyzer": {
+      "status": "failed",
+      "error": "/home/yunchae/anaconda3/envs/bedrock_manus/bin/python: No module named agent.quant_analyst\n"
+    }
+  }
+}

@@ -60,6 +60,7 @@ class StrategyResult:
     trades: List[Dict]
     portfolio_values: List[float]
     signals: pd.DataFrame
+    risk_analysis: Optional[Dict[str, Any]] = None  # 리스크 분석 결과 추가
 
 
 class Logger:
@@ -517,7 +518,7 @@ def load_and_preprocess_data(
     calculate_indicators: bool = False,  # 기본값을 False로 변경 (이미 계산된 지표가 있을 수 있음)
 ) -> Dict[str, pd.DataFrame]:
     """데이터 로드 및 전처리 (기술적 지표 계산 포함)"""
-    from behavior.calculate_index import TechnicalIndicators, StrategyParams
+    from actions.calculate_index import TechnicalIndicators, StrategyParams
 
     # CSV 파일 목록 가져오기
     csv_files = get_csv_files_from_dir(data_dir, symbols)
@@ -670,3 +671,225 @@ DEFAULT_DATA_DIR = "data"
 DEFAULT_REBALANCE_PERIOD = 4
 DEFAULT_RISK_FREE_RATE = 0.02
 DEFAULT_WEIGHT_METHOD = "equal_weight"
+
+def load_analysis_results(
+    analysis_type: str, 
+    symbol: str = None, 
+    strategy: str = None,
+    timestamp: str = None,
+    analysis_dir: str = "analysis"
+) -> Optional[Dict[str, Any]]:
+    """분석 결과 로드"""
+    try:
+        # 분석 타입별 경로 설정
+        if analysis_type == "quant_analysis":
+            base_path = os.path.join(analysis_dir, "quant_analysis")
+        elif analysis_type == "fundamental_analysis":
+            base_path = os.path.join(analysis_dir, "fundamental_analysis")
+        elif analysis_type == "researcher_results":
+            base_path = os.path.join(analysis_dir, "researcher_results")
+        elif analysis_type == "strategy_optimization":
+            base_path = os.path.join(analysis_dir, "strategy_optimization")
+        else:
+            raise ValueError(f"지원하지 않는 분석 타입: {analysis_type}")
+        
+        # 파일 패턴 생성
+        if timestamp:
+            pattern = f"*{timestamp}*.json"
+        elif symbol and strategy:
+            pattern = f"*{strategy}*{symbol}*.json"
+        elif symbol:
+            pattern = f"*{symbol}*.json"
+        elif strategy:
+            pattern = f"*{strategy}*.json"
+        else:
+            pattern = "*.json"
+        
+        # 파일 검색
+        import glob
+        files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
+        
+        if not files:
+            print(f"⚠️ {analysis_type} 결과 파일을 찾을 수 없습니다: {pattern}")
+            return None
+        
+        # 가장 최근 파일 선택
+        latest_file = max(files, key=os.path.getctime)
+        
+        # JSON 파일 로드
+        with open(latest_file, "r", encoding="utf-8") as f:
+            results = json.load(f)
+        
+        print(f"✅ 분석 결과 로드: {latest_file}")
+        return results
+        
+    except Exception as e:
+        print(f"❌ 분석 결과 로드 중 오류: {e}")
+        return None
+
+def save_analysis_results(
+    data: Dict[str, Any],
+    analysis_type: str,
+    filename: str = None,
+    analysis_dir: str = "analysis"
+) -> str:
+    """분석 결과 저장"""
+    try:
+        # 분석 타입별 경로 설정
+        if analysis_type == "quant_analysis":
+            base_path = os.path.join(analysis_dir, "quant_analysis")
+        elif analysis_type == "fundamental_analysis":
+            base_path = os.path.join(analysis_dir, "fundamental_analysis")
+        elif analysis_type == "researcher_results":
+            base_path = os.path.join(analysis_dir, "researcher_results")
+        elif analysis_type == "strategy_optimization":
+            base_path = os.path.join(analysis_dir, "strategy_optimization")
+        else:
+            raise ValueError(f"지원하지 않는 분석 타입: {analysis_type}")
+        
+        # 디렉토리 생성
+        os.makedirs(base_path, exist_ok=True)
+        
+        # 파일명 생성
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{analysis_type}_{timestamp}.json"
+        
+        filepath = os.path.join(base_path, filename)
+        
+        # JSON 파일 저장
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        print(f"✅ 분석 결과 저장: {filepath}")
+        return filepath
+        
+    except Exception as e:
+        print(f"❌ 분석 결과 저장 중 오류: {e}")
+        return ""
+
+def load_optimization_results(
+    strategy: str,
+    symbol: str = None,
+    optimization_method: str = None,
+    analysis_dir: str = "analysis"
+) -> Optional[Dict[str, Any]]:
+    """최적화 결과 로드"""
+    try:
+        base_path = os.path.join(analysis_dir, "researcher_results")
+        
+        # 파일 패턴 생성
+        if optimization_method:
+            pattern = f"*{strategy}*{symbol}*{optimization_method}*.json"
+        elif symbol:
+            pattern = f"*{strategy}*{symbol}*.json"
+        else:
+            pattern = f"*{strategy}*.json"
+        
+        # 파일 검색
+        import glob
+        files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
+        
+        if not files:
+            print(f"⚠️ {strategy} 최적화 결과를 찾을 수 없습니다: {pattern}")
+            return None
+        
+        # 가장 최근 파일 선택
+        latest_file = max(files, key=os.path.getctime)
+        
+        # JSON 파일 로드
+        with open(latest_file, "r", encoding="utf-8") as f:
+            results = json.load(f)
+        
+        print(f"✅ 최적화 결과 로드: {latest_file}")
+        return results
+        
+    except Exception as e:
+        print(f"❌ 최적화 결과 로드 중 오류: {e}")
+        return None
+
+def get_latest_analysis_file(
+    analysis_type: str,
+    symbol: str = None,
+    strategy: str = None,
+    analysis_dir: str = "analysis"
+) -> Optional[str]:
+    """최신 분석 파일 경로 반환"""
+    try:
+        # 분석 타입별 경로 설정
+        if analysis_type == "quant_analysis":
+            base_path = os.path.join(analysis_dir, "quant_analysis")
+        elif analysis_type == "fundamental_analysis":
+            base_path = os.path.join(analysis_dir, "fundamental_analysis")
+        elif analysis_type == "researcher_results":
+            base_path = os.path.join(analysis_dir, "researcher_results")
+        elif analysis_type == "strategy_optimization":
+            base_path = os.path.join(analysis_dir, "strategy_optimization")
+        else:
+            raise ValueError(f"지원하지 않는 분석 타입: {analysis_type}")
+        
+        # 파일 패턴 생성
+        if symbol and strategy:
+            pattern = f"*{strategy}*{symbol}*.json"
+        elif symbol:
+            pattern = f"*{symbol}*.json"
+        elif strategy:
+            pattern = f"*{strategy}*.json"
+        else:
+            pattern = "*.json"
+        
+        # 파일 검색
+        import glob
+        files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
+        
+        if not files:
+            return None
+        
+        # 가장 최근 파일 반환
+        return max(files, key=os.path.getctime)
+        
+    except Exception as e:
+        print(f"❌ 최신 분석 파일 검색 중 오류: {e}")
+        return None
+
+def create_analysis_folder_structure(analysis_dir: str = "analysis"):
+    """분석 폴더 구조 생성"""
+    try:
+        # 메인 분석 폴더들
+        folders = [
+            os.path.join(analysis_dir, "quant_analysis", "correlation"),
+            os.path.join(analysis_dir, "quant_analysis", "regression"),
+            os.path.join(analysis_dir, "quant_analysis", "bayesian"),
+            os.path.join(analysis_dir, "quant_analysis", "summary"),
+            os.path.join(analysis_dir, "researcher_results", "grid_search"),
+            os.path.join(analysis_dir, "researcher_results", "bayesian_opt"),
+            os.path.join(analysis_dir, "researcher_results", "genetic_alg"),
+            os.path.join(analysis_dir, "researcher_results", "comparison"),
+            os.path.join(analysis_dir, "strategy_optimization"),
+            os.path.join(analysis_dir, "archive"),
+            os.path.join(analysis_dir, "important"),
+        ]
+        
+        # 전략별 폴더들
+        strategies = [
+            "dual_momentum", "volatility_breakout", "swing_ema", "swing_rsi",
+            "swing_donchian", "stochastic", "williams_r", "cci",
+            "whipsaw_prevention", "donchian_rsi_whipsaw", "volatility_filtered_breakout",
+            "multi_timeframe_whipsaw", "adaptive_whipsaw", "cci_bollinger",
+            "stoch_donchian", "vwap_macd_scalping", "keltner_rsi_scalping",
+            "absorption_scalping", "rsi_bollinger_scalping"
+        ]
+        
+        for strategy in strategies:
+            folders.append(os.path.join(analysis_dir, "strategy_optimization", strategy))
+        
+        # 폴더 생성
+        for folder in folders:
+            os.makedirs(folder, exist_ok=True)
+        
+        print(f"✅ 분석 폴더 구조 생성 완료: {analysis_dir}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ 분석 폴더 구조 생성 중 오류: {e}")
+        return False

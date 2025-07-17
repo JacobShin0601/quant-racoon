@@ -5,22 +5,36 @@ from pathlib import Path
 from datetime import datetime
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from behavior.y_finance import YahooFinanceDataCollector
-from behavior.calculate_index import TechnicalIndicators, StrategyParams
-from helper import Logger, load_config, print_section_header, print_subsection_header
+from actions.y_finance import YahooFinanceDataCollector
+from actions.calculate_index import TechnicalIndicators, StrategyParams
+from agent.helper import Logger, load_config, print_section_header, print_subsection_header
 
 
 def main():
-    # Logger 초기화
+    import argparse
+    
+    # 명령행 인자 파싱
+    parser = argparse.ArgumentParser(description="데이터 수집 시스템")
+    parser.add_argument("--data-dir", default="data", help="데이터 저장 디렉토리")
+    parser.add_argument("--config", default="../../config/config_long.json", help="설정 파일 경로")
+    parser.add_argument("--uuid", help="실행 UUID")
+    args = parser.parse_args()
+    
+        # Logger 초기화
     logger = Logger()
 
     # config.json 경로
-    config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
+    config_path = os.path.abspath(args.config)
     config = load_config(config_path)
+    
+    # UUID 설정
+    if args.uuid:
+        print(f"🆔 스크래퍼 UUID 설정: {args.uuid}")
 
     # 공통 설정 가져오기
     data_config = config.get("data", {})
-    common_settings = data_config.get("common_settings", {})
+    # data 섹션에서 직접 설정을 가져오거나, common_settings가 있으면 그것을 사용
+    common_settings = data_config.get("common_settings", data_config)
     symbols = data_config.get("symbols", [])
     custom_tasks = data_config.get("custom_tasks", [])
 
@@ -62,11 +76,25 @@ def main():
                     interval=common_settings.get("interval", "15m"),
                     start_date=common_settings.get("start_date"),
                     end_date=common_settings.get("end_date"),
-                    days_back=common_settings.get("days_back", 30),
+                    days_back=common_settings.get("lookback_days", common_settings.get("days_back", 30)),
                 )
                 logger.log_success(
                     f"{symbol} 기본 데이터 수집 완료 ({len(df)}개 포인트)"
                 )
+                
+                # 수집된 재무지표 정보 로깅
+                financial_columns = [col for col in df.columns if col not in [
+                    "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume"
+                ]]
+                if financial_columns:
+                    logger.log_info(f"{symbol} 재무지표 {len(financial_columns)}개 수집됨")
+                    # 주요 재무지표들만 로깅
+                    key_indicators = ["pe_ratio", "return_on_equity", "debt_to_equity", "dividend_yield", 
+                                    "free_cashflow", "market_cap", "beta"]
+                    available_indicators = [ind for ind in key_indicators if ind in df.columns and df[ind].iloc[0] is not None]
+                    if available_indicators:
+                        indicator_values = {ind: df[ind].iloc[0] for ind in available_indicators}
+                        logger.log_info(f"{symbol} 주요 재무지표: {indicator_values}")
 
                 # 2단계: 기술적 지표 계산
                 logger.log_info(f"{symbol} 기술적 지표 계산 중...")
@@ -83,7 +111,8 @@ def main():
                     interval=common_settings.get("interval", "15m"),
                     start_date=common_settings.get("start_date") or "auto",
                     end_date=common_settings.get("end_date") or "auto",
-                    output_dir="data",
+                    output_dir=args.data_dir,
+                    uuid=args.uuid,  # UUID 추가
                 )
                 logger.log_success(f"{symbol} 데이터가 저장되었습니다: {filepath}")
 
@@ -118,6 +147,20 @@ def main():
                 logger.log_success(
                     f"{symbol} 기본 데이터 수집 완료 ({len(df)}개 포인트)"
                 )
+                
+                # 수집된 재무지표 정보 로깅
+                financial_columns = [col for col in df.columns if col not in [
+                    "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume"
+                ]]
+                if financial_columns:
+                    logger.log_info(f"{symbol} 재무지표 {len(financial_columns)}개 수집됨")
+                    # 주요 재무지표들만 로깅
+                    key_indicators = ["pe_ratio", "return_on_equity", "debt_to_equity", "dividend_yield", 
+                                    "free_cashflow", "market_cap", "beta"]
+                    available_indicators = [ind for ind in key_indicators if ind in df.columns and df[ind].iloc[0] is not None]
+                    if available_indicators:
+                        indicator_values = {ind: df[ind].iloc[0] for ind in available_indicators}
+                        logger.log_info(f"{symbol} 주요 재무지표: {indicator_values}")
 
                 # 2단계: 기술적 지표 계산
                 logger.log_info(f"{symbol} 기술적 지표 계산 중...")
@@ -134,7 +177,8 @@ def main():
                     interval=task.get("interval", "15m"),
                     start_date=task.get("start_date") or "auto",
                     end_date=task.get("end_date") or "auto",
-                    output_dir="data",
+                    output_dir=args.data_dir,
+                    uuid=args.uuid,  # UUID 추가
                 )
                 logger.log_success(f"{symbol} 데이터가 저장되었습니다: {filepath}")
 
@@ -150,6 +194,20 @@ def main():
         "common_settings": common_settings,
         "custom_tasks": custom_tasks,
         "total_symbols": len(all_symbols),
+        "uuid": args.uuid,
+        "financial_analysis": {
+            "description": "포괄적인 재무분석을 위한 확장된 지표들 포함",
+            "categories": [
+                "기업 가치 지표 (P/E, P/B, EV/EBITDA 등)",
+                "수익성 지표 (ROE, ROA, 마진 등)",
+                "성장성 지표 (매출성장률, 이익성장률 등)",
+                "재무 건전성 지표 (부채비율, 유동비율 등)",
+                "현금흐름 지표 (영업현금흐름, 자유현금흐름 등)",
+                "배당 관련 지표 (배당수익률, 배당성향 등)",
+                "분기별 재무제표 데이터",
+                "계산된 재무비율들"
+            ]
+        }
     }
     logger.save_json_log(
         log_data, f"data_collection_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

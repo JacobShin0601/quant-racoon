@@ -1,0 +1,44 @@
+{
+  "time_horizon": "short-term",
+  "strategies": [
+    "VWAPMACDScalpingStrategy",
+    "KeltnerRSIScalpingStrategy",
+    "AbsorptionScalpingStrategy",
+    "RSIBollingerScalpingStrategy"
+  ],
+  "data": {
+    "symbols": ["BTCUSDT", "ETHUSDT", "KRW-ETH"],
+    "interval": "1m",
+    "lookback_days": 7
+  },
+  "evaluator": {
+    "portfolio_mode": false,
+    "single_symbol_mode": true
+  },
+  "cleaner": {
+    "run_cleaner": false,
+    "action": "create"
+  },
+  "automation": {
+    "auto_clean": true,
+    "auto_backup": true,
+    "notification": false
+  },
+  "logging": {
+    "level": "INFO",
+    "file_rotation": true,
+    "max_file_size": "10MB",
+    "backup_count": 5
+  },
+  "output": {
+    "results_folder": "results/scalping",
+    "logs_folder": "log/scalping",
+    "backup_folder": "backup/scalping",
+    "separate_strategy_results": true
+  },
+  "flow": {
+    "stages": ["cleaner", "scrapper", "evaluator"],
+    "stop_on_error": true,
+    "enable_research": false
+  }
+} 

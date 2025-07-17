@@ -1,0 +1,329 @@
+{
+  "summary": {
+    "total_strategies": 192,
+    "total_execution_time": 0.7969908714294434,
+    "total_combinations_tested": 8600,
+    "average_score": -Infinity,
+    "best_score": -Infinity,
+    "worst_score": -Infinity
+  },
+  "strategy_performance": {
+    "dual_momentum": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "volatility_breakout": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "swing_ema": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "swing_rsi": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "swing_donchian": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "stochastic": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "williams_r": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "cci": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "whipsaw_prevention": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "donchian_rsi_whipsaw": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "volatility_filtered_breakout": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "multi_timeframe_whipsaw": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "adaptive_whipsaw": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "cci_bollinger": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "stoch_donchian": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "vwap_macd_scalping": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "keltner_rsi_scalping": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "absorption_scalping": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "rsi_bollinger_scalping": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "fixed_weight_rebalance": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "etf_momentum_rotation": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "trend_following_ma20": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "return_stacking": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    },
+    "risk_parity_leverage": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 8
+    }
+  },
+  "symbol_performance": {
+    "AAPL": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "MSFT": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "SPY": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "TLT": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "GLD": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "QQQ": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "DBMF": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    },
+    "SHY": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 24
+    }
+  },
+  "optimization_method_performance": {
+    "grid_search": {
+      "average_score": -Infinity,
+      "max_score": -Infinity,
+      "min_score": -Infinity,
+      "std_score": NaN,
+      "count": 192
+    }
+  },
+  "top_performers": [
+    {
+      "key": "dual_momentum_AAPL",
+      "strategy_name": "dual_momentum",
+      "symbol": "AAPL",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_MSFT",
+      "strategy_name": "dual_momentum",
+      "symbol": "MSFT",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_SPY",
+      "strategy_name": "dual_momentum",
+      "symbol": "SPY",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_TLT",
+      "strategy_name": "dual_momentum",
+      "symbol": "TLT",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_GLD",
+      "strategy_name": "dual_momentum",
+      "symbol": "GLD",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_QQQ",
+      "strategy_name": "dual_momentum",
+      "symbol": "QQQ",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_DBMF",
+      "strategy_name": "dual_momentum",
+      "symbol": "DBMF",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "dual_momentum_SHY",
+      "strategy_name": "dual_momentum",
+      "symbol": "SHY",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "volatility_breakout_AAPL",
+      "strategy_name": "volatility_breakout",
+      "symbol": "AAPL",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    },
+    {
+      "key": "volatility_breakout_MSFT",
+      "strategy_name": "volatility_breakout",
+      "symbol": "MSFT",
+      "score": -Infinity,
+      "params": null,
+      "method": "grid_search"
+    }
+  ]
+}

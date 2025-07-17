@@ -1,0 +1,109 @@
+{
+  "flow": {
+    "stages": ["leaner", "scrapper", "analyzer", "evaluator", "portfolio_manager"],
+    "auto_run": true,
+    "stop_on_error": false
+  },
+  "cleaner": {
+    "folders": ["data", "log", "results"],
+    "action": "clean-and-recreate"
+  },
+  "scrapper": {
+    "data_sources": {
+      "yahoo_finance": {
+        "enabled": true,
+        "rate_limit": 10
+      }
+    }
+  },
+  "data": {
+    "common_settings": {
+      "interval": "15m",
+      "days_back": 60,
+      "start_date": null,
+      "end_date": null
+    },
+    "symbols": [
+      "TSLL",
+      "NVDL",
+      "PLTR",
+      "CONL"
+    ],
+    "custom_tasks": [
+      {
+        "symbol": "BITX",
+        "interval": "1d",
+        "days_back": 90
+      }
+    ]
+  },
+  "analyzer": {
+    "technical_indicators": {
+      "enabled": true,
+      "indicators": ["rsi", "macd", "bollinger", "ema", "stochastic"]
+    },
+    "fundamental_analysis": {
+      "enabled": false
+    }
+  },
+  "evaluator": {
+    "strategies": [
+      "dual_momentum",
+      "volatility_breakout",
+      "swing_ema",
+      "swing_rsi",
+      "swing_donchian",
+      "buy_hold",
+      "fixed_weight_rebalance",
+      "etf_momentum_rotation",
+      "trend_following_ma20",
+      "return_stacking",
+      "risk_parity_leverage"
+    ],
+    "param_ranges": {
+      "rsi_period": [10, 14, 20],
+      "donchian_period": [15, 20, 25],
+      "rsi_oversold": [25, 30, 35],
+      "rsi_overbought": [65, 70, 75]
+    }
+  },
+  "portfolio_manager": {
+    "initial_capital": 100000,
+    "rebalance_period": 60,
+    "weight_methods": {
+      "equal_weight": {
+        "enabled": true
+      },
+      "risk_parity": {
+        "enabled": true
+      },
+      "sharpe_maximization": {
+        "enabled": true
+      },
+      "sortino_maximization": {
+        "enabled": true
+      }
+    },
+    "constraints": {
+      "min_weight": 0.0,
+      "max_weight": 0.6,
+      "cash_weight": 0.05,
+      "leverage": 1.0
+    },
+    "risk_management": {
+      "stop_loss": 0.1,
+      "take_profit": 0.2,
+      "max_drawdown_limit": 0.25
+    }
+  },
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.0005,
+    "slippage": 0.0002
+  },
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
+  }
+} 
