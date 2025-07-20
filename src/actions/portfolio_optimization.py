@@ -39,6 +39,8 @@ class OptimizationConstraints:
     max_weight: float = 1.0
     cash_weight: float = 0.0
     leverage: float = 1.0
+    enable_short_position: bool = False  # Short position 지원 추가
+    short_weight_limit: float = 0.5  # Short position 최대 비중
     group_constraints: Optional[Dict[str, Dict[str, float]]] = None
     sector_constraints: Optional[Dict[str, Dict[str, float]]] = None
     target_return: Optional[float] = None
@@ -78,18 +80,31 @@ class PortfolioOptimizer:
             returns: 수익률 데이터 (T x N)
             risk_free_rate: 무위험 수익률
         """
+        print(f"🔍 PortfolioOptimizer 초기화 시작")
+        print(f"🔍 returns 형태: {returns.shape}")
+        print(f"🔍 returns 컬럼: {list(returns.columns)}")
+        print(f"🔍 risk_free_rate: {risk_free_rate}")
+
         self.returns = returns
         self.risk_free_rate = risk_free_rate
         self.n_assets = returns.shape[1]
         self.asset_names = returns.columns.tolist()
+
+        print(f"🔍 자산 수: {self.n_assets}")
+        print(f"🔍 자산 이름: {self.asset_names}")
 
         # 기본 통계량 계산
         self.mean_returns = returns.mean()
         self.cov_matrix = returns.cov()
         self.correlation_matrix = returns.corr()
 
+        print(f"🔍 평균 수익률 계산 완료")
+        print(f"🔍 공분산 행렬 형태: {self.cov_matrix.shape}")
+
         # 로거 설정
         self.logger = logging.getLogger(__name__)
+
+        print("✅ PortfolioOptimizer 초기화 완료")
 
     def calculate_performance_metrics(self, weights: np.ndarray) -> Dict[str, float]:
         """포트폴리오 성과 지표 계산"""
@@ -157,9 +172,15 @@ class PortfolioOptimizer:
         # 제약조건
         constraint_list = [cp.sum(w) == 1 - constraints.cash_weight]
 
-        # 비중 제약
-        constraint_list.extend([w >= constraints.min_weight])
-        constraint_list.extend([w <= constraints.max_weight])
+        # 비중 제약 (Short position 지원)
+        if constraints.enable_short_position:
+            # Short position 허용: 음수 비중 가능
+            constraint_list.extend([w >= -constraints.short_weight_limit])
+            constraint_list.extend([w <= constraints.max_weight])
+        else:
+            # Long-only: 양수 비중만
+            constraint_list.extend([w >= constraints.min_weight])
+            constraint_list.extend([w <= constraints.max_weight])
 
         # 레버리지 제약
         if constraints.leverage != 1.0:
@@ -593,25 +614,42 @@ class PortfolioOptimizer:
         self, method: OptimizationMethod, constraints: OptimizationConstraints, **kwargs
     ) -> OptimizationResult:
         """포트폴리오 최적화 실행"""
+        print(f"🔍 optimize_portfolio 시작 - 방법: {method.value}")
+        print(
+            f"🔍 제약조건: min_weight={constraints.min_weight}, max_weight={constraints.max_weight}"
+        )
 
-        if method == OptimizationMethod.MEAN_VARIANCE:
-            return self.mean_variance_optimization(constraints)
-        elif method == OptimizationMethod.SHARPE_MAXIMIZATION:
-            return self.sharpe_maximization(constraints)
-        elif method == OptimizationMethod.SORTINO_MAXIMIZATION:
-            return self.sortino_maximization(constraints)
-        elif method == OptimizationMethod.RISK_PARITY:
-            return self.risk_parity_optimization(constraints)
-        elif method == OptimizationMethod.MINIMUM_VARIANCE:
-            return self.minimum_variance_optimization(constraints)
-        elif method == OptimizationMethod.MAXIMUM_DIVERSIFICATION:
-            return self.maximum_diversification_optimization(constraints)
-        elif method == OptimizationMethod.BLACK_LITTERMAN:
-            return self.black_litterman_optimization(constraints, **kwargs)
-        elif method == OptimizationMethod.KELLY_CRITERION:
-            return self.kelly_criterion_optimization(constraints)
-        else:
-            raise ValueError(f"지원하지 않는 최적화 방법: {method}")
+        try:
+            if method == OptimizationMethod.MEAN_VARIANCE:
+                print("🔍 MEAN_VARIANCE 최적화 실행")
+                return self.mean_variance_optimization(constraints)
+            elif method == OptimizationMethod.SHARPE_MAXIMIZATION:
+                print("🔍 SHARPE_MAXIMIZATION 최적화 실행")
+                return self.sharpe_maximization(constraints)
+            elif method == OptimizationMethod.SORTINO_MAXIMIZATION:
+                print("🔍 SORTINO_MAXIMIZATION 최적화 실행")
+                return self.sortino_maximization(constraints)
+            elif method == OptimizationMethod.RISK_PARITY:
+                print("🔍 RISK_PARITY 최적화 실행")
+                return self.risk_parity_optimization(constraints)
+            elif method == OptimizationMethod.MINIMUM_VARIANCE:
+                print("🔍 MINIMUM_VARIANCE 최적화 실행")
+                return self.minimum_variance_optimization(constraints)
+            elif method == OptimizationMethod.MAXIMUM_DIVERSIFICATION:
+                print("🔍 MAXIMUM_DIVERSIFICATION 최적화 실행")
+                return self.maximum_diversification_optimization(constraints)
+            elif method == OptimizationMethod.BLACK_LITTERMAN:
+                print("🔍 BLACK_LITTERMAN 최적화 실행")
+                return self.black_litterman_optimization(constraints, **kwargs)
+            elif method == OptimizationMethod.KELLY_CRITERION:
+                print("🔍 KELLY_CRITERION 최적화 실행")
+                return self.kelly_criterion_optimization(constraints)
+            else:
+                print(f"❌ 지원하지 않는 최적화 방법: {method}")
+                raise ValueError(f"지원하지 않는 최적화 방법: {method}")
+        except Exception as e:
+            print(f"❌ 포트폴리오 최적화 실패: {e}")
+            raise
 
     def compare_methods(
         self, constraints: OptimizationConstraints

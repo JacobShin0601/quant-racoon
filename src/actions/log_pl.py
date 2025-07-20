@@ -28,11 +28,24 @@ class TradingSimulator:
         self.fee_config = self.config["trading"]
         self.simulation_settings = self.config["simulation_settings"]
         self.reset()
+        # Short position 지원 추가
+        self.enable_short_position = self.config.get("trading", {}).get(
+            "enable_short_position", False
+        )
 
     def _load_config(self, config_path: str) -> Dict:
         """통합 설정 파일 로드"""
         try:
-            config_file = os.path.join(os.path.dirname(__file__), config_path)
+            # 절대 경로로 시도
+            if os.path.isabs(config_path):
+                config_file = config_path
+            else:
+                # 상대 경로인 경우 프로젝트 루트 기준으로 시도
+                project_root = os.path.dirname(
+                    os.path.dirname(os.path.dirname(__file__))
+                )
+                config_file = os.path.join(project_root, config_path)
+
             with open(config_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
@@ -71,14 +84,18 @@ class TradingSimulator:
 
     def reset(self):
         """시뮬레이션 상태 초기화"""
+        self.initial_capital = self.simulation_settings.get("initial_capital", 100000)
         self.cash = self.initial_capital
-        self.position = 0
+        self.position = 0  # 롱 포지션 수량
+        self.short_position = 0  # 숏 포지션 수량 추가
         self.entry_price = 0
+        self.short_entry_price = 0  # 숏 진입가 추가
         self.entry_time = None
+        self.short_entry_time = None  # 숏 진입시간 추가
         self.trades = []
         self.portfolio_values = []
-        self.max_drawdown = 0
         self.peak_value = self.initial_capital
+        self.max_drawdown = 0
         self.consecutive_wins = 0
         self.consecutive_losses = 0
         self.max_consecutive_wins = 0
@@ -86,16 +103,31 @@ class TradingSimulator:
 
     def get_commission_rate(self, trade_date: str) -> float:
         """거래 날짜에 따른 수수료율 반환"""
+        # commission_schedule이 없으면 기본 commission 사용
+        if "commission_schedule" not in self.fee_config:
+            return self.fee_config.get("commission", 0.001)
+
         for rule in self.fee_config["commission_schedule"]:
-            if rule["start"] <= trade_date <= rule["end"]:
-                return rule["commission"]
-        return 0.001  # 기본값
+            # config_swing.json에서는 date_from, date_to를 사용
+            start_date = rule.get("start", rule.get("date_from"))
+            end_date = rule.get("end", rule.get("date_to"))
+            commission_rate = rule.get("commission", rule.get("rate"))
+
+            if start_date <= trade_date <= end_date:
+                return commission_rate
+        return self.fee_config.get("commission", 0.001)  # 기본값
 
     def calculate_total_fees(self, price: float, commission_rate: float) -> float:
         """총 수수료 계산 (수수료 + SEC + FINRA)"""
         commission = price * commission_rate
-        sec_fee = price * self.fee_config["additional_fees"]["sec_fee"]
-        finra_fee = price * self.fee_config["additional_fees"]["finra_fee"]
+
+        # additional_fees가 없으면 기본값 사용
+        additional_fees = self.fee_config.get("additional_fees", {})
+        sec_fee = price * additional_fees.get("sec_fee", 0.0000229)  # SEC 수수료 기본값
+        finra_fee = price * additional_fees.get(
+            "finra_fee", 0.000119
+        )  # FINRA 수수료 기본값
+
         return commission + sec_fee + finra_fee
 
     def simulate_trading(
@@ -118,9 +150,11 @@ class TradingSimulator:
         log_lines = []
         log_lines.append(f"=== {strategy_name} 포트폴리오 시뮬레이션 시작 ===")
         log_lines.append(f"초기 자본: ${self.initial_capital:,.2f}")
-        log_lines.append(
-            f"슬리피지: {self.fee_config['slippage_settings']['default_slippage']*100:.3f}%"
+        # slippage_settings가 없으면 기본값 사용
+        slippage = self.fee_config.get("slippage_settings", {}).get(
+            "default_slippage", self.fee_config.get("slippage", 0.0002)
         )
+        log_lines.append(f"슬리피지: {slippage*100:.3f}%")
         log_lines.append("=" * 50)
 
         current_portfolio_value = self.initial_capital  # 항상 초기화
@@ -201,12 +235,15 @@ class TradingSimulator:
         """실제 매매 시뮬레이션 실행"""
         self.reset()
         log_lines = []
+        returns = []  # 수익률 리스트 추가
 
         log_lines.append(f"=== {strategy_name} 매매 시뮬레이션 시작 ===")
         log_lines.append(f"초기 자본: ${self.initial_capital:,.2f}")
-        log_lines.append(
-            f"슬리피지: {self.fee_config['slippage_settings']['default_slippage']*100:.3f}%"
+        # slippage_settings가 없으면 기본값 사용
+        slippage = self.fee_config.get("slippage_settings", {}).get(
+            "default_slippage", self.fee_config.get("slippage", 0.0002)
         )
+        log_lines.append(f"슬리피지: {slippage*100:.3f}%")
         log_lines.append("=" * 50)
 
         for i, row in df.iterrows():
@@ -225,10 +262,12 @@ class TradingSimulator:
 
             # 수수료율 계산
             commission_rate = self.get_commission_rate(trade_date)
-            slippage = self.fee_config["slippage_settings"]["default_slippage"]
+            slippage = self.fee_config.get("slippage_settings", {}).get(
+                "default_slippage", self.fee_config.get("slippage", 0.0002)
+            )
 
             # 매수 신호
-            if self.position == 0 and signal == 1:
+            if self.position == 0 and self.short_position == 0 and signal == 1:
                 # 슬리피지 적용된 체결가
                 execution_price = current_price * (1 + slippage)
                 total_fees = self.calculate_total_fees(execution_price, commission_rate)
@@ -244,14 +283,14 @@ class TradingSimulator:
                     shares_to_buy = max(1, int(min_trade_amount / cost_per_share))
 
                 if shares_to_buy > 0:
-                    # 포지션 진입
+                    # 롱 포지션 진입
                     self.position = shares_to_buy
                     self.entry_price = cost_per_share
                     self.entry_time = row["datetime"]
                     total_cost = shares_to_buy * cost_per_share
                     self.cash -= total_cost
 
-                log_lines.append(f"[{row['datetime']}] 🔵 매수 체결")
+                log_lines.append(f"[{row['datetime']}] 🔵 롱 포지션 진입")
                 log_lines.append(
                     f"    체결가: ${execution_price:.2f} (슬리피지: +{slippage*100:.3f}%)"
                 )
@@ -267,7 +306,52 @@ class TradingSimulator:
                     f"    거래 비율: {(total_cost/self.initial_capital)*100:.1f}%"
                 )
 
-            # 매도 신호
+            # 숏 포지션 진입 (Short position 지원이 활성화된 경우)
+            elif (
+                self.position == 0
+                and self.short_position == 0
+                and signal == -1
+                and self.enable_short_position
+            ):
+                # 슬리피지 적용된 체결가
+                execution_price = current_price * (1 - slippage)
+                total_fees = self.calculate_total_fees(execution_price, commission_rate)
+                cost_per_share = execution_price + total_fees
+
+                # 거래 가능한 주식 수 계산 (전체 자본의 95% 사용, 최소 1주 보장)
+                available_capital = self.cash * 0.95
+                shares_to_sell = max(1, int(available_capital / cost_per_share))
+
+                # 최소 거래 금액 확인 (최소 $1000)
+                min_trade_amount = 1000
+                if shares_to_sell * cost_per_share < min_trade_amount:
+                    shares_to_sell = max(1, int(min_trade_amount / cost_per_share))
+
+                if shares_to_sell > 0:
+                    # 숏 포지션 진입
+                    self.short_position = shares_to_sell
+                    self.short_entry_price = cost_per_share
+                    self.short_entry_time = row["datetime"]
+                    total_revenue = shares_to_sell * execution_price
+                    self.cash += total_revenue
+
+                log_lines.append(f"[{row['datetime']}] 🔴 숏 포지션 진입")
+                log_lines.append(
+                    f"    체결가: ${execution_price:.2f} (슬리피지: -{slippage*100:.3f}%)"
+                )
+                log_lines.append(
+                    f"    수수료: ${total_fees:.2f} (수수료율: {commission_rate*100:.2f}%)"
+                )
+                log_lines.append(
+                    f"    매도 주식 수: {shares_to_sell}주 (${shares_to_sell * execution_price:.2f})"
+                )
+                log_lines.append(f"    총 수익: ${total_revenue:.2f}")
+                log_lines.append(f"    잔고: ${self.cash:.2f}")
+                log_lines.append(
+                    f"    거래 비율: {(total_revenue/self.initial_capital)*100:.1f}%"
+                )
+
+            # 롱 포지션 청산
             elif self.position > 0 and signal == -1:
                 # 슬리피지 적용된 체결가
                 execution_price = current_price * (1 - slippage)
@@ -281,6 +365,7 @@ class TradingSimulator:
                 # 포지션 청산
                 total_revenue = self.position * revenue_per_share
                 self.cash += total_revenue
+                shares_sold = self.position
                 self.position = 0
 
                 # 거래 기록
@@ -289,11 +374,12 @@ class TradingSimulator:
                     "exit_time": row["datetime"],
                     "entry_price": self.entry_price,
                     "exit_price": revenue_per_share,
-                    "shares": self.position,
+                    "shares": shares_sold,
+                    "position_type": "long",
                     "pnl": pnl,
                     "pnl_amount": pnl_amount,
                     "hold_duration": (row["datetime"] - self.entry_time).total_seconds()
-                    / 3600,  # 시간 단위
+                    / 3600,
                 }
                 self.trades.append(trade_record)
 
@@ -313,14 +399,14 @@ class TradingSimulator:
 
                 # 로그 출력
                 pnl_symbol = "🟢" if pnl > 0 else "🔴"
-                log_lines.append(f"[{row['datetime']}] {pnl_symbol} 매도 체결")
+                log_lines.append(f"[{row['datetime']}] {pnl_symbol} 롱 포지션 청산")
                 log_lines.append(
                     f"    체결가: ${execution_price:.2f} (슬리피지: -{slippage*100:.3f}%)"
                 )
                 log_lines.append(
-                    f"    매도 주식 수: {self.position}주 (${self.position * execution_price:.2f})"
+                    f"    매도 주식 수: {shares_sold}주 (${shares_sold * execution_price:.2f})"
                 )
-                log_lines.append(f"    수수료: ${total_fees * self.position:.2f}")
+                log_lines.append(f"    수수료: ${total_fees * shares_sold:.2f}")
                 log_lines.append(f"    총 수익: ${total_revenue:.2f}")
                 log_lines.append(f"    P&L: {pnl*100:+.2f}% (${pnl_amount:+.2f})")
                 log_lines.append(f"    잔고: ${self.cash:.2f}")
@@ -331,6 +417,76 @@ class TradingSimulator:
                     f"    거래 비율: {(total_revenue/self.initial_capital)*100:.1f}%"
                 )
 
+            # 숏 포지션 청산
+            elif self.short_position > 0 and signal == 1:
+                # 슬리피지 적용된 체결가
+                execution_price = current_price * (1 + slippage)
+                total_fees = self.calculate_total_fees(execution_price, commission_rate)
+                cost_per_share = execution_price + total_fees
+
+                # 수익률 계산 (숏 포지션은 가격 하락 시 수익)
+                pnl = (self.short_entry_price - cost_per_share) / self.short_entry_price
+                pnl_amount = (
+                    self.short_entry_price - cost_per_share
+                ) * self.short_position
+
+                # 포지션 청산
+                total_cost = self.short_position * cost_per_share
+                self.cash -= total_cost
+                shares_bought = self.short_position
+                self.short_position = 0
+
+                # 거래 기록
+                trade_record = {
+                    "entry_time": self.short_entry_time,
+                    "exit_time": row["datetime"],
+                    "entry_price": self.short_entry_price,
+                    "exit_price": cost_per_share,
+                    "shares": shares_bought,
+                    "position_type": "short",
+                    "pnl": pnl,
+                    "pnl_amount": pnl_amount,
+                    "hold_duration": (
+                        row["datetime"] - self.short_entry_time
+                    ).total_seconds()
+                    / 3600,
+                }
+                self.trades.append(trade_record)
+
+                # 연속 승/패 업데이트
+                if pnl > 0:
+                    self.consecutive_wins += 1
+                    self.consecutive_losses = 0
+                    self.max_consecutive_wins = max(
+                        self.max_consecutive_wins, self.consecutive_wins
+                    )
+                else:
+                    self.consecutive_losses += 1
+                    self.consecutive_wins = 0
+                    self.max_consecutive_losses = max(
+                        self.max_consecutive_losses, self.consecutive_losses
+                    )
+
+                # 로그 출력
+                pnl_symbol = "🟢" if pnl > 0 else "🔴"
+                log_lines.append(f"[{row['datetime']}] {pnl_symbol} 숏 포지션 청산")
+                log_lines.append(
+                    f"    체결가: ${execution_price:.2f} (슬리피지: +{slippage*100:.3f}%)"
+                )
+                log_lines.append(
+                    f"    매수 주식 수: {shares_bought}주 (${shares_bought * execution_price:.2f})"
+                )
+                log_lines.append(f"    수수료: ${total_fees * shares_bought:.2f}")
+                log_lines.append(f"    총 비용: ${total_cost:.2f}")
+                log_lines.append(f"    P&L: {pnl*100:+.2f}% (${pnl_amount:+.2f})")
+                log_lines.append(f"    잔고: ${self.cash:.2f}")
+                log_lines.append(
+                    f"    보유기간: {trade_record['hold_duration']:.1f}시간"
+                )
+                log_lines.append(
+                    f"    거래 비율: {(total_cost/self.initial_capital)*100:.1f}%"
+                )
+
             # 포트폴리오 가치 계산
             current_portfolio_value = self.cash
             if self.position > 0:
@@ -339,8 +495,28 @@ class TradingSimulator:
                 current_portfolio_value = (
                     self.cash + self.position * self.entry_price * (1 + unrealized_pnl)
                 )
+            if self.short_position > 0:
+                # 미실현 손익 계산 (숏 포지션은 가격 하락 시 수익)
+                unrealized_pnl = (
+                    self.short_entry_price - current_price
+                ) / self.short_entry_price
+                current_portfolio_value = (
+                    self.cash
+                    + self.short_position
+                    * self.short_entry_price
+                    * (1 + unrealized_pnl)
+                )
 
             self.portfolio_values.append(current_portfolio_value)
+
+            # 수익률 계산 및 추가
+            if len(self.portfolio_values) > 1:
+                daily_return = (
+                    current_portfolio_value - self.portfolio_values[-2]
+                ) / self.portfolio_values[-2]
+                returns.append(daily_return)
+            else:
+                returns.append(0.0)
 
             # 최대 낙폭 업데이트
             if current_portfolio_value > self.peak_value:
@@ -374,6 +550,7 @@ class TradingSimulator:
             "results": results,
             "trades": self.trades,
             "portfolio_values": self.portfolio_values,
+            "returns": returns,  # 수익률 리스트 추가
         }
 
     def _calculate_performance_metrics(self) -> Dict[str, float]:
@@ -388,6 +565,7 @@ class TradingSimulator:
                 "sqn": 0.0,
                 "profit_factor": 0.0,
                 "avg_hold_duration": 0.0,
+                "total_trades": 0,
             }
 
         # 기본 지표
@@ -423,6 +601,7 @@ class TradingSimulator:
             "sqn": sqn,
             "profit_factor": profit_factor,
             "avg_hold_duration": avg_hold_duration,
+            "total_trades": len(self.trades),  # 총 거래 수 추가
         }
 
     def _get_common_dates(
@@ -622,6 +801,9 @@ class TradingSimulator:
         for symbol, price in current_prices.items():
             if symbol in self.portfolio_positions:
                 quantity = self.portfolio_positions[symbol]
+                portfolio_value += quantity * price
+            if symbol in self.short_position:
+                quantity = self.short_position[symbol]
                 portfolio_value += quantity * price
 
         return portfolio_value

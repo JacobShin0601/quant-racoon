@@ -7,6 +7,7 @@ echo "🚀 장기 전략 실행 시작..."
 echo "📊 데이터: 1일봉, 기간: 365일 (1년)"
 echo "🎯 전략: RiskParityLeverage, FixedWeightRebalance, ETFMomentumRotation, TrendFollowingMA200, ReturnStacking"
 echo "💼 포트폴리오 모드: 활성화"
+echo "📁 데이터 디렉토리: data/long"
 echo ""
 
 # 환경 설정
@@ -19,6 +20,7 @@ echo "⏰ 시작 시간: $START_TIME"
 # 전체 파이프라인 실행 (cleaner → scrapper → analyzer → researcher → evaluator with portfolio_manager)
 echo "🔄 전체 파이프라인 실행 중..."
 echo "📋 단계: cleaner → scrapper → analyzer → researcher → evaluator(w/portfolio_manager)"
+echo "📁 데이터 디렉토리: data/long"
 python -m src.agent.orchestrator --time-horizon long
 
 # 실행 결과 확인
@@ -28,6 +30,7 @@ if [ $? -eq 0 ]; then
     echo "📁 결과 폴더: results/long/"
     echo "📋 로그 폴더: log/long/"
     echo "💾 백업 폴더: backup/long/"
+    echo "📊 데이터 폴더: data/long/"
 else
     echo ""
     echo "❌ 장기 전략 실행 실패!"

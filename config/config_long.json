@@ -1,23 +1,25 @@
 {
   "time_horizon": "long",
   "strategies": [
-    "RiskParityLeverageStrategy",
-    "FixedWeightRebalanceStrategy",
-    "ETFMomentumRotationStrategy",
-    "TrendFollowingMA200Strategy",
-    "ReturnStackingStrategy",
-    "DualMomentumStrategy",
-    "VolatilityBreakoutStrategy",
-    "SwingEMA",
-    "SwingRSI",
-    "SwingDonchian",
-    "SwingMACD",
-    "SwingRSI"
+    "risk_parity_leverage",
+    "fixed_weight_rebalance",
+    "etf_momentum_rotation",
+    "trend_following_ma200",
+    "return_stacking",
+    "dual_momentum",
+    "volatility_breakout",
+    "swing_ema",
+    "swing_rsi",
+    "swing_donchian"
   ],
   "data": {
-    "symbols": ["AAPL", "MSFT", "SPY", "TLT", "GLD", "QQQ", "DBMF", "SHY"],
+    "symbols": ["AAPL", "QQQ", "SPY", "TSLA", "NVDA", "MSFT", "META", "NFLX"],
     "interval": "1d",
-    "lookback_days": 365
+    "lookback_days": 365,
+    "data_source": "yfinance",
+    "auto_adjust": true,
+    "prepost": false,
+    "train_ratio": 0.8
   },
   "evaluator": {
     "portfolio_mode": true
@@ -36,14 +38,49 @@
     "risk_free_rate": 0.02,
     "target_volatility": 0.15,
     "min_weight": 0.0,
-    "max_weight": 0.6
+    "max_weight": 0.6,
+    "short_weight_limit": 0.2
   },
   "trading": {
     "initial_capital": 100000,
-    "commission": 0.0005,
-    "slippage": 0.0002,
-    "slippage_settings": {
-      "default_slippage": 0.0005
+    "commission": 0.001,
+    "slippage": 0.0005,
+    "position_sizing": "fixed",
+    "fixed_position_size": 0.1
+  },
+  "researcher": {
+    "optimization_method": "bayesian_optimization",
+    "optimization_settings": {
+      "bayesian_optimization": {
+        "n_trials": 50,
+        "n_startup_trials": 5,
+        "early_stopping_patience": 10
+      },
+      "grid_search": {
+        "max_combinations": 100
+      }
+    },
+    "evaluation_metrics": {
+      "weights": {
+        "sharpe_ratio": 0.25,
+        "sortino_ratio": 0.20,
+        "calmar_ratio": 0.15,
+        "profit_factor": 0.20,
+        "win_rate": 0.20
+      }
+    },
+    "risk_penalties": {
+      "max_drawdown_threshold": 0.20,
+      "max_drawdown_penalty": 0.5,
+      "volatility_threshold": 0.30,
+      "volatility_penalty": 0.3
+    },
+    "performance_thresholds": {
+      "min_return_threshold": 0.0,
+      "min_sharpe_ratio": -1.0,
+      "min_profit_factor": 0.0,
+      "min_win_rate": 0.0,
+      "min_trades": 1
     }
   },
   "cleaner": {

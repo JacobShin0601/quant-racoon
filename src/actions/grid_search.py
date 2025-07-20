@@ -35,7 +35,7 @@ class OptimizationResult:
     optimization_method: str
     execution_time: float
     n_combinations_tested: int
-    symbol: str = None
+    symbol: str = ""
 
 
 class HyperparameterOptimizer:
@@ -56,6 +56,9 @@ class HyperparameterOptimizer:
             return {}
         except json.JSONDecodeError:
             self.logger.error(f"설정 파일 형식이 잘못되었습니다: {config_path}")
+            return {}
+        except Exception as e:
+            self.logger.error(f"설정 파일 로드 중 오류: {e}")
             return {}
 
     def generate_parameter_combinations(
@@ -105,67 +108,88 @@ class HyperparameterOptimizer:
         random_sampling: bool = True,
         sampling_ratio: float = 0.3,
         timeout_per_combination: int = 300,
+        quiet_mode: bool = False,
     ) -> OptimizationResult:
         """그리드 서치 최적화"""
-
-        self.logger.info(f"🔍 {strategy_name} 그리드 서치 시작")
         start_time = time.time()
+        if not quiet_mode:
+            self.logger.info(f"🔍 {strategy_name} 그리드 서치 시작")
 
         # 파라미터 조합 생성
         combinations = self.generate_parameter_combinations(
             param_ranges, max_combinations, random_sampling, sampling_ratio
         )
 
+        if not quiet_mode:
+            self.logger.info(f"📊 총 {len(combinations)}개 조합 테스트 예정")
+
         best_score = float("-inf")
         best_params = None
         all_results = []
 
-        for i, params in enumerate(combinations):
+        for i, params in enumerate(combinations, 1):
             try:
-                self.logger.info(f"  테스트 {i+1}/{len(combinations)}: {params}")
+                if not quiet_mode:
+                    self.logger.info(f"  테스트 {i}/{len(combinations)}: {params}")
 
                 # 타임아웃 설정
-                start_eval = time.time()
-                score = evaluation_function(params)
-                eval_time = time.time() - start_eval
+                import signal
 
-                result = {
-                    "params": params,
-                    "score": score,
-                    "evaluation_time": eval_time,
-                    "combination_index": i,
-                }
-                all_results.append(result)
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("평가 시간 초과")
+
+                # 타임아웃 설정 (Unix 시스템에서만)
+                if hasattr(signal, "SIGALRM"):
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(timeout_per_combination)
+
+                try:
+                    score = evaluation_function(params)
+
+                    # 타임아웃 해제
+                    if hasattr(signal, "SIGALRM"):
+                        signal.alarm(0)
+
+                except TimeoutError:
+                    if not quiet_mode:
+                        self.logger.warning(f"  ⏰ 테스트 {i} 시간 초과")
+                    score = -999999.0
+                except Exception as e:
+                    if not quiet_mode:
+                        self.logger.error(f"  ❌ 테스트 {i} 오류: {e}")
+                    score = -999999.0
+
+                all_results.append({"params": params, "score": score})
 
                 if score > best_score:
                     best_score = score
                     best_params = params
-                    self.logger.info(f"    🎯 새로운 최고 점수: {score:.4f}")
+                    if not quiet_mode:
+                        self.logger.info(f"  🎯 새로운 최고 점수: {best_score:.4f}")
 
             except Exception as e:
-                self.logger.warning(
-                    f"    ⚠️ 파라미터 조합 {params} 평가 중 오류: {str(e)}"
-                )
-                continue
+                if not quiet_mode:
+                    self.logger.error(f"  ❌ 테스트 {i} 실행 중 오류: {e}")
+                all_results.append({"params": params, "score": -999999.0})
 
         execution_time = time.time() - start_time
 
-        result = OptimizationResult(
+        if not quiet_mode:
+            self.logger.info(f"✅ {strategy_name} 그리드 서치 완료")
+            self.logger.info(f"   최고 점수: {best_score:.4f}")
+            self.logger.info(f"   최적 파라미터: {best_params}")
+            self.logger.info(f"   실행 시간: {execution_time:.2f}초")
+
+        return OptimizationResult(
             strategy_name=strategy_name,
-            best_params=best_params,
+            best_params=best_params or {},
             best_score=best_score,
             all_results=all_results,
             optimization_method="grid_search",
             execution_time=execution_time,
-            n_combinations_tested=len(all_results),
+            n_combinations_tested=len(combinations),
+            symbol="",
         )
-
-        self.logger.info(f"✅ {strategy_name} 그리드 서치 완료")
-        self.logger.info(f"   최고 점수: {best_score:.4f}")
-        self.logger.info(f"   최적 파라미터: {best_params}")
-        self.logger.info(f"   실행 시간: {execution_time:.2f}초")
-
-        return result
 
     def bayesian_optimization(
         self,
@@ -174,6 +198,7 @@ class HyperparameterOptimizer:
         evaluation_function: Callable,
         n_trials: int = 100,
         n_startup_trials: int = 10,
+        quiet_mode: bool = False,
     ) -> OptimizationResult:
         """베이지안 최적화 (Optuna 사용)"""
 
@@ -183,9 +208,19 @@ class HyperparameterOptimizer:
             self.logger.error(
                 "Optuna가 설치되지 않았습니다. pip install optuna로 설치해주세요."
             )
-            return None
+            return OptimizationResult(
+                strategy_name=strategy_name,
+                best_params={},
+                best_score=float("-inf"),
+                all_results=[],
+                optimization_method="bayesian_optimization",
+                execution_time=0.0,
+                n_combinations_tested=0,
+                symbol="",
+            )
 
-        self.logger.info(f"🔍 {strategy_name} 베이지안 최적화 시작")
+        if not quiet_mode:
+            self.logger.info(f"🔍 {strategy_name} 베이지안 최적화 시작")
         start_time = time.time()
 
         def objective(trial):
@@ -213,7 +248,7 @@ class HyperparameterOptimizer:
 
         # Optuna 스터디 생성
         study = optuna.create_study(direction="maximize")
-        study.optimize(objective, n_trials=n_trials, n_startup_trials=n_startup_trials)
+        study.optimize(objective, n_trials=n_trials)
 
         execution_time = time.time() - start_time
 
@@ -237,12 +272,14 @@ class HyperparameterOptimizer:
             optimization_method="bayesian_optimization",
             execution_time=execution_time,
             n_combinations_tested=len(all_results),
+            symbol="",
         )
 
-        self.logger.info(f"✅ {strategy_name} 베이지안 최적화 완료")
-        self.logger.info(f"   최고 점수: {study.best_value:.4f}")
-        self.logger.info(f"   최적 파라미터: {study.best_params}")
-        self.logger.info(f"   실행 시간: {execution_time:.2f}초")
+        if not quiet_mode:
+            self.logger.info(f"✅ {strategy_name} 베이지안 최적화 완료")
+            self.logger.info(f"   최고 점수: {study.best_value:.4f}")
+            self.logger.info(f"   최적 파라미터: {study.best_params}")
+            self.logger.info(f"   실행 시간: {execution_time:.2f}초")
 
         return result
 
@@ -255,10 +292,12 @@ class HyperparameterOptimizer:
         generations: int = 20,
         mutation_rate: float = 0.1,
         crossover_rate: float = 0.8,
+        quiet_mode: bool = False,
     ) -> OptimizationResult:
         """유전 알고리즘 최적화"""
 
-        self.logger.info(f"🔍 {strategy_name} 유전 알고리즘 시작")
+        if not quiet_mode:
+            self.logger.info(f"🔍 {strategy_name} 유전 알고리즘 시작")
         start_time = time.time()
 
         # 초기 개체군 생성
@@ -268,7 +307,8 @@ class HyperparameterOptimizer:
         all_results = []
 
         for generation in range(generations):
-            self.logger.info(f"  세대 {generation + 1}/{generations}")
+            if not quiet_mode:
+                self.logger.info(f"  세대 {generation + 1}/{generations}")
 
             # 적합도 평가
             fitness_scores = []
@@ -288,11 +328,13 @@ class HyperparameterOptimizer:
                     if score > best_score:
                         best_score = score
                         best_params = individual
-                        self.logger.info(f"    🎯 새로운 최고 점수: {score:.4f}")
+                        if not quiet_mode:
+                            self.logger.info(f"    🎯 새로운 최고 점수: {score:.4f}")
 
                 except Exception as e:
                     fitness_scores.append(float("-inf"))
-                    self.logger.warning(f"    ⚠️ 개체 평가 중 오류: {str(e)}")
+                    if not quiet_mode:
+                        self.logger.warning(f"    ⚠️ 개체 평가 중 오류: {str(e)}")
 
             # 선택, 교차, 돌연변이
             if generation < generations - 1:  # 마지막 세대가 아니면
@@ -308,18 +350,20 @@ class HyperparameterOptimizer:
 
         result = OptimizationResult(
             strategy_name=strategy_name,
-            best_params=best_params,
+            best_params=best_params or {},
             best_score=best_score,
             all_results=all_results,
             optimization_method="genetic_algorithm",
             execution_time=execution_time,
             n_combinations_tested=len(all_results),
+            symbol="",
         )
 
-        self.logger.info(f"✅ {strategy_name} 유전 알고리즘 완료")
-        self.logger.info(f"   최고 점수: {best_score:.4f}")
-        self.logger.info(f"   최적 파라미터: {best_params}")
-        self.logger.info(f"   실행 시간: {execution_time:.2f}초")
+        if not quiet_mode:
+            self.logger.info(f"✅ {strategy_name} 유전 알고리즘 완료")
+            self.logger.info(f"   최고 점수: {best_score:.4f}")
+            self.logger.info(f"   최적 파라미터: {best_params}")
+            self.logger.info(f"   실행 시간: {execution_time:.2f}초")
 
         return result
 
@@ -453,8 +497,12 @@ class HyperparameterOptimizer:
             results_dict.append(result_dict)
 
         json_path = os.path.join(output_dir, f"optimization_results_{timestamp}.json")
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(results_dict, f, indent=2, ensure_ascii=False)
+        try:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(results_dict, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            self.logger.error(f"JSON 파일 저장 중 오류: {e}")
+            raise
 
         # CSV 형태로 저장 (요약)
         summary_data = []
@@ -473,7 +521,11 @@ class HyperparameterOptimizer:
 
         df = pd.DataFrame(summary_data)
         csv_path = os.path.join(output_dir, f"optimization_summary_{timestamp}.csv")
-        df.to_csv(csv_path, index=False, encoding="utf-8")
+        try:
+            df.to_csv(csv_path, index=False, encoding="utf-8")
+        except Exception as e:
+            self.logger.error(f"CSV 파일 저장 중 오류: {e}")
+            raise
 
         self.logger.info(f"결과 저장 완료:")
         self.logger.info(f"  JSON: {json_path}")

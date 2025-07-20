@@ -1,1188 +1,240 @@
 {
   "research_config": {
-    "experiment_name": "hyperparameter_optimization_20250716",
-    "description": "전략별 하이퍼파라미터 최적화 실험",
+    "experiment_name": "individual_stock_optimization_20250720",
+    "description": "개별 종목별 전략 하이퍼파라미터 최적화 (베이지안 최적화)",
     "data_dir": "data",
     "log_dir": "log",
     "results_dir": "results",
-    "source_config": "config_long.json",
-    "_comment_source_config": "자동 감지: 'auto_detect' 또는 특정 파일명 (config_long.json, config_swing.json, config_scalping.json)",
-    "optimization_metric": "sharpe_ratio",
+    "source_config": "config_swing.json",
     "cross_validation_folds": 3,
     "random_state": 42,
-    "max_combinations_per_strategy": 50,
+    "max_combinations_per_strategy": 100,
     "timeout_per_combination": 300
   },
+  
+  "optimization_settings": {
+    "default_method": "bayesian_optimization",
+    "grid_search": {
+      "enabled": true,
+      "max_combinations": 100,
+      "random_sampling": true,
+      "sampling_ratio": 0.3
+    },
+    "bayesian_optimization": {
+      "enabled": true,
+      "n_trials": 50,
+      "n_startup_trials": 5,
+      "n_ei_candidates": 24,
+      "random_state": 42,
+      "early_stopping": true,
+      "early_stopping_patience": 10
+    },
+    "genetic_algorithm": {
+      "enabled": false,
+      "population_size": 50,
+      "generations": 20,
+      "mutation_rate": 0.1,
+      "crossover_rate": 0.8
+    }
+  },
+  
   "strategies": {
     "dual_momentum": {
       "description": "추세⇄평균회귀 듀얼 모멘텀 전략",
       "param_ranges": {
-        "donchian_period": [
-          5,
-          8,
-          10,
-          12,
-          15,
-          20
-        ],
-        "rsi_period": [
-          5,
-          8,
-          10,
-          12,
-          14,
-          16
-        ],
-        "rsi_oversold": [
-          15,
-          20,
-          25,
-          30,
-          35,
-          40
-        ],
-        "rsi_overbought": [
-          60,
-          65,
-          70,
-          75,
-          80,
-          85
-        ],
-        "momentum_period": [
-          3,
-          5,
-          8,
-          10,
-          12,
-          15
-        ],
-        "momentum_threshold": [
-          0.005,
-          0.01,
-          0.015,
-          0.02,
-          0.03,
-          0.05
-        ]
+        "donchian_period": [20, 30, 40, 50],
+        "rsi_period": [14, 20, 30],
+        "rsi_oversold": [25, 30, 35],
+        "rsi_overbought": [65, 70, 75],
+        "momentum_period": [10, 20, 30],
+        "momentum_threshold": [0.02, 0.03, 0.05, 0.08]
       }
     },
     "volatility_breakout": {
       "description": "변동성 조정 채널 브레이크아웃 전략",
       "param_ranges": {
-        "keltner_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "keltner_multiplier": [
-          1.5,
-          2.0,
-          2.5,
-          3.0
-        ],
-        "volume_period": [
-          15,
-          20,
-          25
-        ],
-        "volume_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "volatility_period": [
-          15,
-          20,
-          25
-        ],
-        "volatility_threshold": [
-          0.3,
-          0.5,
-          0.7,
-          0.9
-        ]
+        "keltner_period": [15, 20, 25, 30],
+        "keltner_multiplier": [1.5, 2.0, 2.5, 3.0],
+        "volume_period": [15, 20, 25],
+        "volume_threshold": [0.6, 0.8, 1.0, 1.2],
+        "volatility_period": [15, 20, 25],
+        "volatility_threshold": [0.3, 0.5, 0.7, 0.9]
       }
     },
     "swing_ema": {
       "description": "중기 이동평균 돌파 스윙 트레이딩 전략",
       "param_ranges": {
-        "ema_short_period": [
-          10,
-          15,
-          20,
-          25
-        ],
-        "ema_long_period": [
-          30,
-          40,
-          50,
-          60
-        ],
-        "min_holding_days": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "max_holding_days": [
-          10,
-          15,
-          20,
-          25
-        ],
-        "slope_period": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "volume_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "volatility_threshold": [
-          0.3,
-          0.5,
-          0.7,
-          0.9
-        ]
+        "ema_short_period": [20, 30, 40, 50],
+        "ema_long_period": [50, 60, 80, 100],
+        "min_holding_days": [5, 7, 10, 15],
+        "max_holding_days": [15, 20, 30, 40],
+        "slope_period": [5, 7, 10, 15],
+        "volume_threshold": [0.8, 1.0, 1.2, 1.5],
+        "volatility_threshold": [0.3, 0.5, 0.7, 0.9]
       }
     },
     "swing_rsi": {
       "description": "RSI 리버설 스윙 트레이딩 전략",
       "param_ranges": {
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "rsi_oversold": [
-          20,
-          25,
-          30,
-          35
-        ],
-        "rsi_overbought": [
-          65,
-          70,
-          75,
-          80
-        ],
-        "min_holding_days": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "max_holding_days": [
-          7,
-          10,
-          15,
-          20
-        ],
-        "rsi_momentum_period": [
-          2,
-          3,
-          5
-        ],
-        "price_momentum_period": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "volume_threshold": [
-          0.5,
-          0.7,
-          0.9,
-          1.1
-        ]
+        "rsi_period": [10, 14, 20],
+        "rsi_oversold": [20, 25, 30, 35],
+        "rsi_overbought": [65, 70, 75, 80],
+        "min_holding_days": [3, 5, 7, 10],
+        "max_holding_days": [7, 10, 15, 20],
+        "rsi_momentum_period": [2, 3, 5],
+        "price_momentum_period": [3, 5, 7, 10],
+        "volume_threshold": [0.5, 0.7, 0.9, 1.1]
       }
     },
     "swing_donchian": {
       "description": "Donchian Channel 돌파 스윙 트레이딩 전략",
       "param_ranges": {
-        "donchian_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "min_holding_days": [
-          5,
-          7,
-          10,
-          15
-        ],
-        "max_holding_days": [
-          10,
-          15,
-          20,
-          25
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "volatility_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "breakout_strength_threshold": [
-          0.003,
-          0.005,
-          0.008,
-          0.01
-        ]
-      }
-    },
-    "stochastic": {
-      "description": "Stochastic Oscillator 기반 전략",
-      "param_ranges": {
-        "k_period": [
-          10,
-          14,
-          20
-        ],
-        "d_period": [
-          2,
-          3,
-          5
-        ],
-        "low_threshold": [
-          15,
-          20,
-          25
-        ],
-        "high_threshold": [
-          75,
-          80,
-          85
-        ]
-      }
-    },
-    "williams_r": {
-      "description": "Williams %R 기반 전략",
-      "param_ranges": {
-        "period": [
-          10,
-          14,
-          20
-        ],
-        "low_threshold": [
-          -85,
-          -80,
-          -75
-        ],
-        "high_threshold": [
-          -25,
-          -20,
-          -15
-        ]
-      }
-    },
-    "cci": {
-      "description": "CCI 기반 전략",
-      "param_ranges": {
-        "period": [
-          15,
-          20,
-          25
-        ],
-        "threshold": [
-          80,
-          100,
-          120,
-          150
-        ]
-      }
-    },
-    "whipsaw_prevention": {
-      "description": "휩쏘 방지 전략",
-      "param_ranges": {
-        "ema_short": [
-          8,
-          10,
-          12,
-          15
-        ],
-        "ema_long": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "atr_period": [
-          10,
-          14,
-          20
-        ],
-        "signal_confirmation_period": [
-          2,
-          3,
-          5
-        ],
-        "volume_threshold": [
-          1.2,
-          1.5,
-          1.8,
-          2.0
-        ],
-        "volatility_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "trend_strength_threshold": [
-          0.015,
-          0.02,
-          0.025,
-          0.03
-        ],
-        "min_holding_period": [
-          3,
-          5,
-          7,
-          10
-        ]
-      }
-    },
-    "donchian_rsi_whipsaw": {
-      "description": "Donchian + RSI 듀얼 모멘텀 휩쏘 방지 전략",
-      "param_ranges": {
-        "donchian_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "rsi_oversold": [
-          20,
-          25,
-          30,
-          35
-        ],
-        "rsi_overbought": [
-          65,
-          70,
-          75,
-          80
-        ],
-        "breakout_confirmation_period": [
-          1,
-          2,
-          3
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          2,
-          3,
-          5,
-          7
-        ]
-      }
-    },
-    "volatility_filtered_breakout": {
-      "description": "변동성 필터링 브레이크아웃 휩쏘 방지 전략",
-      "param_ranges": {
-        "breakout_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "breakout_threshold": [
-          0.005,
-          0.01,
-          0.015,
-          0.02
-        ],
-        "atr_period": [
-          10,
-          14,
-          20
-        ],
-        "volatility_lookback": [
-          30,
-          50,
-          70
-        ],
-        "volatility_quantile": [
-          0.3,
-          0.5,
-          0.7
-        ],
-        "volume_period": [
-          15,
-          20,
-          25
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "confirmation_period": [
-          1,
-          2,
-          3
-        ],
-        "min_holding_period": [
-          2,
-          3,
-          5,
-          7
-        ]
-      }
-    },
-    "multi_timeframe_whipsaw": {
-      "description": "다중 시간 프레임 휩쏘 방지 전략",
-      "param_ranges": {
-        "short_period": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "medium_period": [
-          7,
-          10,
-          15,
-          20
-        ],
-        "long_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "rsi_oversold": [
-          20,
-          25,
-          30,
-          35
-        ],
-        "rsi_overbought": [
-          65,
-          70,
-          75,
-          80
-        ],
-        "volume_threshold": [
-          1.1,
-          1.3,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          3,
-          5,
-          7,
-          10
-        ]
-      }
-    },
-    "adaptive_whipsaw": {
-      "description": "적응형 휩쏘 방지 전략",
-      "param_ranges": {
-        "ema_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "atr_period": [
-          10,
-          14,
-          20
-        ],
-        "volatility_lookback": [
-          30,
-          50,
-          70
-        ],
-        "trend_lookback": [
-          15,
-          20,
-          25
-        ],
-        "volume_lookback": [
-          15,
-          20,
-          25
-        ],
-        "base_volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "base_volatility_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "base_holding_period": [
-          3,
-          5,
-          7,
-          10
-        ]
-      }
-    },
-    "cci_bollinger": {
-      "description": "CCI + Bollinger Band 결합 전략",
-      "param_ranges": {
-        "cci_period": [
-          15,
-          20,
-          25
-        ],
-        "cci_oversold": [
-          -120,
-          -100,
-          -80
-        ],
-        "cci_overbought": [
-          80,
-          100,
-          120
-        ],
-        "bb_period": [
-          15,
-          20,
-          25
-        ],
-        "bb_std": [
-          1.5,
-          2.0,
-          2.5
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          2,
-          3,
-          5,
-          7
-        ]
+        "donchian_period": [10, 15, 20, 25],
+        "min_holding_days": [3, 5, 7, 10],
+        "max_holding_days": [7, 10, 15, 20],
+        "volume_threshold": [0.8, 1.0, 1.2, 1.5],
+        "volatility_threshold": [0.5, 0.6, 0.8, 1.0],
+        "breakout_strength_threshold": [0.002, 0.003, 0.005, 0.008]
       }
     },
     "stoch_donchian": {
-      "description": "Stoch %K 교차 + Donchian 채널 전략",
+      "description": "Stochastic + Donchian Channel 조합 전략",
       "param_ranges": {
-        "stoch_k_period": [
-          10,
-          14,
-          20
-        ],
-        "stoch_d_period": [
-          2,
-          3,
-          5
-        ],
-        "stoch_low_threshold": [
-          15,
-          20,
-          25
-        ],
-        "stoch_high_threshold": [
-          75,
-          80,
-          85
-        ],
-        "donchian_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          2,
-          3,
-          5,
-          7
-        ],
-        "confirmation_period": [
-          1,
-          2,
-          3
-        ]
+        "donchian_period": [10, 15, 20, 25],
+        "stoch_k_period": [5, 8, 10, 12],
+        "stoch_d_period": [3, 5, 7],
+        "stoch_oversold": [15, 20, 25, 30],
+        "stoch_overbought": [70, 75, 80, 85],
+        "volume_threshold": [0.6, 0.8, 1.0, 1.2]
       }
     },
-    "vwap_macd_scalping": {
-      "description": "VWAP + MACD 스켈핑 전략",
+    "whipsaw_prevention": {
+      "description": "Whipsaw 방지 전략 - 노이즈 필터링",
       "param_ranges": {
-        "vwap_period": [
-          15,
-          20,
-          25
-        ],
-        "macd_fast": [
-          8,
-          12,
-          16
-        ],
-        "macd_slow": [
-          20,
-          26,
-          32
-        ],
-        "macd_signal": [
-          5,
-          9,
-          13
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          1,
-          2,
-          3,
-          5
-        ],
-        "max_holding_period": [
-          5,
-          7,
-          10,
-          15
-        ]
+        "atr_period": [8, 10, 14, 20],
+        "atr_multiplier": [1.0, 1.5, 2.0, 2.5],
+        "volume_filter_period": [8, 10, 15, 20],
+        "volume_threshold": [0.6, 0.8, 1.0, 1.2],
+        "confirmation_candles": [1, 2, 3]
       }
     },
-    "keltner_rsi_scalping": {
-      "description": "Keltner Channel + RSI 스켈핑 전략",
+    "donchian_rsi_whipsaw": {
+      "description": "Donchian + RSI + Whipsaw 방지 전략",
       "param_ranges": {
-        "keltner_period": [
-          15,
-          20,
-          25
-        ],
-        "keltner_multiplier": [
-          1.5,
-          2.0,
-          2.5
-        ],
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "rsi_oversold": [
-          20,
-          25,
-          30,
-          35
-        ],
-        "rsi_overbought": [
-          65,
-          70,
-          75,
-          80
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          1,
-          2,
-          3,
-          5
-        ],
-        "max_holding_period": [
-          5,
-          7,
-          10,
-          15
-        ]
+        "donchian_period": [15, 20, 25, 30],
+        "rsi_period": [10, 14, 20],
+        "rsi_oversold": [20, 25, 30, 35],
+        "rsi_overbought": [65, 70, 75, 80],
+        "atr_period": [10, 14, 20],
+        "atr_multiplier": [1.5, 2.0, 2.5]
       }
     },
-    "absorption_scalping": {
-      "description": "거래량 흡수 스켈핑 전략",
+    "volatility_filtered_breakout": {
+      "description": "변동성 필터링된 브레이크아웃 전략",
       "param_ranges": {
-        "volume_period": [
-          15,
-          20,
-          25
-        ],
-        "volume_threshold": [
-          1.5,
-          2.0,
-          2.5,
-          3.0
-        ],
-        "price_momentum_period": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "momentum_threshold": [
-          0.005,
-          0.01,
-          0.015,
-          0.02
-        ],
-        "atr_period": [
-          10,
-          14,
-          20
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          1,
-          2,
-          3,
-          5
-        ],
-        "max_holding_period": [
-          5,
-          7,
-          10,
-          15
-        ]
+        "breakout_period": [15, 20, 25, 30],
+        "volatility_period": [10, 15, 20],
+        "volatility_threshold": [0.3, 0.5, 0.7, 0.9],
+        "volume_period": [10, 15, 20],
+        "volume_threshold": [0.8, 1.0, 1.2, 1.5]
       }
     },
-    "rsi_bollinger_scalping": {
-      "description": "RSI + Bollinger Band 스켈핑 전략",
+    "multi_timeframe_whipsaw": {
+      "description": "멀티 타임프레임 Whipsaw 방지 전략",
       "param_ranges": {
-        "rsi_period": [
-          10,
-          14,
-          20
-        ],
-        "rsi_oversold": [
-          20,
-          25,
-          30,
-          35
-        ],
-        "rsi_overbought": [
-          65,
-          70,
-          75,
-          80
-        ],
-        "bb_period": [
-          15,
-          20,
-          25
-        ],
-        "bb_std": [
-          1.5,
-          2.0,
-          2.5
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ],
-        "atr_threshold": [
-          0.6,
-          0.8,
-          1.0,
-          1.2
-        ],
-        "min_holding_period": [
-          1,
-          2,
-          3,
-          5
-        ],
-        "max_holding_period": [
-          5,
-          7,
-          10,
-          15
-        ]
+        "short_period": [5, 8, 10, 12],
+        "medium_period": [15, 20, 25, 30],
+        "long_period": [40, 50, 60],
+        "atr_period": [10, 14, 20],
+        "atr_multiplier": [1.5, 2.0, 2.5]
       }
     },
-    "buy_hold": {
-      "description": "매수 후 보유 전략 (벤치마크)",
-      "param_ranges": {}
-    },
-    "fixed_weight_rebalance": {
-      "description": "고정 비중 리밸런싱 전략",
+    "adaptive_whipsaw": {
+      "description": "적응형 Whipsaw 방지 전략",
       "param_ranges": {
-        "rebalance_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "weight_method": [
-          "equal",
-          "market_cap",
-          "risk_parity"
-        ]
+        "base_period": [10, 15, 20, 25],
+        "adaptation_factor": [0.3, 0.5, 0.7, 1.0],
+        "volatility_lookback": [8, 10, 15, 20],
+        "volume_lookback": [8, 10, 15, 20]
       }
     },
-    "etf_momentum_rotation": {
-      "description": "ETF 모멘텀 로테이션 전략",
+    "cci_bollinger": {
+      "description": "CCI + Bollinger Band 조합 전략",
       "param_ranges": {
-        "momentum_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "lookback_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "top_n": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "rebalance_period": [
-          30,
-          60,
-          90,
-          120
-        ]
+        "cci_period": [10, 14, 20],
+        "cci_oversold": [-100, -80, -60],
+        "cci_overbought": [60, 80, 100],
+        "bb_period": [15, 20, 25, 30],
+        "bb_std": [1.5, 2.0, 2.5, 3.0]
       }
     },
-    "trend_following_ma20": {
-      "description": "20일 이동평균 추세 추종 전략",
+    "mean_reversion": {
+      "description": "평균회귀 전략 - 극단적 가격에서 반전 기대",
       "param_ranges": {
-        "ma_period": [
-          15,
-          20,
-          25,
-          30
-        ],
-        "atr_period": [
-          10,
-          14,
-          20
-        ],
-        "atr_multiplier": [
-          1.5,
-          2.0,
-          2.5,
-          3.0
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ]
+        "lookback_period": [20, 30, 40, 50],
+        "std_multiplier": [1.5, 2.0, 2.5, 3.0],
+        "rsi_period": [10, 14, 20],
+        "rsi_oversold": [20, 25, 30, 35],
+        "rsi_overbought": [65, 70, 75, 80]
       }
     },
-    "return_stacking": {
-      "description": "수익률 스태킹 전략",
+    "swing_breakout": {
+      "description": "스윙 브레이크아웃 전략 - 주요 저항/지지선 돌파",
       "param_ranges": {
-        "lookback_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "momentum_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "volatility_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "rebalance_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "max_leverage": [
-          1.0,
-          1.5,
-          2.0,
-          2.5
-        ]
+        "breakout_period": [15, 20, 25, 30],
+        "confirmation_period": [2, 3, 5],
+        "volume_threshold": [1.0, 1.2, 1.5, 1.8],
+        "price_threshold": [0.005, 0.01, 0.015, 0.02]
       }
     },
-    "risk_parity_leverage": {
-      "description": "리스크 패리티 레버리지 전략",
+    "swing_pullback_entry": {
+      "description": "스윙 풀백 진입 전략 - 브레이크아웃 후 조정 시 진입",
       "param_ranges": {
-        "target_volatility": [
-          0.05,
-          0.1,
-          0.15,
-          0.2
-        ],
-        "lookback_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "rebalance_period": [
-          30,
-          60,
-          90,
-          120
-        ],
-        "max_leverage": [
-          1.0,
-          1.5,
-          2.0,
-          2.5
-        ]
+        "breakout_period": [15, 20, 25, 30],
+        "pullback_period": [3, 5, 7, 10],
+        "retracement_threshold": [0.3, 0.5, 0.7],
+        "volume_confirmation": [true, false]
       }
     },
-    "trend_following_ma200": {
-      "description": "200일 이동평균 추세 추종 전략",
+    "swing_candle_pattern": {
+      "description": "스윙 캔들 패턴 기반 전략 - 장악형, 십자형 등 활용",
       "param_ranges": {
-        "ma_period": [
-          150,
-          200,
-          250,
-          300
-        ],
-        "atr_period": [
-          10,
-          14,
-          20
-        ],
-        "atr_multiplier": [
-          1.5,
-          2.0,
-          2.5,
-          3.0
-        ],
-        "volume_threshold": [
-          1.0,
-          1.2,
-          1.5,
-          1.8
-        ]
+        "body_threshold": [0.4, 0.5, 0.6, 0.7],
+        "shadow_threshold": [0.2, 0.3, 0.4, 0.5],
+        "confirmation_period": [2, 3, 5],
+        "volume_confirmation": [true, false]
+      }
+    },
+    "swing_bollinger_band": {
+      "description": "스윙 볼린저 밴드 전략 - 밴드 하단 터치 시 매수, 상단 터치 시 매도",
+      "param_ranges": {
+        "bb_period": [15, 20, 25, 30],
+        "bb_std": [1.5, 2.0, 2.5, 3.0],
+        "rsi_period": [10, 14, 20],
+        "rsi_oversold": [25, 30, 35, 40],
+        "rsi_overbought": [60, 65, 70, 75],
+        "confirmation_candles": [1, 2, 3]
       }
     },
     "swing_macd": {
-      "description": "MACD 스윙 트레이딩 전략",
+      "description": "스윙 MACD 전략 - MACD 신호선 교차 기반 매매",
       "param_ranges": {
-        "macd_fast": [
-          8,
-          12,
-          16
-        ],
-        "macd_slow": [
-          20,
-          26,
-          32
-        ],
-        "macd_signal": [
-          5,
-          9,
-          13
-        ],
-        "min_holding_days": [
-          3,
-          5,
-          7,
-          10
-        ],
-        "max_holding_days": [
-          7,
-          10,
-          15,
-          20
-        ],
-        "volume_threshold": [
-          0.8,
-          1.0,
-          1.2,
-          1.5
-        ]
+        "macd_fast": [8, 10, 12, 15],
+        "macd_slow": [20, 25, 30, 35],
+        "macd_signal": [7, 9, 12, 15],
+        "min_holding_days": [3, 5, 7, 10],
+        "max_holding_days": [10, 15, 20, 25],
+        "volume_threshold": [0.8, 1.0, 1.2, 1.5],
+        "trend_confirmation": [true, false]
       }
     }
   },
-  "optimization_settings": {
-    "algorithm": "bayesian_optimization",
-    "n_trials": 100,
-    "timeout": 3600,
-    "n_jobs": -1,
-    "random_state": 42,
-    "early_stopping": true,
-    "early_stopping_patience": 10
-  },
-  "evaluation_settings": {
-    "metrics": [
-      "sharpe_ratio",
-      "sortino_ratio",
-      "calmar_ratio",
-      "max_drawdown",
-      "total_return"
-    ],
-    "benchmark": "buy_hold",
-    "risk_free_rate": 0.02,
-    "transaction_cost": 0.001,
-    "slippage": 0.0005
-  },
+
   "reporting_settings": {
     "generate_plots": true,
     "save_results": true,
-    "export_format": [
-      "json",
-      "csv",
-      "excel"
-    ],
+    "export_format": ["json", "csv", "excel"],
     "create_summary_report": true,
     "include_parameter_importance": true
-  },
-  "portfolio": {
-    "symbols": [
-      "AAPL",
-      "MSFT",
-      "SPY",
-      "TLT",
-      "GLD",
-      "QQQ",
-      "DBMF",
-      "SHY"
-    ],
-    "weight_calculation_method": "risk_parity",
-    "weight_methods": {
-      "equal_weight": {
-        "enabled": true
-      },
-      "volatility_inverse": {
-        "enabled": true,
-        "lookback_period": 30
-      },
-      "risk_parity": {
-        "enabled": true,
-        "target_volatility": 0.15,
-        "max_iterations": 1000
-      },
-      "momentum_weight": {
-        "enabled": true,
-        "momentum_period": 20,
-        "top_n_symbols": 3
-      },
-      "min_variance": {
-        "enabled": true,
-        "lookback_period": 60
-      }
-    },
-    "rebalance_period": 60,
-    "risk_free_rate": 0.02,
-    "target_volatility": 0.15,
-    "min_weight": 0.0,
-    "max_weight": 0.6
-  },
-  "trading": {
-    "initial_capital": 100000,
-    "commission": 0.0005,
-    "slippage": 0.0002
-  },
-  "simulation_settings": {
-    "enable_detailed_logging": true,
-    "log_trade_details": true,
-    "calculate_metrics": true
   }
-}
+} 

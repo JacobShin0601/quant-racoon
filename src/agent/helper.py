@@ -6,13 +6,14 @@ Agent 공통 유틸리티 및 헬퍼 함수들
 import os
 import json
 import sys
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
 import numpy as np
 import logging
 from pathlib import Path
+from contextlib import contextmanager
 
 
 # 프로젝트 루트를 Python 경로에 추가
@@ -74,6 +75,7 @@ class Logger:
         self.summary_logger = None
         self.summary_log_file = None
         self.evaluation_results = []
+        self._file_handlers = []  # 파일 핸들러 추적
 
     def ensure_log_dir(self):
         """로그 디렉토리 생성"""
@@ -81,16 +83,60 @@ class Logger:
             os.makedirs(self.log_dir)
             print(f"[Logger] 로그 디렉토리 생성: {self.log_dir}")
 
+    def set_log_dir(self, new_log_dir: str):
+        """로그 디렉토리 변경"""
+        self.log_dir = new_log_dir
+        self.ensure_log_dir()
+        print(f"[Logger] 로그 디렉토리 변경: {self.log_dir}")
+
+    def _cleanup_handlers(self, logger_instance):
+        """로거의 핸들러들을 정리하고 파일 핸들러를 닫습니다"""
+        if logger_instance:
+            for handler in logger_instance.handlers[:]:
+                # 파일 핸들러인 경우 close() 호출
+                if isinstance(handler, logging.FileHandler):
+                    handler.close()
+                    if handler in self._file_handlers:
+                        self._file_handlers.remove(handler)
+                logger_instance.removeHandler(handler)
+
+    @contextmanager
+    def _managed_file_handler(self, log_path: str, logger_instance):
+        """파일 핸들러를 관리하는 context manager"""
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
+        file_handler.setLevel(logging.INFO)
+
+        # 포맷터 설정
+        formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
+        file_handler.setFormatter(formatter)
+
+        try:
+            logger_instance.addHandler(file_handler)
+            self._file_handlers.append(file_handler)
+            yield file_handler
+        finally:
+            if file_handler in logger_instance.handlers:
+                logger_instance.removeHandler(file_handler)
+            file_handler.close()
+            if file_handler in self._file_handlers:
+                self._file_handlers.remove(file_handler)
+
     def setup_logger(
         self,
         strategy: str = None,
         symbols: List[str] = None,
         mode: str = "general",
         timestamp: datetime = None,
+        uuid: str = None,
     ) -> str:
         """로거 설정 및 로그 파일명 생성"""
         if timestamp is None:
             timestamp = datetime.now()
+
+        # 로그 디렉토리 확인 및 생성
+        self.ensure_log_dir()
 
         # 로그 파일명 생성
         filename_parts = []
@@ -107,6 +153,10 @@ class Logger:
                 symbols_str += f"_etc{len(symbols)-3}"
             filename_parts.append(symbols_str)
 
+        # UUID가 있으면 파일명에 포함
+        if uuid:
+            filename_parts.append(uuid)
+
         filename_parts.append(timestamp.strftime("%Y%m%d_%H%M%S"))
 
         filename = "_".join(filename_parts) + ".log"
@@ -116,13 +166,8 @@ class Logger:
         self.logger = logging.getLogger(filename)
         self.logger.setLevel(logging.INFO)
 
-        # 기존 핸들러 제거 (중복 방지)
-        for handler in self.logger.handlers[:]:
-            self.logger.removeHandler(handler)
-
-        # 파일 핸들러
-        file_handler = logging.FileHandler(log_path, encoding="utf-8")
-        file_handler.setLevel(logging.INFO)
+        # 기존 핸들러 정리 (파일 핸들러 닫기 포함)
+        self._cleanup_handlers(self.logger)
 
         # 콘솔 핸들러
         console_handler = logging.StreamHandler()
@@ -132,12 +177,17 @@ class Logger:
         formatter = logging.Formatter(
             "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
-        file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
 
-        # 핸들러 추가
-        self.logger.addHandler(file_handler)
+        # 콘솔 핸들러 추가
         self.logger.addHandler(console_handler)
+
+        # 🔥 핵심 수정: 파일 핸들러를 직접 추가하고 유지
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+        self._file_handlers.append(file_handler)
 
         self.log_file = log_path
         print(f"[Logger] 로그 파일 생성: {log_path}")
@@ -150,6 +200,9 @@ class Logger:
         """종합 요약 로거 설정"""
         if timestamp is None:
             timestamp = datetime.now()
+
+        # 로그 디렉토리 확인 및 생성
+        self.ensure_log_dir()
 
         # 종합 요약 로그 파일명 생성
         filename_parts = ["summary"]
@@ -168,13 +221,8 @@ class Logger:
         self.summary_logger = logging.getLogger(f"summary_{filename}")
         self.summary_logger.setLevel(logging.INFO)
 
-        # 기존 핸들러 제거 (중복 방지)
-        for handler in self.summary_logger.handlers[:]:
-            self.summary_logger.removeHandler(handler)
-
-        # 파일 핸들러
-        file_handler = logging.FileHandler(summary_log_path, encoding="utf-8")
-        file_handler.setLevel(logging.INFO)
+        # 기존 핸들러 정리 (파일 핸들러 닫기 포함)
+        self._cleanup_handlers(self.summary_logger)
 
         # 콘솔 핸들러
         console_handler = logging.StreamHandler()
@@ -184,17 +232,41 @@ class Logger:
         formatter = logging.Formatter(
             "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
-        file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
 
-        # 핸들러 추가
-        self.summary_logger.addHandler(file_handler)
+        # 콘솔 핸들러 추가
         self.summary_logger.addHandler(console_handler)
+
+        # 🔥 핵심 수정: 파일 핸들러를 직접 추가하고 유지
+        file_handler = logging.FileHandler(summary_log_path, encoding="utf-8")
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        self.summary_logger.addHandler(file_handler)
+        self._file_handlers.append(file_handler)
 
         self.summary_log_file = summary_log_path
         print(f"[Logger] 종합 요약 로그 파일 생성: {summary_log_path}")
 
         return summary_log_path
+
+    def cleanup(self):
+        """로거 정리 - 모든 핸들러를 닫습니다"""
+        if self.logger:
+            self._cleanup_handlers(self.logger)
+        if self.summary_logger:
+            self._cleanup_handlers(self.summary_logger)
+
+        # 남은 파일 핸들러들 정리
+        for handler in self._file_handlers[:]:
+            try:
+                handler.close()
+            except:
+                pass
+        self._file_handlers.clear()
+
+    def __del__(self):
+        """소멸자에서도 정리 수행"""
+        self.cleanup()
 
     def log_info(self, message: str):
         """정보 로그"""
@@ -455,7 +527,18 @@ class Logger:
 def load_config(config_path: str) -> Dict[str, Any]:
     """통합 설정 파일 로드 (agent 전용)"""
     try:
-        config_file = os.path.join(os.path.dirname(__file__), config_path)
+        # config_path가 절대 경로인지 확인
+        if os.path.isabs(config_path):
+            # 절대 경로인 경우 그대로 사용
+            config_file = config_path
+        else:
+            # 상대 경로인 경우 프로젝트 루트 기준으로 계산
+            current_dir = os.path.dirname(__file__)  # src/agent/
+            project_root = os.path.dirname(
+                os.path.dirname(current_dir)
+            )  # 프로젝트 루트
+            config_file = os.path.join(project_root, config_path)
+
         with open(config_file, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
@@ -490,27 +573,28 @@ def parse_symbol_from_filename(filename: str) -> str:
 
 def get_csv_files_from_dir(data_dir: str, symbols: List[str] = None) -> List[str]:
     """데이터 디렉토리에서 CSV 파일 목록 가져오기"""
+
     if not os.path.exists(data_dir):
-        raise FileNotFoundError(f"데이터 디렉토리 {data_dir}가 존재하지 않습니다.")
+        print(f"❌ 디렉토리가 존재하지 않음: {data_dir}")
+        raise FileNotFoundError(f"데이터 디렉토리를 찾을 수 없습니다: {data_dir}")
 
-    if not symbols:
-        # 모든 CSV 파일 사용
-        csv_files = [f for f in os.listdir(data_dir) if f.endswith(".csv")]
-    else:
-        # 특정 심볼에 해당하는 CSV 파일만 찾기 (정확한 매칭)
-        csv_files = []
-        for sym in symbols:
-            # 심볼명으로 시작하는 파일만 찾기 (예: AAPL_daily_auto_auto_20250717_6ff345ef.csv)
-            matching_files = [
-                f
-                for f in os.listdir(data_dir)
-                if f.endswith(".csv") and f.startswith(f"{sym}_")
-            ]
-            csv_files.extend(matching_files)
+    # 디렉토리 내 모든 파일 확인
+    try:
+        all_files = os.listdir(data_dir)
+        csv_files_in_dir = [f for f in all_files if f.endswith(".csv")]
+    except Exception as e:
+        print(f"❌ os.listdir 오류: {e}")
+        raise
 
-        # 디버깅을 위한 로그 추가
-        print(f"🔍 찾은 CSV 파일들: {csv_files}")
-        print(f"📊 요청된 심볼들: {symbols}")
+    if symbols is None or len(symbols) == 0:
+        # symbols가 None이거나 빈 리스트면 모든 CSV 파일 반환
+        return csv_files_in_dir
+
+    csv_files = []
+    for sym in symbols:
+        # 심볼명으로 시작하는 파일만 찾기 (예: AAPL_daily_auto_auto_20250717_6ff345ef.csv)
+        matching_files = [f for f in csv_files_in_dir if f.startswith(f"{sym}_")]
+        csv_files.extend(matching_files)
 
     if not csv_files:
         raise FileNotFoundError("CSV 파일을 찾을 수 없습니다.")
@@ -673,7 +757,7 @@ def print_subsection_header(title: str, width: int = 50):
 
 
 # 공통 상수
-DEFAULT_CONFIG_PATH = "../../config/config_default.json"
+DEFAULT_CONFIG_PATH = "config/config_default.json"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_REBALANCE_PERIOD = 4
 DEFAULT_RISK_FREE_RATE = 0.02
@@ -745,20 +829,15 @@ def save_analysis_results(
 ) -> str:
     """분석 결과 저장"""
     try:
-        # 분석/최적화/리포트 저장 전에 아래 함수를 호출하여 폴더 구조를 보장하세요:
-        # create_results_folder_structure("results")
-        # create_analysis_folder_structure("analysis")
-        # 분석 타입별 경로 설정
-        if analysis_type == "quant_analysis":
-            base_path = os.path.join(analysis_dir, "quant_analysis")
-        elif analysis_type == "fundamental_analysis":
-            base_path = os.path.join(analysis_dir, "fundamental_analysis")
-        elif analysis_type == "researcher_results":
-            base_path = os.path.join(analysis_dir, "researcher_results")
-        elif analysis_type == "strategy_optimization":
-            base_path = os.path.join(analysis_dir, "strategy_optimization")
+        # analysis_dir이 이미 시간대별 하위폴더를 포함하고 있는지 확인
+        # (예: analysis/long, analysis/swing 등)
+        if os.path.basename(analysis_dir) in ["long", "swing", "scalping"]:
+            # 이미 시간대별 하위폴더가 포함된 경우
+            base_path = os.path.join(analysis_dir, analysis_type)
         else:
-            raise ValueError(f"지원하지 않는 분석 타입: {analysis_type}")
+            # 기본 analysis 폴더인 경우
+            base_path = os.path.join(analysis_dir, analysis_type)
+
         # 디렉토리 생성 (상위 폴더까지)
         os.makedirs(base_path, exist_ok=True)
         # 파일명 생성
@@ -940,3 +1019,184 @@ def create_results_folder_structure(results_dir: str = "results"):
     except Exception as e:
         print(f"❌ 결과 폴더 구조 생성 중 오류: {e}")
         return False
+
+
+def split_data_train_test(
+    data_dict: Dict[str, pd.DataFrame], train_ratio: float = 0.8
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    데이터를 train과 test로 분할
+
+    Args:
+        data_dict: 종목별 데이터 딕셔너리
+        train_ratio: train 데이터 비율 (0.0 ~ 1.0)
+
+    Returns:
+        train_data_dict, test_data_dict
+    """
+    train_data = {}
+    test_data = {}
+
+    for symbol, data in data_dict.items():
+        if data.empty:
+            continue
+
+        # 데이터 포인트 수 계산
+        total_points = len(data)
+        train_points = int(round(total_points * train_ratio))
+
+        # 분할
+        train_data[symbol] = data.iloc[:train_points].copy()
+        test_data[symbol] = data.iloc[train_points:].copy()
+
+        pass
+
+    return train_data, test_data
+
+
+def calculate_buy_hold_returns(
+    data_dict: Dict[str, pd.DataFrame],
+) -> Dict[str, Dict[str, float]]:
+    """
+    Buy & Hold 전략의 수익률 계산
+
+    Args:
+        data_dict: 종목별 데이터 딕셔너리
+
+    Returns:
+        종목별 Buy & Hold 성과 지표
+    """
+    buy_hold_results = {}
+
+    for symbol, data in data_dict.items():
+        if data.empty or "Close" not in data.columns:
+            continue
+
+        try:
+            # 수익률 계산
+            initial_price = data["Close"].iloc[0]
+            final_price = data["Close"].iloc[-1]
+            total_return = (final_price - initial_price) / initial_price
+
+            # 일별 수익률 계산
+            daily_returns = data["Close"].pct_change().dropna()
+
+            # 샤프 비율 계산 (연율화)
+            mean_return = daily_returns.mean()
+            std_return = daily_returns.std()
+            sharpe_ratio = (
+                (mean_return * 252) / (std_return * np.sqrt(252))
+                if std_return > 0
+                else 0.0
+            )
+
+            # 소르티노 비율 계산
+            negative_returns = daily_returns[daily_returns < 0]
+            downside_std = negative_returns.std()
+            sortino_ratio = (
+                (mean_return * 252) / (downside_std * np.sqrt(252))
+                if downside_std > 0
+                else 0.0
+            )
+
+            # 최대 낙폭 계산
+            cumulative_returns = (1 + daily_returns).cumprod()
+            rolling_max = cumulative_returns.expanding().max()
+            drawdown = (cumulative_returns - rolling_max) / rolling_max
+            max_drawdown = abs(drawdown.min())
+
+            # 변동성 (연율화)
+            volatility = std_return * np.sqrt(252)
+
+            buy_hold_results[symbol] = {
+                "total_return": total_return,
+                "sharpe_ratio": sharpe_ratio,
+                "sortino_ratio": sortino_ratio,
+                "max_drawdown": max_drawdown,
+                "volatility": volatility,
+                "total_trades": 1,  # Buy & Hold는 1번의 거래
+            }
+
+        except Exception as e:
+            print(f"❌ {symbol} Buy & Hold 계산 중 오류: {e}")
+            buy_hold_results[symbol] = {
+                "total_return": 0.0,
+                "sharpe_ratio": 0.0,
+                "sortino_ratio": 0.0,
+                "max_drawdown": 0.0,
+                "volatility": 0.0,
+                "total_trades": 0,
+            }
+
+    return buy_hold_results
+
+
+def calculate_portfolio_metrics(
+    individual_results: Dict[str, Dict[str, float]], weights: Dict[str, float]
+) -> Dict[str, float]:
+    """
+    포트폴리오 전체 성과 지표 계산
+
+    Args:
+        individual_results: 종목별 성과 지표
+        weights: 포트폴리오 비중
+
+    Returns:
+        포트폴리오 전체 성과 지표
+    """
+    try:
+        # 가중 평균 수익률
+        portfolio_return = sum(
+            individual_results[symbol]["total_return"] * weights.get(symbol, 0.0)
+            for symbol in individual_results.keys()
+        )
+
+        # 가중 평균 샤프 비율
+        portfolio_sharpe = sum(
+            individual_results[symbol]["sharpe_ratio"] * weights.get(symbol, 0.0)
+            for symbol in individual_results.keys()
+        )
+
+        # 가중 평균 소르티노 비율
+        portfolio_sortino = sum(
+            individual_results[symbol]["sortino_ratio"] * weights.get(symbol, 0.0)
+            for symbol in individual_results.keys()
+        )
+
+        # 가중 평균 변동성
+        portfolio_volatility = sum(
+            individual_results[symbol]["volatility"] * weights.get(symbol, 0.0)
+            for symbol in individual_results.keys()
+        )
+
+        # 최대 낙폭 (가장 큰 값 사용)
+        portfolio_max_drawdown = max(
+            individual_results[symbol]["max_drawdown"]
+            for symbol in individual_results.keys()
+        )
+
+        # 총 거래 수
+        total_trades = sum(
+            individual_results[symbol]["total_trades"]
+            for symbol in individual_results.keys()
+        )
+
+        return {
+            "total_return": portfolio_return,
+            "sharpe_ratio": portfolio_sharpe,
+            "sortino_ratio": portfolio_sortino,
+            "max_drawdown": portfolio_max_drawdown,
+            "volatility": portfolio_volatility,
+            "total_trades": total_trades,
+        }
+
+    except Exception as e:
+        print(f"❌ 포트폴리오 지표 계산 중 오류: {e}")
+        return {
+            "total_return": 0.0,
+            "sharpe_ratio": 0.0,
+            "sortino_ratio": 0.0,
+            "max_drawdown": 0.0,
+            "volatility": 0.0,
+            "total_trades": 0,
+        }

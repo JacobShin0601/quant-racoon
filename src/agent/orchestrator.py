@@ -1,662 +1,599 @@
 #!/usr/bin/env python3
 """
-flow 기반 퀀트 분석 파이프라인 오케스트레이터
+오케스트레이터 - 전체 파이프라인 관리
+새로운 2단계 구조: cleaner → scrapper → researcher → evaluator → portfolio_manager
 """
-import os
+
 import sys
-import subprocess
-import shutil
+import os
+import argparse
 import json
-import uuid
-from typing import Dict
-from pathlib import Path
 from datetime import datetime
+from typing import Dict, Any, Optional
+from pathlib import Path
 
-# 프로젝트 루트 경로를 PYTHONPATH에 추가
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+# 프로젝트 루트를 Python 경로에 추가
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agent.helper import Logger, load_config
+from .cleaner import Cleaner
+from .scrapper import DataScrapper
+from .researcher import IndividualStrategyResearcher
+from .evaluator import TrainTestEvaluator
+from .portfolio_manager import AdvancedPortfolioManager
+from .helper import (
+    load_config,
+    print_section_header,
+    print_subsection_header,
+    DEFAULT_CONFIG_PATH,
+)
+
+# 환경 변수 설정 (orchestrator 모드)
+os.environ["ORCHESTRATOR_MODE"] = "true"
 
 
-class FlowOrchestrator:
-    """전체 퀀트 분석 파이프라인을 관리하는 클래스"""
+class Orchestrator:
+    """전체 파이프라인 오케스트레이터"""
 
     def __init__(
         self,
-        config_path: str = "../../config/config_default.json",
-        time_horizon: str = None,
+        config_path: str = DEFAULT_CONFIG_PATH,
+        time_horizon: str = "swing",
+        uuid: Optional[str] = None,
     ):
-        self.config_path = config_path  # config_path를 인스턴스 변수로 저장
-        self.config = load_config(config_path)
+        self.config_path = config_path
         self.time_horizon = time_horizon
-        self.logger = Logger()
-        self.logger.setup_logger(strategy="flow_orchestrator", mode="orchestrator")
-        self.execution_results = {}
+        self.uuid = uuid or datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # 실행 UUID 생성 (한 번의 실행에서 모든 파일이 동일한 UUID 사용)
-        self.execution_uuid = str(uuid.uuid4())[:8]  # 8자리로 축약
-        self.logger.log_info(f"🆔 실행 UUID 생성: {self.execution_uuid}")
+        # 설정 로드 - 절대 경로로 변환
+        if not os.path.isabs(config_path):
+            config_path = os.path.join(os.getcwd(), config_path)
+        self.config = load_config(config_path)
 
-        # time-horizon 기반 config 선택
-        if time_horizon:
-            self._select_config_by_time_horizon(time_horizon)
+        # 실행 시간 기록
+        self.start_time = datetime.now()
 
-        # 폴더 구조 설정
-        self._setup_folders()
+        # 각 단계별 결과 저장
+        self.results = {}
 
-        # 로깅 설정
-        self._setup_logging()
+        print_section_header("🚀 오케스트레이터 초기화")
+        print(f"📁 설정 파일: {config_path}")
+        print(f"⏰ 시간대: {time_horizon}")
+        print(f"🆔 실행 UUID: {self.uuid}")
 
-    def _select_config_by_time_horizon(self, time_horizon: str):
-        """time-horizon에 따라 적절한 config 파일 선택"""
-        config_mapping = {
-            "swing": "config/config_swing.json",
-            "long": "config/config_long.json",
-            "long-term": "config/config_long.json",
-            "scalping": "config/config_scalping.json",
-            "short-term": "config/config_scalping.json",
-        }
+    def _get_config_for_horizon(self) -> Dict[str, Any]:
+        """시간대별 설정 가져오기"""
+        # 시간대별 config 파일 경로
+        horizon_config_path = f"config/config_{self.time_horizon}.json"
 
-        if time_horizon in config_mapping:
-            config_file = config_mapping[time_horizon]
-            config_path = Path(__file__).parent.parent.parent / config_file
-            if config_path.exists():
-                self.config = load_config(str(config_path))
-                self.logger.log_info(
-                    f"✅ {time_horizon} 전략용 config 로드: {config_file}"
-                )
-            else:
-                self.logger.log_warning(
-                    f"⚠️ {config_file} 파일을 찾을 수 없습니다. 기본 config 사용"
-                )
+        if os.path.exists(horizon_config_path):
+            print(f"✅ 시간대별 설정 파일 사용: {horizon_config_path}")
+            return load_config(horizon_config_path)
         else:
-            self.logger.log_warning(
-                f"⚠️ 알 수 없는 time-horizon: {time_horizon}. 기본 config 사용"
+            print(
+                f"⚠️ 시간대별 설정 파일이 없습니다. 기본 설정 사용: {self.config_path}"
             )
+            return self.config
 
-    def _setup_folders(self):
-        """출력 폴더 구조 설정 (cleaner.py를 통해 생성)"""
-        output_config = self.config.get("output", {})
-        self.results_folder = output_config.get("results_folder", "results")
-        self.logs_folder = output_config.get("logs_folder", "logs")
-        self.backup_folder = output_config.get("backup_folder", "backup")
-
-        # cleaner.py의 create 기능을 subprocess로 호출
-        cmd = [
-            sys.executable,
-            "-m",
-            "agent.cleaner",
-            "--action",
-            "create",
-            "--data-dir",
-            "data",
-            "--log-dir",
-            self.logs_folder,
-            "--results-dir",
-            self.results_folder,
-        ]
-        self.logger.log_info(f"폴더 생성 명령어: {' '.join(cmd)}")
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            self.logger.log_success("✅ cleaner.py를 통한 폴더 생성 완료")
-            self.logger.log_info(result.stdout)
-        else:
-            self.logger.log_error(f"❌ cleaner.py 폴더 생성 실패: {result.stderr}")
-            raise RuntimeError("폴더 생성 실패")
-
-        # backup 폴더는 cleaner가 관리하지 않으므로 직접 생성 (상위 폴더까지)
-        Path(self.backup_folder).mkdir(parents=True, exist_ok=True)
-        self.logger.log_info(f"📁 폴더 확인/생성: {self.backup_folder}")
-
-    def _setup_logging(self):
-        """로깅 설정"""
-        logging_config = self.config.get("logging", {})
-        log_level = logging_config.get("level", "INFO")
-        file_rotation = logging_config.get("file_rotation", True)
-
-        # 로거 설정 업데이트
-        self.logger.setup_logger(strategy="flow_orchestrator", mode="orchestrator")
-
-    def _get_current_config_name(self) -> str:
-        """현재 사용 중인 config 파일명 반환"""
-        if self.time_horizon:
-            config_mapping = {
-                "swing": "config_swing.json",
-                "long": "config_long.json",
-                "long-term": "config_long.json",
-                "scalping": "config_scalping.json",
-                "short-term": "config_scalping.json",
-            }
-            return config_mapping.get(self.time_horizon, "config_default.json")
-        else:
-            # 기본 config 파일명 추출
-            config_path = getattr(self, "config_path", "config_default.json")
-            return os.path.basename(config_path)
-
-    def _update_research_source_config(self, source_config_name: str):
-        """research config의 source_config를 동적으로 업데이트"""
-        try:
-            research_config_path = "config/config_research.json"
-
-            # research config 로드
-            with open(research_config_path, "r", encoding="utf-8") as f:
-                research_config = json.load(f)
-
-            # source_config 업데이트
-            research_config["research_config"]["source_config"] = source_config_name
-
-            # 백업 생성
-            backup_path = f"{research_config_path}.backup"
-            shutil.copy2(research_config_path, backup_path)
-
-            # 업데이트된 config 저장
-            with open(research_config_path, "w", encoding="utf-8") as f:
-                json.dump(research_config, f, indent=2, ensure_ascii=False)
-
-            self.logger.log_info(
-                f"📝 Research config 업데이트: source_config = {source_config_name}"
-            )
-
-        except Exception as e:
-            self.logger.log_error(f"❌ Research config 업데이트 실패: {e}")
-
-    def _backup_results(self):
-        """결과 백업"""
-        automation_config = self.config.get("automation", {})
-        if not automation_config.get("auto_backup", False):
-            return
+    def run_cleaner(self) -> bool:
+        """1단계: 데이터 정리"""
+        print_subsection_header("🧹 1단계: 데이터 정리")
 
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = Path(self.backup_folder) / f"backup_{timestamp}"
-            backup_path.mkdir(exist_ok=True)
+            horizon_config = self._get_config_for_horizon()
 
-            # results 폴더 백업
-            if Path(self.results_folder).exists():
-                shutil.copytree(
-                    self.results_folder, backup_path / "results", dirs_exist_ok=True
-                )
+            cleaner = Cleaner()
 
-            # logs 폴더 백업
-            if Path(self.logs_folder).exists():
-                shutil.copytree(
-                    self.logs_folder, backup_path / "logs", dirs_exist_ok=True
-                )
-
-            self.logger.log_success(f"✅ 백업 완료: {backup_path}")
-        except Exception as e:
-            self.logger.log_error(f"❌ 백업 실패: {e}")
-
-    def _clean_old_files(self):
-        """오래된 파일 정리"""
-        automation_config = self.config.get("automation", {})
-        if not automation_config.get("auto_clean", False):
-            return
-
-        try:
-            # 30일 이상 된 로그 파일 삭제
-            log_config = self.config.get("logging", {})
-            backup_count = log_config.get("backup_count", 5)
-
-            # 로그 파일 정리
-            log_dir = Path(self.logs_folder)
-            if log_dir.exists():
-                log_files = sorted(
-                    log_dir.glob("*.log"), key=lambda x: x.stat().st_mtime
-                )
-                if len(log_files) > backup_count:
-                    for old_file in log_files[:-backup_count]:
-                        old_file.unlink()
-                        self.logger.log_info(f"🗑️ 오래된 로그 파일 삭제: {old_file}")
-
-            self.logger.log_success("✅ 파일 정리 완료")
-        except Exception as e:
-            self.logger.log_error(f"❌ 파일 정리 실패: {e}")
-
-    def run_stage(self, stage_name: str) -> bool:
-        self.logger.log_subsection(f"🚀 {stage_name} 단계 실행 시작")
-        try:
-            if stage_name == "cleaner":
-                return self._run_cleaner()
-            elif stage_name == "scrapper":
-                return self._run_scrapper()
-            elif stage_name == "researcher":
-                return self._run_researcher()
-            elif stage_name == "analyzer":
-                return self._run_analyzer()
-            elif stage_name == "evaluator":
-                return self._run_evaluator()
-            elif stage_name == "portfolio_manager":
-                return self._run_portfolio_manager()
-            else:
-                self.logger.log_error(f"❌ 알 수 없는 단계: {stage_name}")
-                return False
-        except Exception as e:
-            self.logger.log_error(f"❌ {stage_name} 단계 실행 중 오류: {e}")
-            return False
-
-    def _run_cleaner(self) -> bool:
-        try:
-            cleaner_config = self.config.get("cleaner", {})
-            action = cleaner_config.get("action", "create")  # 기본값을 create로 변경
-            run_cleaner = cleaner_config.get(
-                "run_cleaner", False
-            )  # cleaner 실행 여부 제어
+            # 설정에서 cleaner 액션 확인
+            cleaner_config = horizon_config.get("cleaner", {})
+            action = cleaner_config.get("action", "clean-and-recreate")
             folders = cleaner_config.get(
-                "folders", ["data", "log", "results", "analysis", "researcher_results"]
+                "folders",
+                [
+                    f"data/{self.time_horizon}",
+                    f"log/{self.time_horizon}",
+                    f"results/{self.time_horizon}",
+                ],
             )
 
-            # cleaner 실행을 건너뛰는 경우
-            if not run_cleaner:
-                self.logger.log_info("⏭️ Cleaner 단계 건너뛰기 (설정에서 비활성화됨)")
-                self.execution_results["cleaner"] = {
-                    "status": "skipped",
-                    "reason": "disabled in config",
-                }
-                return True
-
-            # 확장된 cleaner.py 사용 - folders 인자 전달
-            cmd = [sys.executable, "-m", "agent.cleaner", "--action", action]
-
-            # folders 인자 추가
-            if folders:
-                cmd.extend(["--folders"] + folders)
+            if action == "clean-and-recreate":
+                success = cleaner.clean_and_recreate_folders(folders)
+            elif action == "clean-only":
+                success = cleaner.clean_folders(folders)
+            elif action == "create-only":
+                success = cleaner.create_folders(folders)
             else:
-                # 기존 방식 (하위 호환성)
-                cmd.extend(
-                    [
-                        "--data-dir",
-                        "data",
-                        "--log-dir",
-                        self.logs_folder,
-                        "--results-dir",
-                        self.results_folder,
-                    ]
-                )
+                # 기본값: clean-and-recreate
+                success = cleaner.clean_and_recreate_folders(folders)
 
-            self.logger.log_info(f"실행 명령어: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0:
-                self.logger.log_success("✅ Cleaner 단계 완료")
-                self.execution_results["cleaner"] = {
+            if success:
+                print("✅ 데이터 정리 완료")
+                self.results["cleaner"] = {
                     "status": "success",
-                    "output": result.stdout,
+                    "timestamp": datetime.now(),
                 }
-                return True
             else:
-                self.logger.log_error(f"❌ Cleaner 단계 실패: {result.stderr}")
-                self.execution_results["cleaner"] = {
+                print("❌ 데이터 정리 실패")
+                self.results["cleaner"] = {
                     "status": "failed",
-                    "error": result.stderr,
+                    "timestamp": datetime.now(),
                 }
-                return False
+
+            return success
+
         except Exception as e:
-            self.logger.log_error(f"❌ Cleaner 실행 중 오류: {e}")
+            print(f"❌ 데이터 정리 중 오류: {e}")
+            self.results["cleaner"] = {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now(),
+            }
             return False
 
-    def _run_scrapper(self) -> bool:
-        try:
-            # 전략별 데이터 경로 설정
-            data_dir = f"data/{self.time_horizon}" if self.time_horizon else "data"
+    def run_scrapper(self) -> bool:
+        """2단계: 데이터 수집"""
+        print_subsection_header("📊 2단계: 데이터 수집")
 
-            # config 파일 경로 설정
-            config_file = (
-                f"config/config_{self.time_horizon}.json"
-                if self.time_horizon
-                else "config/config_default.json"
+        try:
+            horizon_config = self._get_config_for_horizon()
+
+            # 시간대별 설정 파일 경로 사용
+            horizon_config_path = f"config/config_{self.time_horizon}.json"
+            scrapper = DataScrapper(
+                config_path=horizon_config_path,
+                time_horizon=self.time_horizon,
+                uuid=self.uuid,
             )
 
-            cmd = [
-                sys.executable,
-                "-m",
-                "agent.scrapper",
-                "--data-dir",
-                data_dir,
-                "--config",
-                config_file,
-                "--uuid",
-                self.execution_uuid,
-            ]
-            env = os.environ.copy()
-            env["PYTHONPATH"] = "src"
-            self.logger.log_info(f"실행 명령어: PYTHONPATH=src {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-            if result.returncode == 0:
-                self.logger.log_success("✅ Scrapper 단계 완료")
-                self.execution_results["scrapper"] = {
+            success = scrapper.run_scrapper()
+
+            if success:
+                print("✅ 데이터 수집 완료")
+                self.results["scrapper"] = {
                     "status": "success",
-                    "output": result.stdout,
+                    "timestamp": datetime.now(),
                 }
-                return True
             else:
-                self.logger.log_error(f"❌ Scrapper 단계 실패: {result.stderr}")
-                self.execution_results["scrapper"] = {
+                print("❌ 데이터 수집 실패")
+                self.results["scrapper"] = {
                     "status": "failed",
-                    "error": result.stderr,
+                    "timestamp": datetime.now(),
                 }
-                return False
+
+            return success
+
         except Exception as e:
-            self.logger.log_error(f"❌ Scrapper 실행 중 오류: {e}")
+            print(f"❌ 데이터 수집 중 오류: {e}")
+            self.results["scrapper"] = {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now(),
+            }
             return False
 
-    def _run_researcher(self) -> bool:
+    def run_researcher(self) -> bool:
+        """3단계: 개별 종목별 전략 최적화"""
+        print_subsection_header("🔬 3단계: 개별 종목별 전략 최적화")
+
         try:
-            # 현재 config 파일명을 기반으로 research config의 source_config 설정
-            current_config_name = self._get_current_config_name()
+            horizon_config = self._get_config_for_horizon()
 
-            # research config 파일 경로
-            research_config_path = "config/config_research.json"
+            # 데이터 디렉토리 설정
+            data_dir = f"data/{self.time_horizon}"
 
-            # research config에서 source_config를 현재 config로 업데이트
-            self._update_research_source_config(current_config_name)
+            # 시간대별 설정 파일 경로 사용
+            horizon_config_path = f"config/config_{self.time_horizon}.json"
 
-            # 전략과 심볼 정보 가져오기
-            strategies = self.config.get("strategies", [])
-            symbols = self.config.get("data", {}).get("symbols", [])
+            researcher = IndividualStrategyResearcher(
+                research_config_path="config/config_research.json",
+                source_config_path=horizon_config_path,
+                data_dir=data_dir,
+                results_dir="results",
+                log_dir="log",
+                analysis_dir="analysis",
+                auto_detect_source_config=False,  # 명시적으로 설정된 config 사용
+                uuid=self.uuid,  # UUID 전달
+            )
 
-            cmd = [
-                sys.executable,
-                "-m",
-                "agent.researcher",
-                "--config",
-                research_config_path,
-                "--data_dir",
-                f"data/{self.time_horizon}",
-                "--uuid",
-                self.execution_uuid,
-            ]
-
-            # 전략과 심볼 인자 추가
-            if strategies:
-                cmd.extend(["--strategies"] + strategies)
-            if symbols:
-                cmd.extend(["--symbols"] + symbols)
-
-            env = os.environ.copy()
-            env["PYTHONPATH"] = "src"
-            self.logger.log_info(f"실행 명령어: PYTHONPATH=src {' '.join(cmd)}")
-            self.logger.log_info(f"📊 Research source config: {current_config_name}")
-            self.logger.log_info(f"📊 Research strategies: {strategies}")
-            self.logger.log_info(f"📊 Research symbols: {symbols}")
-            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-            if result.returncode == 0:
-                self.logger.log_success("✅ Researcher 단계 완료")
-                self.execution_results["researcher"] = {
-                    "status": "success",
-                    "output": result.stdout,
-                }
-                return True
-            else:
-                self.logger.log_error(f"❌ Researcher 단계 실패: {result.stderr}")
-                self.execution_results["researcher"] = {
-                    "status": "failed",
-                    "error": result.stderr,
-                }
-                return False
-        except Exception as e:
-            self.logger.log_error(f"❌ Researcher 실행 중 오류: {e}")
-            return False
-
-    def _run_analyzer(self) -> bool:
-        try:
-            # 전략별 데이터 경로 설정
-            data_dir = f"data/{self.time_horizon}" if self.time_horizon else "data"
-
-            cmd = [
-                sys.executable,
-                "-m",
-                "agent.analyst",
-                "--data_dir",
-                data_dir,
-                "--uuid",
-                self.execution_uuid,
-            ]
-            env = os.environ.copy()
-            env["PYTHONPATH"] = "src"
-            self.logger.log_info(f"실행 명령어: PYTHONPATH=src {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-            if result.returncode == 0:
-                self.logger.log_success("✅ Analyzer 단계 완료")
-                self.execution_results["analyzer"] = {
-                    "status": "success",
-                    "output": result.stdout,
-                }
-                return True
-            else:
-                self.logger.log_error(f"❌ Analyzer 단계 실패: {result.stderr}")
-                self.execution_results["analyzer"] = {
-                    "status": "failed",
-                    "error": result.stderr,
-                }
-                return False
-        except Exception as e:
-            self.logger.log_error(f"❌ Analyzer 실행 중 오류: {e}")
-            return False
-
-    def _run_evaluator(self) -> bool:
-        try:
-            evaluator_config = self.config.get("evaluator", {})
-            strategies = self.config.get("strategies", [])
-            if not strategies:
-                self.logger.log_warning("⚠️ 실행할 전략이 없음 - 스킵")
-                self.execution_results["evaluator"] = {
-                    "status": "skipped",
-                    "reason": "no strategies",
-                }
-                return True
-
-            # 포트폴리오 모드 확인
-            portfolio_mode = evaluator_config.get("portfolio_mode", False)
-            cmd = [sys.executable, "-m", "agent.evaluator"]
-
-            if portfolio_mode:
-                cmd.append("--portfolio")
-
-            cmd.extend(["--strategies"] + strategies)
-
-            # 결과 폴더 지정
-            cmd.extend(["--results_dir", self.results_folder])
-
-            # UUID 추가
-            cmd.extend(["--uuid", self.execution_uuid])
-
-            # config 경로 추가
-            cmd.extend(["--config", self.config_path])
-
-            env = os.environ.copy()
-            env["PYTHONPATH"] = "src"
-            self.logger.log_info(f"실행 명령어: PYTHONPATH=src {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-            if result.returncode == 0:
-                self.logger.log_success("✅ Evaluator 단계 완료")
-                self.execution_results["evaluator"] = {
-                    "status": "success",
-                    "output": result.stdout,
-                }
-                return True
-            else:
-                self.logger.log_error(f"❌ Evaluator 단계 실패: {result.stderr}")
-                self.execution_results["evaluator"] = {
-                    "status": "failed",
-                    "error": result.stderr,
-                }
-                return False
-        except Exception as e:
-            self.logger.log_error(f"❌ Evaluator 실행 중 오류: {e}")
-            return False
-
-    def _run_portfolio_manager(self) -> bool:
-        try:
-            cmd = [
-                sys.executable,
-                "-m",
-                "agent.portfolio_manager",
-                "--uuid",
-                self.execution_uuid,
-            ]
-            env = os.environ.copy()
-            env["PYTHONPATH"] = "src"
-            self.logger.log_info(f"실행 명령어: PYTHONPATH=src {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-            if result.returncode == 0:
-                self.logger.log_success("✅ Portfolio Manager 단계 완료")
-                self.execution_results["portfolio_manager"] = {
-                    "status": "success",
-                    "output": result.stdout,
-                }
-                return True
-            else:
-                self.logger.log_error(
-                    f"❌ Portfolio Manager 단계 실패: {result.stderr}"
+            # UUID 설정 - logger를 통해 설정
+            if self.uuid:
+                researcher.logger.setup_logger(
+                    strategy="individual_research", mode="research", uuid=self.uuid
                 )
-                self.execution_results["portfolio_manager"] = {
+
+            # 종합 연구 실행
+            results = researcher.run_comprehensive_research(
+                optimization_method="bayesian_optimization"
+            )
+
+            if results:
+                print(f"✅ 개별 전략 최적화 완료: {len(results)}개 조합")
+
+                # 결과 저장
+                output_file = researcher.save_research_results(results)
+                if output_file:
+                    print(f"💾 최적화 결과 저장됨: {output_file}")
+
+                # 연구 보고서 생성
+                researcher.generate_research_report(results)
+
+                self.results["researcher"] = {
+                    "status": "success",
+                    "combinations": len(results),
+                    "timestamp": datetime.now(),
+                }
+
+                # 최적화 결과 파일 경로 저장 (evaluator에서 사용)
+                self.results["researcher"]["output_file"] = output_file
+
+                return True
+            else:
+                print("❌ 개별 전략 최적화 실패")
+                self.results["researcher"] = {
                     "status": "failed",
-                    "error": result.stderr,
+                    "timestamp": datetime.now(),
                 }
                 return False
+
         except Exception as e:
-            self.logger.log_error(f"❌ Portfolio Manager 실행 중 오류: {e}")
+            print(f"❌ 개별 전략 최적화 중 오류: {e}")
+            self.results["researcher"] = {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now(),
+            }
             return False
 
-    def run_full_flow(self) -> bool:
-        self.logger.log_section("🎯 퀀트 분석 파이프라인 시작")
+    def run_evaluator(self) -> bool:
+        """4단계: 2단계 평가 (개별 + 포트폴리오)"""
+        print_subsection_header("📊 4단계: 2단계 전략 평가")
 
-        # 사전 정리
-        self._clean_old_files()
+        try:
+            horizon_config = self._get_config_for_horizon()
 
-        flow_config = self.config.get("flow", {})
-        stages = flow_config.get(
-            "stages",
-            [
+            # 데이터 디렉토리 설정
+            data_dir = f"data/{self.time_horizon}"
+
+            # 최적화 결과 파일 경로
+            optimization_file = self._find_latest_optimization_file()
+
+            if not optimization_file:
+                print("❌ 최적화 결과 파일을 찾을 수 없습니다.")
+                return False
+
+            # 시간대별 config 파일 경로 사용
+            horizon_config_path = f"config/config_{self.time_horizon}.json"
+
+            evaluator = TrainTestEvaluator(
+                data_dir=data_dir,
+                log_mode="summary",
+                config_path=horizon_config_path,
+                optimization_results_path=optimization_file,
+            )
+
+            # UUID 설정 (타입 힌트 문제로 주석 처리)
+            # if self.uuid and hasattr(evaluator, "execution_uuid"):
+            #     evaluator.execution_uuid = self.uuid
+
+            # Train/Test 평가 실행
+            results = evaluator.run_train_test_evaluation(save_results=True)
+
+            if results:
+                print("✅ 2단계 평가 완료")
+                print(f"  📊 개별 종목 평가: {len(results['individual_results'])}개")
+                print(
+                    f"  🎯 포트폴리오 평가: {len(results['portfolio_results'])}개 전략"
+                )
+
+                self.results["evaluator"] = {
+                    "status": "success",
+                    "individual_symbols": len(results["individual_results"]),
+                    "portfolio_methods": len(results["portfolio_results"]),
+                    "timestamp": datetime.now(),
+                }
+
+                return True
+            else:
+                print("❌ 2단계 평가 실패")
+                self.results["evaluator"] = {
+                    "status": "failed",
+                    "timestamp": datetime.now(),
+                }
+                return False
+
+        except Exception as e:
+            print(f"❌ 2단계 평가 중 오류: {e}")
+            self.results["evaluator"] = {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now(),
+            }
+            return False
+
+    def run_portfolio_manager(self) -> bool:
+        """5단계: 포트폴리오 최적화"""
+        print_subsection_header("⚖️ 5단계: 포트폴리오 최적화")
+
+        try:
+            horizon_config = self._get_config_for_horizon()
+
+            # 포트폴리오 매니저 초기화
+            portfolio_manager = AdvancedPortfolioManager(
+                config_path=self.config_path,
+                time_horizon=self.time_horizon,
+                uuid=self.uuid,
+            )
+
+            # 포트폴리오 최적화 실행
+            success = portfolio_manager.run_portfolio_optimization()
+
+            if success:
+                print("✅ 포트폴리오 최적화 완료")
+                self.results["portfolio_manager"] = {
+                    "status": "success",
+                    "timestamp": datetime.now(),
+                }
+            else:
+                print("❌ 포트폴리오 최적화 실패")
+                self.results["portfolio_manager"] = {
+                    "status": "failed",
+                    "timestamp": datetime.now(),
+                }
+
+            return success
+
+        except Exception as e:
+            print(f"❌ 포트폴리오 최적화 중 오류: {e}")
+            self.results["portfolio_manager"] = {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now(),
+            }
+            return False
+
+    def _find_latest_optimization_file(self) -> Optional[str]:
+        """최신 최적화 결과 파일 찾기"""
+        try:
+            # results 디렉토리에서 최적화 결과 파일 찾기
+            results_dir = Path("results")
+            if not results_dir.exists():
+                return None
+
+            # hyperparam_optimization_*.json 파일들 찾기 (researcher가 생성하는 파일명)
+            optimization_files = list(
+                results_dir.glob("hyperparam_optimization_*.json")
+            )
+
+            if not optimization_files:
+                print("⚠️ hyperparam_optimization_*.json 파일을 찾을 수 없습니다")
+                print(f"🔍 results 디렉토리 내용:")
+                for file in results_dir.glob("*.json"):
+                    print(f"  - {file.name}")
+                return None
+
+            # 가장 최신 파일 반환
+            latest_file = max(optimization_files, key=lambda x: x.stat().st_mtime)
+            print(f"✅ 최신 최적화 결과 파일 발견: {latest_file.name}")
+            return str(latest_file)
+
+        except Exception as e:
+            print(f"⚠️ 최적화 결과 파일 찾기 실패: {e}")
+            return None
+
+    def run_pipeline(self, stages: Optional[list] = None) -> bool:
+        """전체 파이프라인 실행"""
+        print_section_header("🚀 전체 파이프라인 실행 시작")
+
+        # 기본 단계 순서 (수정됨)
+        if not stages:
+            stages = [
                 "cleaner",
                 "scrapper",
-                "analyzer",
                 "researcher",
-                "evaluator",
                 "portfolio_manager",
-            ],
-        )
-        stop_on_error = flow_config.get("stop_on_error", False)
+                "evaluator",
+            ]
 
-        # researcher 단계 활성화 여부 확인
-        enable_research = flow_config.get("enable_research", True)
-        if not enable_research and "researcher" in stages:
-            stages.remove("researcher")
-            self.logger.log_info("⏭️ Researcher 단계 비활성화됨")
+        print(f"📋 실행 단계: {' → '.join(stages)}")
+        print(f"⏰ 시작 시간: {self.start_time}")
 
-        self.logger.log_info(f"실행할 단계들: {', '.join(stages)}")
-        self.logger.log_info(f"오류 시 중단: {stop_on_error}")
         success_count = 0
         total_stages = len(stages)
+
         for i, stage in enumerate(stages, 1):
-            self.logger.log_info(f"📋 진행률: {i}/{total_stages} ({stage})")
-            success = self.run_stage(stage)
-            if success:
-                success_count += 1
-            else:
-                self.logger.log_error(f"❌ {stage} 단계 실패")
-                if stop_on_error:
-                    self.logger.log_error("🚫 오류로 인해 파이프라인 중단")
+            print(f"\n🔄 단계 {i}/{total_stages}: {stage}")
+
+            try:
+                if stage == "cleaner":
+                    success = self.run_cleaner()
+                elif stage == "scrapper":
+                    success = self.run_scrapper()
+                elif stage == "researcher":
+                    success = self.run_researcher()
+                elif stage == "portfolio_manager":
+                    success = self.run_portfolio_manager()
+                elif stage == "evaluator":
+                    success = self.run_evaluator()
+                else:
+                    print(f"❌ 알 수 없는 단계: {stage}")
+                    success = False
+
+                if success:
+                    success_count += 1
+                    print(f"✅ {stage} 단계 완료")
+                else:
+                    print(f"❌ {stage} 단계 실패")
+
+                    # 설정에 따라 오류 시 중단
+                    if self.config.get("flow", {}).get("stop_on_error", True):
+                        print("⚠️ 오류 발생으로 파이프라인 중단")
+                        break
+
+            except Exception as e:
+                print(f"❌ {stage} 단계 실행 중 예외 발생: {e}")
+                success_count += 1  # 예외는 이미 로깅됨
+
+                if self.config.get("flow", {}).get("stop_on_error", True):
+                    print("⚠️ 예외 발생으로 파이프라인 중단")
                     break
 
-        # 사후 처리
-        self._backup_results()
+        # 최종 요약
+        self._generate_final_summary(success_count, total_stages)
 
-        self.logger.log_section("📊 파이프라인 실행 결과 요약")
-        self.logger.log_info(f"총 단계: {total_stages}개")
-        self.logger.log_info(f"성공: {success_count}개")
-        self.logger.log_info(f"실패: {total_stages - success_count}개")
-        for stage, result in self.execution_results.items():
+        # 결과 저장
+        self._save_pipeline_results()
+
+        return success_count == total_stages
+
+    def _generate_final_summary(self, success_count: int, total_stages: int):
+        """최종 요약 생성"""
+        print_section_header("📊 파이프라인 실행 완료")
+
+        end_time = datetime.now()
+        execution_time = end_time - self.start_time
+
+        print(f"⏱️ 총 실행 시간: {execution_time}")
+        print(f"✅ 성공한 단계: {success_count}/{total_stages}")
+        print(f"📈 성공률: {success_count/total_stages*100:.1f}%")
+
+        # 각 단계별 결과 요약
+        print("\n📋 단계별 결과:")
+        for stage, result in self.results.items():
             status = result.get("status", "unknown")
+            timestamp = result.get("timestamp", "N/A")
+
             if status == "success":
-                self.logger.log_success(f"✅ {stage}: 성공")
+                print(f"  ✅ {stage}: 성공 ({timestamp})")
             elif status == "failed":
-                self.logger.log_error(f"❌ {stage}: 실패")
-            elif status == "skipped":
-                self.logger.log_warning(
-                    f"⚠️ {stage}: 스킵 ({result.get('reason', 'N/A')})"
-                )
+                print(f"  ❌ {stage}: 실패 ({timestamp})")
+            elif status == "error":
+                error = result.get("error", "Unknown error")
+                print(f"  💥 {stage}: 오류 - {error} ({timestamp})")
+
         if success_count == total_stages:
-            self.logger.log_success("🎉 모든 단계가 성공적으로 완료되었습니다!")
-            return True
+            print("\n🎉 모든 단계가 성공적으로 완료되었습니다!")
         else:
-            self.logger.log_error(
-                f"⚠️ 일부 단계가 실패했습니다. ({success_count}/{total_stages})"
-            )
+            print(f"\n⚠️ {total_stages - success_count}개 단계에서 문제가 발생했습니다.")
+
+    def _save_pipeline_results(self):
+        """파이프라인 결과 저장"""
+        try:
+            # UUID가 있으면 사용, 없으면 현재 시간 사용
+            if self.uuid:
+                timestamp = self.uuid
+            else:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"pipeline_results_{timestamp}.json"
+            output_path = os.path.join("results", filename)
+
+            # 결과를 JSON 직렬화 가능한 형태로 변환
+            serializable_results = {}
+            for stage, result in self.results.items():
+                serializable_results[stage] = {
+                    "status": result.get("status"),
+                    "timestamp": (
+                        result.get("timestamp").isoformat()
+                        if result.get("timestamp")
+                        else None
+                    ),
+                    "error": result.get("error"),
+                }
+
+            pipeline_summary = {
+                "uuid": self.uuid,
+                "time_horizon": self.time_horizon,
+                "start_time": self.start_time.isoformat(),
+                "end_time": datetime.now().isoformat(),
+                "total_stages": len(self.results),
+                "successful_stages": sum(
+                    1 for r in self.results.values() if r.get("status") == "success"
+                ),
+                "results": serializable_results,
+            }
+
+            # 디렉토리 생성
+            os.makedirs("results", exist_ok=True)
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(pipeline_summary, f, indent=2, ensure_ascii=False)
+
+            print(f"💾 파이프라인 결과 저장: {output_path}")
+
+        except Exception as e:
+            print(f"⚠️ 파이프라인 결과 저장 실패: {e}")
+
+    def run_single_stage(self, stage: str) -> bool:
+        """단일 단계 실행"""
+        print_section_header(f"🔄 단일 단계 실행: {stage}")
+
+        try:
+            if stage == "cleaner":
+                return self.run_cleaner()
+            elif stage == "scrapper":
+                return self.run_scrapper()
+            elif stage == "researcher":
+                return self.run_researcher()
+            elif stage == "portfolio_manager":
+                return self.run_portfolio_manager()
+            elif stage == "evaluator":
+                return self.run_evaluator()
+            else:
+                print(f"❌ 알 수 없는 단계: {stage}")
+                return False
+
+        except Exception as e:
+            print(f"❌ {stage} 단계 실행 중 예외 발생: {e}")
             return False
-
-    def run_single_stage(self, stage_name: str) -> bool:
-        self.logger.log_section(f"🎯 {stage_name} 단계만 실행")
-        return self.run_stage(stage_name)
-
-    def get_execution_summary(self) -> Dict:
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "time_horizon": self.time_horizon,
-            "config_file": getattr(self, "config_path", "default"),
-            "total_stages": len(self.execution_results),
-            "successful_stages": sum(
-                1
-                for r in self.execution_results.values()
-                if r.get("status") == "success"
-            ),
-            "failed_stages": sum(
-                1
-                for r in self.execution_results.values()
-                if r.get("status") == "failed"
-            ),
-            "skipped_stages": sum(
-                1
-                for r in self.execution_results.values()
-                if r.get("status") == "skipped"
-            ),
-            "results": self.execution_results,
-        }
 
 
 def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(description="퀀트 분석 파이프라인 Orchestrator")
-    parser.add_argument(
-        "--stage",
-        choices=[
-            "cleaner",
-            "scrapper",
-            "researcher",
-            "analyzer",
-            "evaluator",
-            "portfolio_manager",
-        ],
-        help="실행할 단일 단계",
+    """메인 함수"""
+    parser = argparse.ArgumentParser(
+        description="퀀트 트레이딩 파이프라인 오케스트레이터"
     )
-    parser.add_argument(
-        "--config", default="../../config/config_default.json", help="설정 파일 경로"
-    )
+    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="설정 파일 경로")
     parser.add_argument(
         "--time-horizon",
-        choices=["swing", "long", "long-term", "scalping", "short-term"],
-        help="전략 타임프레임 (config 자동 선택)",
+        default="swing",
+        choices=["scalping", "swing", "long"],
+        help="시간대 설정",
     )
-    parser.add_argument("--no-research", action="store_true", help="연구 단계 제외")
+    parser.add_argument(
+        "--stages",
+        nargs="+",
+        choices=["cleaner", "scrapper", "researcher", "evaluator", "portfolio_manager"],
+        help="실행할 단계들 (지정하지 않으면 모든 단계 실행)",
+    )
+    parser.add_argument(
+        "--single-stage",
+        choices=["cleaner", "scrapper", "researcher", "evaluator", "portfolio_manager"],
+        help="단일 단계만 실행",
+    )
+    parser.add_argument("--uuid", help="실행 UUID")
+
     args = parser.parse_args()
 
-    orchestrator = FlowOrchestrator(args.config, args.time_horizon)
-
-    # --no-research 옵션 처리
-    if args.no_research:
-        orchestrator.config.get("flow", {})["enable_research"] = False
-
-    if args.stage:
-        success = orchestrator.run_single_stage(args.stage)
-    else:
-        success = orchestrator.run_full_flow()
-
-    summary = orchestrator.get_execution_summary()
-    orchestrator.logger.save_json_log(
-        summary, f"flow_execution_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    # 오케스트레이터 초기화
+    orchestrator = Orchestrator(
+        config_path=args.config,
+        time_horizon=args.time_horizon,
+        uuid=args.uuid,
     )
-    exit(0 if success else 1)
+
+    # 실행
+    if args.single_stage:
+        # 단일 단계 실행
+        success = orchestrator.run_single_stage(args.single_stage)
+        if success:
+            print(f"✅ {args.single_stage} 단계 완료")
+        else:
+            print(f"❌ {args.single_stage} 단계 실패")
+    else:
+        # 전체 파이프라인 또는 지정된 단계들 실행
+        success = orchestrator.run_pipeline(args.stages)
+        if success:
+            print("🎉 파이프라인 실행 완료")
+        else:
+            print("⚠️ 파이프라인 실행 중 문제 발생")
 
 
 if __name__ == "__main__":

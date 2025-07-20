@@ -1,15 +1,19 @@
 {
   "time_horizon": "scalping",
   "strategies": [
-    "VWAPMACDScalpingStrategy",
-    "KeltnerRSIScalpingStrategy",
-    "AbsorptionScalpingStrategy",
-    "RSIBollingerScalpingStrategy"
+    "vwap_macd_scalping",
+    "keltner_rsi_scalping",
+    "absorption_scalping",
+    "rsi_bollinger_scalping"
   ],
   "data": {
-    "symbols": ["BTCUSDT", "ETHUSDT", "KRW-ETH"],
-    "interval": "1m",
-    "lookback_days": 7
+    "symbols": ["AAPL", "QQQ", "SPY", "TSLA", "NVDA", "MSFT", "META", "NFLX"],
+    "interval": "60m",
+    "lookback_days": 30,
+    "data_source": "yfinance",
+    "auto_adjust": true,
+    "prepost": false,
+    "train_ratio": 0.8
   },
   "evaluator": {
     "portfolio_mode": false,
@@ -49,12 +53,50 @@
     "risk_free_rate": 0.02,
     "target_volatility": 0.30,
     "min_weight": 0.0,
-    "max_weight": 0.9
+    "max_weight": 0.9,
+    "short_weight_limit": 0.4
   },
   "trading": {
     "initial_capital": 100000,
-    "commission": 0.0005,
-    "slippage": 0.0002
+    "commission": 0.001,
+    "slippage": 0.0005,
+    "position_sizing": "fixed",
+    "fixed_position_size": 0.1
+  },
+  "researcher": {
+    "optimization_method": "bayesian_optimization",
+    "optimization_settings": {
+      "bayesian_optimization": {
+        "n_trials": 30,
+        "n_startup_trials": 3,
+        "early_stopping_patience": 5
+      },
+      "grid_search": {
+        "max_combinations": 50
+      }
+    },
+    "evaluation_metrics": {
+      "weights": {
+        "sharpe_ratio": 0.30,
+        "sortino_ratio": 0.25,
+        "calmar_ratio": 0.15,
+        "profit_factor": 0.20,
+        "win_rate": 0.10
+      }
+    },
+    "risk_penalties": {
+      "max_drawdown_threshold": 0.15,
+      "max_drawdown_penalty": 0.6,
+      "volatility_threshold": 0.40,
+      "volatility_penalty": 0.4
+    },
+    "performance_thresholds": {
+      "min_return_threshold": 0.0,
+      "min_sharpe_ratio": -0.5,
+      "min_profit_factor": 0.5,
+      "min_win_rate": 0.3,
+      "min_trades": 5
+    }
   },
   "simulation_settings": {
     "enable_detailed_logging": true,

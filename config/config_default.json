@@ -24,10 +24,14 @@
       "end_date": null
     },
     "symbols": [
-      "TSLL",
-      "NVDL",
-      "PLTR",
-      "CONL"
+      "AAPL",
+      "META", 
+      "NFLX",
+      "QQQ",
+      "SPY",
+      "NVDA",
+      "TSLA",
+      "MSFT"
     ],
     "custom_tasks": [
       {
@@ -68,7 +72,7 @@
     }
   },
   "portfolio": {
-    "symbols": ["TSLL", "NVDL", "PLTR", "CONL"],
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT"],
     "weight_calculation_method": "equal_weight",
     "weight_methods": {
       "equal_weight": {"enabled": true},

@@ -45,13 +45,13 @@ class StrategyParams:
     keltner_period: int = 20
     keltner_multiplier: float = 2.0
     volume_period: int = 20
-    volume_threshold: float = 1.0
+    volume_threshold: float = 0.5  # 1.0에서 0.5로 완화 (볼륨 필터 완화)
     volatility_period: int = 20
-    volatility_threshold: float = 0.5
+    volatility_threshold: float = 0.3  # 0.5에서 0.3으로 완화 (변동성 필터 완화)
 
     # Swing EMA 전략 파라미터
-    ema_short_period: int = 20
-    ema_long_period: int = 50
+    ema_short_period: int = 10  # 20에서 10으로 단축
+    ema_long_period: int = 30  # 50에서 30으로 단축
     min_holding_days: int = 5
     max_holding_days: int = 15
     slope_period: int = 5
@@ -61,7 +61,9 @@ class StrategyParams:
     price_momentum_period: int = 5
 
     # Swing Donchian 전략 파라미터
-    breakout_strength_threshold: float = 0.005
+    breakout_strength_threshold: float = (
+        0.002  # 0.005에서 0.002로 완화 (돌파 임계값 완화)
+    )
 
     # Stochastic 전략 파라미터
     k_period: int = 14

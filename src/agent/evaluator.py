@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-전략 평가 및 비교 분석 시스템
+Train/Test 평가 시스템
+1. Train 데이터로 최적화된 전략과 포트폴리오 비중을 사용
+2. Train과 Test 데이터 모두에서 성과 평가
+3. Buy & Hold 대비 성과 비교
+4. 종합적인 성과 테이블 생성
 """
 
 import sys
@@ -13,11 +17,14 @@ import argparse
 import json
 import matplotlib.pyplot as plt
 import seaborn as sns
+import glob
+from pathlib import Path
 
 # 프로젝트 루트를 Python 경로에 추가
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, project_root)
 
-from actions.strategies import (
+from src.actions.strategies import (
     StrategyManager,
     DualMomentumStrategy,
     VolatilityAdjustedBreakoutStrategy,
@@ -48,12 +55,20 @@ from actions.strategies import (
     ETFMomentumRotationStrategy,
     TrendFollowingMA200Strategy,
     ReturnStackingStrategy,
+    # 새로운 스윙 전략들 추가
+    SwingBreakoutStrategy,
+    SwingPullbackEntryStrategy,
+    SwingCandlePatternStrategy,
+    SwingBollingerBandStrategy,
+    SwingMACDStrategy,
+    # 포트폴리오 전략들 추가
+    DynamicAssetAllocationStrategy,
+    SectorRotationStrategy,
 )
-from actions.calculate_index import StrategyParams
-from actions.log_pl import TradingSimulator
-from actions.portfolio_weight import PortfolioWeightCalculator
-from .portfolio_manager import AdvancedPortfolioManager
-from .helper import (
+from src.actions.calculate_index import StrategyParams
+from src.actions.log_pl import TradingSimulator
+from src.agent.portfolio_manager import AdvancedPortfolioManager
+from src.agent.helper import (
     StrategyResult,
     PortfolioWeights,
     Logger,
@@ -64,1747 +79,1272 @@ from .helper import (
     print_section_header,
     print_subsection_header,
     format_percentage,
+    split_data_train_test,
+    calculate_buy_hold_returns,
+    calculate_portfolio_metrics,
     DEFAULT_CONFIG_PATH,
     DEFAULT_DATA_DIR,
 )
 
+# 포트폴리오 매니저 import를 선택적으로 처리
+PORTFOLIO_MANAGER_AVAILABLE = False
+AdvancedPortfolioManager = None
 
-class StrategyEvaluator:
-    """전략 평가 및 비교 분석 클래스"""
+try:
+    from .portfolio_manager import AdvancedPortfolioManager
+
+    PORTFOLIO_MANAGER_AVAILABLE = True
+except ImportError:
+    pass
+
+
+class TrainTestEvaluator:
+    """Train/Test 평가 시스템"""
 
     def __init__(
         self,
         data_dir: str = DEFAULT_DATA_DIR,
         log_mode: str = "summary",
-        portfolio_mode: bool = False,
         config_path: str = DEFAULT_CONFIG_PATH,
-        portfolio_weights: PortfolioWeights = None,
-        portfolio_method: str = "signal_combined",  # "fixed", "strategy_weights", "signal_combined"
-        analysis_results_path: str = None,  # 정량 분석 결과 파일 경로
+        optimization_results_path: str = None,  # 개별 전략 최적화 결과 파일 경로
+        portfolio_results_path: str = None,  # 포트폴리오 최적화 결과 파일 경로
     ):
         self.data_dir = data_dir
         self.log_mode = log_mode
-        self.portfolio_mode = portfolio_mode
         self.config = load_config(config_path)
         self.strategy_manager = StrategyManager()
         self.params = StrategyParams()
         self.simulator = TradingSimulator(config_path)
-        self.weight_calculator = PortfolioWeightCalculator(config_path)
-        self.portfolio_manager = AdvancedPortfolioManager(config_path)
-        self.portfolio_weights = portfolio_weights
-        self.portfolio_method = portfolio_method
-        self.analysis_results_path = analysis_results_path
+        # PortfolioWeightCalculator 제거 - portfolio_manager.py의 결과물만 사용
+
+        # 포트폴리오 매니저 초기화 (선택적)
+        if PORTFOLIO_MANAGER_AVAILABLE:
+            self.portfolio_manager = AdvancedPortfolioManager(config_path)
+        else:
+            self.portfolio_manager = None
+
+        self.optimization_results_path = optimization_results_path
+        self.portfolio_results_path = portfolio_results_path
         self.results = {}
         self.logger = Logger()
         self.evaluation_start_time = datetime.now()
-        self.execution_uuid = None  # UUID 초기화
+        self.execution_uuid = None
+
+        # Train/Test 분할 비율
+        self.train_ratio = self.config.get("data", {}).get("train_ratio", 0.8)
+
+        # 주요 평가 지표
+        self.primary_metric = self.config.get("evaluator", {}).get(
+            "primary_metric", "sharpe_ratio"
+        )
 
         # 전략 등록
         self._register_strategies()
 
-    def _calculate_strategy_based_weights(
-        self, strategy_name: str, data_dict: Dict[str, pd.DataFrame]
-    ) -> pd.DataFrame:
-        """전략별 포트폴리오 비중 계산 (옵션 A) - portfolio_manager 활용"""
-        self.logger.log_info(f"📋 {strategy_name} 전략 기반 포트폴리오 비중 계산")
-
-        # 전략별 최적화 방법 매핑
-        strategy_optimization_map = {
-            "dual_momentum": "sharpe_maximization",
-            "volatility_breakout": "minimum_variance",
-            "swing_ema": "risk_parity",
-            "swing_rsi": "sortino_maximization",
-            "swing_donchian": "maximum_diversification",
-            # 데이터 사이언스 전략들
-            "trend_following_ds": "maximum_diversification",  # 추세 추종은 분산 극대화
-            "predictive_ds": "sharpe_maximization",  # 예측 기반은 샤프 비율 최대화
-            "bayesian": "risk_parity",  # 베이지안은 리스크 패리티
-            "ensemble_ds": "sortino_maximization",  # 앙상블은 소르티노 비율 최대화
-        }
-
-        # 전략에 맞는 최적화 방법 선택
-        optimization_method_name = strategy_optimization_map.get(
-            strategy_name, "sharpe_maximization"
-        )
-
-        # portfolio_manager를 사용한 고급 포트폴리오 최적화
-        try:
-            from actions.portfolio_optimization import OptimizationMethod
-
-            # 문자열을 OptimizationMethod enum으로 변환
-            method_map = {
-                "sharpe_maximization": OptimizationMethod.SHARPE_MAXIMIZATION,
-                "minimum_variance": OptimizationMethod.MINIMUM_VARIANCE,
-                "risk_parity": OptimizationMethod.RISK_PARITY,
-                "sortino_maximization": OptimizationMethod.SORTINO_MAXIMIZATION,
-                "maximum_diversification": OptimizationMethod.MAXIMUM_DIVERSIFICATION,
-            }
-
-            optimization_method = method_map.get(
-                optimization_method_name, OptimizationMethod.SHARPE_MAXIMIZATION
-            )
-
-            # portfolio_manager를 사용한 고급 최적화 실행
-            self.logger.log_info(
-                f"🎯 {strategy_name} 전략에 맞는 최적화 방법: {optimization_method_name}"
-            )
-
-            # 수익률 데이터 준비
-            returns_df = self.portfolio_manager.prepare_returns_data(data_dict)
-
-            # 포트폴리오 최적화 실행
-            result = self.portfolio_manager.calculate_advanced_portfolio_weights(
-                data_dict, optimization_method
-            )
-
-            if result and result.weights is not None:
-                # 결과를 DataFrame 형태로 변환
-                symbols = list(data_dict.keys())
-                weights_df = pd.DataFrame([result.weights], columns=symbols, index=[0])
-
-                # 현금 비중 추가 (있는 경우)
-                if (
-                    hasattr(result.constraints, "cash_weight")
-                    and result.constraints.cash_weight > 0
-                ):
-                    weights_df["cash"] = result.constraints.cash_weight
-
-                self.logger.log_success(
-                    f"✅ {strategy_name} 전략 최적화 완료 (샤프: {result.sharpe_ratio:.3f})"
-                )
-                return weights_df
-            else:
-                self.logger.log_warning(
-                    f"⚠️ {strategy_name} 최적화 실패, 기본 방법 사용"
-                )
-                return self.weight_calculator.calculate_optimal_weights(data_dict)
-
-        except Exception as e:
-            self.logger.log_error(f"❌ {strategy_name} 포트폴리오 최적화 중 오류: {e}")
-            self.logger.log_info(f"🔄 기본 포트폴리오 비중 계산으로 fallback")
-
-            # 기존 방식으로 fallback
-            original_method = self.weight_calculator.method
-            self.weight_calculator.method = optimization_method_name
-
-            try:
-                weights_df = self.weight_calculator.calculate_optimal_weights(data_dict)
-            finally:
-                # 원래 method로 복원
-                self.weight_calculator.method = original_method
-
-            return weights_df
-
-    def _combine_signals_with_weights(
-        self,
-        strategy_name: str,
-        data_dict: Dict[str, pd.DataFrame],
-        base_weights: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """전략 신호와 포트폴리오 비중 결합 (옵션 B)"""
-        self.logger.log_info(f"📋 {strategy_name} 신호와 포트폴리오 비중 결합")
-
-        # 기본 비중 복사
-        combined_weights = base_weights.copy()
-
-        # 기본 비중 정보 로깅
-        avg_base_weights = base_weights.mean()
-        self.logger.log_info(f"📊 기본 포트폴리오 비중:")
-        for symbol, weight in avg_base_weights.items():
-            if symbol != "cash" and weight > 0.01:
-                self.logger.log_info(f"  {symbol}: {weight*100:.1f}%")
-
-        # 각 종목별로 전략 신호 생성 및 비중 조정
-        signal_adjustments = {}
-        for symbol in data_dict.keys():
-            if symbol in data_dict:
-                data = data_dict[symbol]
-                strategy = self.strategy_manager.strategies[strategy_name]
-                signals = strategy.generate_signals(data)
-
-                # 신호 기반 비중 조정
-                adjustment_factor = self._calculate_signal_adjustment(signals, symbol)
-                signal_adjustments[symbol] = adjustment_factor
-
-                self.logger.log_info(
-                    f"📈 {symbol} 신호 조정 팩터: {adjustment_factor:.3f}"
-                )
-
-        # 조정된 비중 계산
-        for symbol in combined_weights.columns:
-            if symbol != "cash" and symbol in signal_adjustments:
-                adjustment = signal_adjustments[symbol]
-                combined_weights[symbol] = combined_weights[symbol] * adjustment
-
-        # 비중 정규화 (합계가 1이 되도록)
-        combined_weights = self._normalize_weights(combined_weights)
-
-        # 조정 후 비중 정보 로깅
-        avg_combined_weights = combined_weights.mean()
-        self.logger.log_info(f"📊 신호 조정 후 포트폴리오 비중:")
-        for symbol, weight in avg_combined_weights.items():
-            if symbol != "cash" and weight > 0.01:
-                self.logger.log_info(f"  {symbol}: {weight*100:.1f}%")
-
-        return combined_weights
-
-    def _calculate_signal_adjustment(self, signals: pd.DataFrame, symbol: str) -> float:
-        """신호에 따른 비중 조정 팩터 계산"""
-        try:
-            # dict 타입이면 DataFrame으로 변환
-            if isinstance(signals, dict):
-                signals = pd.DataFrame(signals)
-            # 신호가 DataFrame이 아니거나 columns 속성이 없으면 기본값 사용
-            if not hasattr(signals, "columns") or signals is None:
-                self.logger.log_warning(
-                    f"⚠️ {symbol}: 신호 데이터가 DataFrame이 아닙니다. 기본값 1.0 사용"
-                )
-                return 1.0
-
-            # 신호 컬럼 확인
-            if "signal" not in signals.columns:
-                self.logger.log_warning(
-                    f"⚠️ {symbol}: 'signal' 컬럼이 없습니다. 기본값 1.0 사용"
-                )
-                return 1.0
-
-            # 최근 10개 신호의 평균 계산
-            recent_signals = signals["signal"].tail(10)
-            if len(recent_signals) == 0:
-                self.logger.log_warning(
-                    f"⚠️ {symbol}: 신호 데이터가 없습니다. 기본값 1.0 사용"
-                )
-                return 1.0
-
-            avg_signal = recent_signals.mean()
-
-            # 신호 강도에 따른 조정 팩터 계산
-            # 신호 범위: -1 (강한 매도) ~ 1 (강한 매수)
-            if avg_signal > 0.3:  # 매수 신호
-                adjustment = 1.0 + (avg_signal - 0.3) * 0.5  # 최대 1.35배
-            elif avg_signal < -0.3:  # 매도 신호
-                adjustment = 1.0 + (avg_signal + 0.3) * 0.5  # 최소 0.65배
-            else:  # 중립 신호
-                adjustment = 1.0
-
-            # 조정 팩터 범위 제한 (0.5 ~ 1.5)
-            adjustment = max(0.5, min(1.5, adjustment))
-
-            self.logger.log_info(f"  📊 {symbol} 신호 분석:")
-            self.logger.log_info(f"    평균 신호: {avg_signal:.3f}")
-            self.logger.log_info(f"    조정 팩터: {adjustment:.3f}")
-
-            return adjustment
-
-        except Exception as e:
-            self.logger.log_error(f"❌ {symbol} 신호 조정 계산 중 오류: {str(e)}")
-            return 1.0
-
-    def _normalize_weights(self, weights_df: pd.DataFrame) -> pd.DataFrame:
-        """비중 정규화 (합계가 1이 되도록)"""
-        # 현금을 제외한 비중 합계
-        non_cash_weights = weights_df.drop(columns=["cash"], errors="ignore")
-        total_weight = non_cash_weights.sum(axis=1)
-
-        # 정규화
-        for col in non_cash_weights.columns:
-            weights_df[col] = weights_df[col] / total_weight
-
-        # 현금 비중 조정
-        if "cash" in weights_df.columns:
-            weights_df["cash"] = 1 - non_cash_weights.sum(axis=1)
-
-        return weights_df
-
     def _register_strategies(self):
-        """모든 전략을 매니저에 등록"""
-        # config에서 심볼/비중 불러오기
-        config_symbols = self.config.get("data", {}).get("symbols", [])
-        config_weights = self.config.get("data", {}).get("weights", None)
-        if config_weights is None:
-            weights = (
-                [1.0 / len(config_symbols)] * len(config_symbols)
-                if config_symbols
-                else []
-            )
-        else:
-            weights = config_weights
-        # numpy 배열일 경우 리스트로 변환
-        try:
-            import numpy as np
-
-            if isinstance(weights, np.ndarray):
-                weights = weights.tolist()
-        except ImportError:
-            pass
-        if not isinstance(weights, list):
-            weights = list(weights)
-
-        strategies = {
-            "buy_hold": FixedWeightRebalanceStrategy(
-                self.params, config_symbols, weights
-            ),
-            "dual_momentum": DualMomentumStrategy(self.params),
-            "volatility_breakout": VolatilityAdjustedBreakoutStrategy(self.params),
-            "swing_ema": SwingEMACrossoverStrategy(self.params),
-            "swing_rsi": SwingRSIReversalStrategy(self.params),
-            "swing_donchian": DonchianSwingBreakoutStrategy(self.params),
-            # 신규 전략 등록
-            "stochastic": StochasticStrategy(self.params),
-            "williams_r": WilliamsRStrategy(self.params),
-            "cci": CCIStrategy(self.params, threshold=80),
-            # 휩쏘 방지 전략들 등록
-            "whipsaw_prevention": WhipsawPreventionStrategy(self.params),
-            "donchian_rsi_whipsaw": DonchianRSIWhipsawStrategy(self.params),
-            "volatility_filtered_breakout": VolatilityFilteredBreakoutStrategy(
-                self.params
-            ),
-            "multi_timeframe_whipsaw": MultiTimeframeWhipsawStrategy(self.params),
-            "adaptive_whipsaw": AdaptiveWhipsawStrategy(self.params),
-            # 새로운 결합 전략들 등록
-            "cci_bollinger": CCIBollingerStrategy(self.params),
-            "stoch_donchian": StochDonchianStrategy(self.params),
-            # 스켈핑 전략들 등록
-            "vwap_macd_scalping": VWAPMACDScalpingStrategy(self.params),
-            "keltner_rsi_scalping": KeltnerRSIScalpingStrategy(self.params),
-            "absorption_scalping": AbsorptionScalpingStrategy(self.params),
-            "rsi_bollinger_scalping": RSIBollingerScalpingStrategy(self.params),
-            # 평균회귀 전략 등록
-            "mean_reversion": MeanReversionStrategy(self.params),
-            # 실전형 전략들 등록 (config 기반)
-            "fixed_weight_rebalance": FixedWeightRebalanceStrategy(
-                self.params, config_symbols, weights
-            ),
-            "etf_momentum_rotation": ETFMomentumRotationStrategy(
-                self.params,
-                top_n=min(2, len(config_symbols)),
-                lookback_period=20,
-                rebalance_period=20,
-            ),
-            "trend_following_ma200": TrendFollowingMA200Strategy(self.params),
-            "return_stacking": ReturnStackingStrategy(
-                self.params, config_symbols, weights
-            ),
-            "risk_parity_leverage": RiskParityLeverageStrategy(
-                self.params, config_symbols
-            ),
-            "all": FixedWeightRebalanceStrategy(self.params, config_symbols, weights),
+        """전략 등록"""
+        strategies_to_register = {
+            "dual_momentum": DualMomentumStrategy,
+            "volatility_breakout": VolatilityAdjustedBreakoutStrategy,
+            "swing_ema": SwingEMACrossoverStrategy,
+            "swing_rsi": SwingRSIReversalStrategy,
+            "swing_donchian": DonchianSwingBreakoutStrategy,
+            "stoch_donchian": StochDonchianStrategy,
+            "whipsaw_prevention": WhipsawPreventionStrategy,
+            "donchian_rsi_whipsaw": DonchianRSIWhipsawStrategy,
+            "volatility_filtered_breakout": VolatilityFilteredBreakoutStrategy,
+            "multi_timeframe_whipsaw": MultiTimeframeWhipsawStrategy,
+            "adaptive_whipsaw": AdaptiveWhipsawStrategy,
+            "cci_bollinger": CCIBollingerStrategy,
+            "mean_reversion": MeanReversionStrategy,
+            "swing_breakout": SwingBreakoutStrategy,
+            "swing_pullback_entry": SwingPullbackEntryStrategy,
+            "swing_candle_pattern": SwingCandlePatternStrategy,
+            "swing_bollinger_band": SwingBollingerBandStrategy,
+            "swing_macd": SwingMACDStrategy,
         }
-        for name, strategy in strategies.items():
-            self.strategy_manager.add_strategy(name, strategy)
 
-    def load_data(self, symbol: str = None) -> Dict[str, pd.DataFrame]:
-        """데이터 로드"""
-        # config에서 심볼 목록 가져오기
-        config_symbols = self.config.get("data", {}).get("symbols", [])
+        for name, strategy_class in strategies_to_register.items():
+            self.strategy_manager.add_strategy(name, strategy_class(StrategyParams()))
 
-        return load_and_preprocess_data(self.data_dir, config_symbols, symbol)
+        self.logger.log_info(f"✅ {len(strategies_to_register)}개 전략 등록 완료")
 
-    def evaluate_strategy(
-        self, strategy_name: str, data_dict: Dict[str, pd.DataFrame]
-    ) -> StrategyResult:
-        """단일 전략 평가"""
-        # 로거 설정 (간소화된 로그 파일명)
-        symbols = list(data_dict.keys())
-        self.logger.setup_logger(strategy=strategy_name, symbols=symbols, mode="eval")
+    def load_data_and_split(
+        self, symbols: List[str] = None
+    ) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+        """데이터 로드 및 Train/Test 분할"""
+        if not symbols:
+            symbols = self.config.get("data", {}).get("symbols", [])
 
-        self.logger.log_section(f"🔍 {strategy_name} 전략 평가 중...")
+        data_dict = load_and_preprocess_data(self.data_dir, symbols)
+        if not data_dict:
+            self.logger.log_error(f"데이터를 로드할 수 없습니다: {self.data_dir}")
+            return {}, {}
 
-        # 데이터 분석 정보 로깅
-        first_symbol = list(data_dict.keys())[0]
-        data = data_dict[first_symbol]
-        start_date = data["datetime"].min()
-        end_date = data["datetime"].max()
-        total_days = (end_date - start_date).days
-        total_points = len(data)
-
-        self.logger.log_info(
-            f"📅 분석 기간: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')} ({total_days}일)"
-        )
-        self.logger.log_info(f"📊 분석 종목: {', '.join(symbols)} ({len(symbols)}개)")
-        self.logger.log_info(f"📈 데이터 포인트: {total_points:,}개")
-        self.logger.log_info(
-            f"💰 초기 자본: ${self.config.get('trading', {}).get('initial_capital', 100000):,}"
+        # Train/Test 분할
+        train_data_dict, test_data_dict = split_data_train_test(
+            data_dict, self.train_ratio
         )
 
-        try:
-            if self.portfolio_mode:
-                # 포트폴리오 모드 - 멀티-에셋 비중 기반 시뮬레이션
-                self.logger.log_info(
-                    f"📊 {strategy_name} 포트폴리오 비중 기반 시뮬레이션 ({self.portfolio_method})"
-                )
-
-                # 포트폴리오 비중 계산 방법에 따른 분기
-                if self.portfolio_method == "fixed":
-                    # 기존 방식: 고정된 비중 사용
-                    if self.portfolio_weights is not None:
-                        self.logger.log_info(f"📋 미리 계산된 포트폴리오 비중 사용")
-                        weights_df = self.portfolio_weights.weights
-                    else:
-                        self.logger.log_info(f"📋 기본 포트폴리오 비중 계산")
-                        weights_df = self.weight_calculator.calculate_optimal_weights(
-                            data_dict
-                        )
-                        # 비중 요약 출력
-                        self.weight_calculator.print_weight_summary(weights_df)
-
-                elif self.portfolio_method == "strategy_weights":
-                    # 옵션 A: 전략별 다른 최적화 방법으로 비중 계산
-                    weights_df = self._calculate_strategy_based_weights(
-                        strategy_name, data_dict
-                    )
-
-                elif self.portfolio_method == "signal_combined":
-                    # 옵션 B: 기본 비중 + 전략 신호 결합
-                    if self.portfolio_weights is not None:
-                        base_weights = self.portfolio_weights.weights
-                    else:
-                        base_weights = self.weight_calculator.calculate_optimal_weights(
-                            data_dict
-                        )
-
-                    weights_df = self._combine_signals_with_weights(
-                        strategy_name, data_dict, base_weights
-                    )
-
-                else:
-                    # 기본값: 고정된 비중 사용
-                    self.logger.log_warning(
-                        f"알 수 없는 포트폴리오 방법: {self.portfolio_method}, 기본 방식 사용"
-                    )
-                    weights_df = self.weight_calculator.calculate_optimal_weights(
-                        data_dict
-                    )
-
-                # 포트폴리오 비중 정보 로깅
-                avg_weights = weights_df.mean()
-                self.logger.log_info(f"📊 평균 포트폴리오 비중:")
-                for symbol, weight in avg_weights.items():
-                    if symbol != "cash" and weight > 0.01:  # 1% 이상인 종목만
-                        self.logger.log_info(f"  {symbol}: {weight*100:.1f}%")
-
-                # 포트폴리오 리스크 분석 (portfolio_manager 활용)
-                risk_analysis = self._analyze_portfolio_risk(
-                    strategy_name, data_dict, weights_df
-                )
-                if risk_analysis:
-                    self.logger.log_info(f"🔍 리스크 분석 결과:")
-                    overall_risk = risk_analysis.get("risk_assessment", {}).get(
-                        "overall_risk", "평가 불가"
-                    )
-                    self.logger.log_info(f"  종합 리스크 수준: {overall_risk}")
-
-                    optimization_metrics = risk_analysis.get("optimization_metrics", {})
-                    if optimization_metrics:
-                        sharpe = optimization_metrics.get("sharpe_ratio", 0)
-                        volatility = optimization_metrics.get("volatility", 0)
-                        max_dd = optimization_metrics.get("max_drawdown", 0)
-                        self.logger.log_info(f"  샤프 비율: {sharpe:.3f}")
-                        self.logger.log_info(f"  변동성: {volatility*100:.1f}%")
-                        self.logger.log_info(f"  최대 낙폭: {max_dd*100:.1f}%")
-
-                # 전략별 신호 생성 (포트폴리오 모드에서도 전략별 차이를 위해)
-                strategy_signals = {}
-                portfolio_strategies = [
-                    "buy_hold",
-                    "fixed_weight_rebalance",
-                    "etf_momentum_rotation",
-                    "trend_following_ma200",
-                    "return_stacking",
-                    "risk_parity_leverage",
-                ]
-                strategy = self.strategy_manager.strategies[strategy_name]
-                if strategy_name in portfolio_strategies:
-                    # 포트폴리오 전략은 data_dict 전체를 넘김
-                    signals = strategy.generate_signals(data_dict)
-                    if isinstance(signals, dict):
-                        strategy_signals = signals
-                    else:
-                        for symbol in data_dict.keys():
-                            strategy_signals[symbol] = signals
-                else:
-                    # 단일종목 전략은 각 종목별로 DataFrame을 넘김
-                    for symbol, data in data_dict.items():
-                        signals = strategy.generate_signals(data)
-                        strategy_signals[symbol] = signals
-
-                # 실시간 로그 모드인 경우
-                if self.log_mode == "real_time":
-                    print(f"\n📊 {strategy_name} 실시간 포트폴리오 시뮬레이션")
-                    print("-" * 50)
-
-                    # 포트폴리오 시뮬레이션 실행 (전략별 신호 포함)
-                    simulation_result = self.simulator.simulate_portfolio_trading(
-                        data_dict, weights_df, strategy_name, strategy_signals
-                    )
-
-                    # 실시간 로그 출력
-                    self.simulator.print_logs(simulation_result["log_lines"])
-
-                    results = simulation_result["results"]
-                    trades = simulation_result["trades"]
-                    portfolio_values = simulation_result["portfolio_values"]
-
-                else:
-                    # 요약 모드 - 포트폴리오 성과 지표 계산 (전략별 신호 포함)
-                    simulation_result = self.simulator.simulate_portfolio_trading(
-                        data_dict, weights_df, strategy_name, strategy_signals
-                    )
-                    results = simulation_result["results"]
-                    trades = simulation_result["trades"]
-                    portfolio_values = simulation_result["portfolio_values"]
-
-            else:
-                # 단일 종목 모드 (기존 방식)
-                # 첫 번째 종목 사용
-                first_symbol = list(data_dict.keys())[0]
-                data = data_dict[first_symbol]
-
-                # 전략 실행
-                strategy = self.strategy_manager.strategies[strategy_name]
-
-                # 포트폴리오 전략들은 data_dict를 받아야 함
-                portfolio_strategies = [
-                    "buy_hold",
-                    "fixed_weight_rebalance",
-                    "etf_momentum_rotation",
-                    "trend_following_ma200",
-                    "return_stacking",
-                    "risk_parity_leverage",
-                ]
-
-                if strategy_name in portfolio_strategies:
-                    # 단일종목 모드에서 포트폴리오 전략 실행 시
-                    # config의 모든 심볼에 대해 동일한 데이터를 사용하여 가짜 데이터 생성
-                    config_symbols = self.config.get("data", {}).get("symbols", [])
-                    fake_data_dict = {}
-                    for symbol in config_symbols:
-                        fake_data_dict[symbol] = data.copy()
-
-                    signals = strategy.generate_signals(fake_data_dict)
-                    # 단일종목 모드에서는 첫 번째 종목의 신호만 사용
-                    if isinstance(signals, dict):
-                        signals = signals[first_symbol]
-                else:
-                    signals = strategy.generate_signals(data)
-
-                # 실시간 로그 모드인 경우
-                if self.log_mode == "real_time":
-                    print(f"\n📊 {strategy_name} 실시간 매매 시뮬레이션")
-                    print("-" * 50)
-
-                    # 시뮬레이션 실행
-                    simulation_result = self.simulator.simulate_trading(
-                        data, signals, strategy_name
-                    )
-
-                    # 실시간 로그 출력
-                    self.simulator.print_logs(simulation_result["log_lines"])
-
-                    results = simulation_result["results"]
-                    trades = simulation_result["trades"]
-                    portfolio_values = simulation_result["portfolio_values"]
-
-                    # total_trades 키 추가
-                    results["total_trades"] = len(trades)
-
-                else:
-                    # 요약 모드 - 실제 거래 시뮬레이션 실행하여 정확한 승률 계산
-                    simulation_result = self.simulator.simulate_trading(
-                        data, signals, strategy_name
-                    )
-                    results = simulation_result["results"]
-                    trades = simulation_result["trades"]
-                    portfolio_values = simulation_result["portfolio_values"]
-
-                    # total_trades 키 추가
-                    results["total_trades"] = len(trades)
-
-            # 성과 지표 로깅 (간소화)
-            self.logger.log_success(f"✅ {strategy_name} 전략 평가 완료")
-            self.logger.log_info(
-                f"📈 총 수익률: {results['total_return']*100:.2f}% | "
-                f"📊 샤프 비율: {results['sharpe_ratio']:.2f} | "
-                f"📉 최대 낙폭: {results['max_drawdown']*100:.2f}% | "
-                f"🔄 거래 횟수: {results['total_trades']}회"
+        # Test 데이터가 너무 적으면 경고
+        test_data_points = sum(len(data) for data in test_data_dict.values())
+        if test_data_points < 100:  # 최소 100개 데이터 포인트 권장
+            self.logger.log_warning(
+                f"⚠️ Test 데이터가 너무 적습니다 ({test_data_points}개). 평가 결과가 부정확할 수 있습니다."
             )
 
-            # 종합 요약용 결과 저장
-            self.logger.add_evaluation_result(strategy_name, results)
+        return train_data_dict, test_data_dict
 
-            # 거래 통계 로깅
-            if trades:
-                profitable_trades = [t for t in trades if t["pnl"] > 0]
-                losing_trades = [t for t in trades if t["pnl"] < 0]
-                avg_profit = (
-                    np.mean([t["pnl"] for t in profitable_trades])
-                    if profitable_trades
-                    else 0
-                )
-                avg_loss = (
-                    np.mean([t["pnl"] for t in losing_trades]) if losing_trades else 0
-                )
+    def load_optimization_results(self) -> Dict[str, Dict]:
+        """개별 전략 최적화 결과 로드"""
+        if not self.optimization_results_path:
+            # 자동으로 최신 최적화 결과 파일 찾기
+            self.logger.log_info(
+                "최적화 결과 파일 경로가 지정되지 않았습니다. 최신 파일을 자동으로 찾습니다."
+            )
+            self.optimization_results_path = self._find_latest_optimization_file()
 
-                self.logger.log_info(f"📊 거래 통계:")
-                self.logger.log_info(
-                    f"  수익 거래: {len(profitable_trades)}회 (평균 ${avg_profit:.2f})"
-                )
-                self.logger.log_info(
-                    f"  손실 거래: {len(losing_trades)}회 (평균 ${avg_loss:.2f})"
-                )
-                self.logger.log_info(
-                    f"  최대 수익: ${max([t['pnl'] for t in trades]):.2f}"
-                )
-                self.logger.log_info(
-                    f"  최대 손실: ${min([t['pnl'] for t in trades]):.2f}"
-                )
+        if not self.optimization_results_path:
+            self.logger.log_error("최적화 결과 파일을 찾을 수 없습니다")
+            return {}
 
-            # StrategyResult 객체 생성
-            if self.portfolio_mode:
-                # 포트폴리오 모드에서는 전략별 신호와 weights_df 모두 저장
-                strategy_result = StrategyResult(
-                    name=strategy_name,
-                    total_return=results["total_return"],
-                    sharpe_ratio=results["sharpe_ratio"],
-                    max_drawdown=results["max_drawdown"],
-                    win_rate=results["win_rate"],
-                    profit_factor=results["profit_factor"],
-                    sqn=results["sqn"],
-                    total_trades=results["total_trades"],
-                    avg_hold_duration=results["avg_hold_duration"],
-                    trades=trades,
-                    portfolio_values=portfolio_values,
-                    signals=strategy_signals,  # 전략별 신호 저장
-                    risk_analysis=(
-                        risk_analysis if "risk_analysis" in locals() else None
-                    ),  # 리스크 분석 결과 저장
-                )
-            else:
-                strategy_result = StrategyResult(
-                    name=strategy_name,
-                    total_return=results["total_return"],
-                    sharpe_ratio=results["sharpe_ratio"],
-                    max_drawdown=results["max_drawdown"],
-                    win_rate=results["win_rate"],
-                    profit_factor=results["profit_factor"],
-                    sqn=results["sqn"],
-                    total_trades=results["total_trades"],
-                    avg_hold_duration=results["avg_hold_duration"],
-                    trades=trades,
-                    portfolio_values=portfolio_values,
-                    signals=signals,
-                )
+        try:
+            with open(self.optimization_results_path, "r", encoding="utf-8") as f:
+                results = json.load(f)
 
-            return strategy_result
+            self.logger.log_success(f"최적화 결과 로드 완료: {len(results)}개 조합")
+            return results
+        except Exception as e:
+            self.logger.log_error(f"최적화 결과 로드 실패: {e}")
+            return {}
+
+    def _find_latest_optimization_file(self) -> Optional[str]:
+        """최신 최적화 결과 파일 찾기"""
+        try:
+            results_dir = Path("results")
+            if not results_dir.exists():
+                return None
+
+            # hyperparam_optimization_*.json 파일들 찾기
+            optimization_files = list(
+                results_dir.glob("hyperparam_optimization_*.json")
+            )
+
+            if not optimization_files:
+                self.logger.log_warning(
+                    "하이퍼파라미터 최적화 결과 파일을 찾을 수 없습니다"
+                )
+                return None
+
+            # 가장 최신 파일 반환
+            latest_file = max(optimization_files, key=lambda x: x.stat().st_mtime)
+            self.logger.log_success(f"최신 최적화 결과 파일 발견: {latest_file.name}")
+            return str(latest_file)
 
         except Exception as e:
-            import traceback
+            self.logger.log_error(f"최적화 결과 파일 찾기 실패: {e}")
+            return None
 
-            print("==== 예외 발생! 전체 트레이스백 출력 ====", flush=True)
-            print(traceback.format_exc(), flush=True)
-            self.logger.log_error(f"❌ {strategy_name} 전략 평가 중 오류: {e}")
-            # 기본 결과 객체 반환 (예외 발생 시)
-            default_results = {
-                "total_return": 0.0,
-                "sharpe_ratio": 0.0,
-                "max_drawdown": 0.0,
-                "win_rate": 0.0,
-                "profit_factor": 0.0,
-                "sqn": 0.0,
-                "total_trades": 0,
-                "avg_hold_duration": 0.0,
-            }
+    def load_portfolio_results(self) -> Dict[str, Any]:
+        """포트폴리오 최적화 결과 로드"""
+        if not self.portfolio_results_path:
+            # 자동으로 최신 포트폴리오 결과 파일 찾기
+            self.portfolio_results_path = self._find_latest_portfolio_file()
 
-            strategy_result = StrategyResult(
-                name=strategy_name,
-                total_return=default_results["total_return"],
-                sharpe_ratio=default_results["sharpe_ratio"],
-                max_drawdown=default_results["max_drawdown"],
-                win_rate=default_results["win_rate"],
-                profit_factor=default_results["profit_factor"],
-                sqn=default_results["sqn"],
-                total_trades=default_results["total_trades"],
-                avg_hold_duration=default_results["avg_hold_duration"],
-                trades=[],
-                portfolio_values=pd.DataFrame(),
-                signals=pd.DataFrame(),
+        if not self.portfolio_results_path:
+            self.logger.log_warning("포트폴리오 결과 파일을 찾을 수 없습니다")
+            return {}
+
+        try:
+            with open(self.portfolio_results_path, "r", encoding="utf-8") as f:
+                results = json.load(f)
+
+            self.logger.log_success(
+                f"포트폴리오 결과 로드 완료: {self.portfolio_results_path}"
             )
+            return results
+        except Exception as e:
+            self.logger.log_error(f"포트폴리오 결과 로드 실패: {e}")
+            return {}
 
-            return strategy_result
+    def _find_latest_portfolio_file(self) -> Optional[str]:
+        """최신 포트폴리오 결과 파일 찾기"""
+        try:
+            results_dir = Path("results")
+            if not results_dir.exists():
+                return None
+
+            # portfolio_optimization_*.json 파일들 찾기
+            portfolio_files = list(results_dir.glob("portfolio_optimization_*.json"))
+
+            if not portfolio_files:
+                self.logger.log_warning(
+                    "포트폴리오 최적화 결과 파일을 찾을 수 없습니다"
+                )
+                return None
+
+            # 가장 최신 파일 반환
+            latest_file = max(portfolio_files, key=lambda x: x.stat().st_mtime)
+            self.logger.log_success(
+                f"최신 포트폴리오 결과 파일 발견: {latest_file.name}"
+            )
+            return str(latest_file)
+
+        except Exception as e:
+            self.logger.log_error(f"포트폴리오 결과 파일 찾기 실패: {e}")
+            return None
 
     def evaluate_strategy_with_params(
         self,
         strategy_name: str,
         data_dict: Dict[str, pd.DataFrame],
         optimized_params: Dict[str, Any],
-    ) -> "StrategyResult":
+    ) -> Dict[str, Dict[str, float]]:
         """최적화된 파라미터로 전략 평가"""
-        self.logger.log_section(f"🔍 {strategy_name} 최적화된 파라미터로 평가")
-        self.logger.log_info(f"최적화된 파라미터: {optimized_params}")
+        results = {}
 
         try:
-            # StrategyParams 객체 생성 (최적화된 파라미터로)
-            strategy_params = StrategyParams(**optimized_params)
-
             # 전략 인스턴스 생성
-            strategy_class = self.strategy_manager.strategies[strategy_name].__class__
-            strategy = strategy_class(strategy_params)
+            strategy = self.strategy_manager.strategies.get(strategy_name)
+            if not strategy:
+                self.logger.log_error(f"전략을 찾을 수 없습니다: {strategy_name}")
+                return {}
 
-            # 기존 전략 임시 저장
-            original_strategy = self.strategy_manager.strategies[strategy_name]
+            # 최적화된 파라미터 적용
+            for param_name, param_value in optimized_params.items():
+                if hasattr(strategy, param_name):
+                    setattr(strategy, param_name, param_value)
 
-            # 새로운 전략으로 교체
-            self.strategy_manager.strategies[strategy_name] = strategy
+            # 각 종목에 대해 전략 실행
+            for symbol, data in data_dict.items():
+                try:
+                    signals = strategy.generate_signals(data)
 
-            try:
-                # 전략 평가 실행
-                result = self.evaluate_strategy(strategy_name, data_dict)
-                return result
-            finally:
-                # 원래 전략으로 복원
-                self.strategy_manager.strategies[strategy_name] = original_strategy
+                    if signals is not None and not signals.empty:
+                        # 거래 시뮬레이션
+                        result = self.simulator.simulate_trading(
+                            data, signals, strategy_name
+                        )
+
+                        # 시뮬레이션 결과 요약만 출력
+                        if result:
+                            # 성과 지표 계산 - simulate_trading 결과 구조에 맞게 수정
+                            results_data = result.get("results", {})
+                            total_return = results_data.get("total_return", 0.0)
+                            total_trades = results_data.get("total_trades", 0)
+
+                            # 샤프 비율 계산
+                            returns = result.get("returns", [])
+                            sharpe_ratio = 0
+                            sortino_ratio = 0
+                            max_drawdown = 0
+                            volatility = 0
+
+                            if (
+                                returns
+                                and isinstance(returns, list)
+                                and len(returns) > 0
+                            ):
+                                try:
+                                    returns_series = pd.Series(returns)
+                                    mean_return = returns_series.mean()
+                                    std_return = returns_series.std()
+                                    sharpe_ratio = (
+                                        (mean_return * 252)
+                                        / (std_return * np.sqrt(252))
+                                        if std_return > 0
+                                        else 0
+                                    )
+
+                                    # 소르티노 비율 계산
+                                    negative_returns = returns_series[
+                                        returns_series < 0
+                                    ]
+                                    if len(negative_returns) > 0:
+                                        downside_deviation = negative_returns.std()
+                                        sortino_ratio = (
+                                            (mean_return * 252)
+                                            / (downside_deviation * np.sqrt(252))
+                                            if downside_deviation > 0
+                                            else 0
+                                        )
+
+                                    # 최대 낙폭 계산
+                                    cumulative_returns = (1 + returns_series).cumprod()
+                                    running_max = cumulative_returns.expanding().max()
+                                    drawdown = (
+                                        cumulative_returns - running_max
+                                    ) / running_max
+                                    max_drawdown = abs(drawdown.min())
+
+                                    # 변동성 계산
+                                    volatility = returns_series.std() * np.sqrt(252)
+                                except Exception as e:
+                                    pass
+                                    # 기본값 유지
+
+                            # 베타 계산 (간단히 1.0으로 설정)
+                            beta = 1.0
+
+                            results[symbol] = {
+                                "total_return": total_return,
+                                "sharpe_ratio": sharpe_ratio,
+                                "sortino_ratio": sortino_ratio,
+                                "max_drawdown": max_drawdown,
+                                "volatility": volatility,
+                                "beta": beta,
+                                "total_trades": total_trades,
+                            }
+                            pass
+                        else:
+                            pass
+                    else:
+                        pass
+                except Exception:
+                    # 오류가 발생해도 기본 결과 반환
+                    results[symbol] = {
+                        "total_return": 0.0,
+                        "sharpe_ratio": 0.0,
+                        "sortino_ratio": 0.0,
+                        "max_drawdown": 0.0,
+                        "volatility": 0.0,
+                        "beta": 1.0,
+                        "total_trades": 0,
+                    }
+                    continue
 
         except Exception as e:
-            self.logger.log_error(f"최적화된 파라미터로 평가 중 오류: {str(e)}")
-            return None
+            self.logger.log_error(f"전략 평가 중 오류: {e}")
 
-    def _calculate_basic_metrics(
-        self, data: pd.DataFrame, signals: pd.DataFrame
-    ) -> Dict[str, float]:
-        """기본 성과 지표 계산"""
-        returns = data["close"].pct_change()
-        strategy_returns = signals["signal"].shift(1) * returns
+        # 항상 {symbol: ...} 형태로 반환 보장
+        if len(results) == 1:
+            symbol = list(results.keys())[0]
+            return {symbol: results[symbol]}
+        return results
 
-        total_return = strategy_returns.sum()
-        sharpe_ratio = (
-            (strategy_returns.mean() / strategy_returns.std() * np.sqrt(252))
-            if strategy_returns.std() > 0
-            else 0
-        )
+    def evaluate_all_strategies(
+        self,
+        train_data_dict: Dict[str, pd.DataFrame],
+        test_data_dict: Dict[str, pd.DataFrame],
+        optimization_results: Dict[str, Dict],
+    ) -> Dict[str, Any]:
+        """모든 전략의 Train/Test 성과 평가"""
 
-        # 최대 낙폭 계산
-        cumulative_returns = (1 + strategy_returns).cumprod()
-        rolling_max = cumulative_returns.expanding().max()
-        drawdown = (cumulative_returns - rolling_max) / rolling_max
-        max_drawdown = drawdown.min()
-
-        # 실제 거래 기반 승률 계산
-        win_rate = self._calculate_actual_win_rate(data, signals)
-
-        # 수익 팩터 계산
-        profit_factor = self._calculate_profit_factor(strategy_returns)
-
-        # SQN (System Quality Number) 계산
-        sqn = self._calculate_sqn(strategy_returns)
-
-        # 거래 횟수 계산
-        signal_changes = signals["signal"].diff()
-        buy_signals = len(signals[signal_changes == 1])
-        sell_signals = len(signals[signal_changes == -1])
-        total_trades = min(buy_signals, sell_signals)
-
-        return {
-            "total_return": total_return,
-            "sharpe_ratio": sharpe_ratio,
-            "max_drawdown": max_drawdown,
-            "win_rate": win_rate,
-            "profit_factor": profit_factor,
-            "sqn": sqn,
-            "total_trades": total_trades,
-            "avg_hold_duration": 0.0,  # 기본값
+        all_results = {
+            "train": {},
+            "test": {},
+            "buy_hold_train": {},
+            "buy_hold_test": {},
+            "filtered_results": {},  # 필터링된 결과
+            "ranking": [],  # 순위
         }
 
-    def _calculate_actual_win_rate(
-        self, data: pd.DataFrame, signals: pd.DataFrame
-    ) -> float:
-        """실제 거래 결과 기반 승률 계산"""
-        try:
-            # 신호 변화점 찾기
-            signal_changes = signals["signal"].diff()
-            entry_points = signals[signal_changes != 0].index
+        # Buy & Hold 성과 계산
+        all_results["buy_hold_train"] = calculate_buy_hold_returns(train_data_dict)
+        all_results["buy_hold_test"] = calculate_buy_hold_returns(test_data_dict)
 
-            if len(entry_points) < 2:
-                return 0.0
+        # 최적화된 전략들 평가
+        symbols = list(train_data_dict.keys())
+        strategy_scores = []  # 전략별 점수 저장
 
-            wins = 0
-            total_trades = 0
+        for symbol in symbols:
+            # 해당 종목의 최적 전략 찾기
+            best_strategy = None
+            best_params = {}
 
-            for i in range(len(entry_points) - 1):
-                entry_idx = entry_points[i]
-                exit_idx = entry_points[i + 1]
+            # 키 패턴으로 찾기 (예: "dual_momentum_AAPL")
+            for key, result in optimization_results.items():
+                if key.endswith(f"_{symbol}"):
+                    best_strategy = result.get("strategy_name")
+                    best_params = result.get("best_params", {})
+                    break
 
-                if entry_idx >= len(data) or exit_idx >= len(data):
-                    continue
+            if not best_strategy:
+                continue
 
-                entry_price = data.loc[entry_idx, "close"]
-                exit_price = data.loc[exit_idx, "close"]
-                position = signals.loc[entry_idx, "signal"]
-
-                # 수익/손실 계산
-                if position == 1:  # 롱 포지션
-                    pnl = (exit_price - entry_price) / entry_price
-                elif position == -1:  # 숏 포지션
-                    pnl = (entry_price - exit_price) / entry_price
-                else:
-                    continue
-
-                if pnl > 0:
-                    wins += 1
-                total_trades += 1
-
-            return wins / total_trades if total_trades > 0 else 0.0
-
-        except Exception as e:
-            self.logger.log_warning(f"승률 계산 중 오류: {e}")
-            return 0.0
-
-    def _calculate_profit_factor(self, strategy_returns: pd.Series) -> float:
-        """수익 팩터 계산"""
-        try:
-            positive_returns = strategy_returns[strategy_returns > 0]
-            negative_returns = strategy_returns[strategy_returns < 0]
-
-            gross_profit = positive_returns.sum() if len(positive_returns) > 0 else 0
-            gross_loss = abs(negative_returns.sum()) if len(negative_returns) > 0 else 0
-
-            return gross_profit / gross_loss if gross_loss > 0 else 1.0
-
-        except Exception as e:
-            self.logger.log_warning(f"수익 팩터 계산 중 오류: {e}")
-            return 1.0
-
-    def _calculate_sqn(self, strategy_returns: pd.Series) -> float:
-        """SQN (System Quality Number) 계산"""
-        try:
-            if len(strategy_returns) == 0 or strategy_returns.std() == 0:
-                return 0.0
-
-            # 연간화된 수익률과 표준편차
-            annual_return = strategy_returns.mean() * 252
-            annual_std = strategy_returns.std() * np.sqrt(252)
-
-            return annual_return / annual_std if annual_std > 0 else 0.0
-
-        except Exception as e:
-            self.logger.log_warning(f"SQN 계산 중 오류: {e}")
-            return 0.0
-
-    def compare_strategies(
-        self, data_dict: Dict[str, pd.DataFrame], strategies: List[str] = None
-    ) -> Dict[str, StrategyResult]:
-        """여러 전략 비교 분석"""
-        if strategies is None:
-            strategies = list(self.strategy_manager.strategies.keys())
-
-        # 로거 설정 (간소화)
-        symbols = list(data_dict.keys())
-        self.logger.setup_logger(strategy="comparison", symbols=symbols, mode="comp")
-
-        self.logger.log_section("🚀 전략 비교 분석 시작")
-
-        first_symbol = list(data_dict.keys())[0]
-        data = data_dict[first_symbol]
-        start_date = data["datetime"].min()
-        end_date = data["datetime"].max()
-
-        self.logger.log_info(
-            f"📅 분석 기간: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}"
-        )
-        self.logger.log_info(f"📊 분석 종목: {', '.join(symbols)} ({len(symbols)}개)")
-        self.logger.log_info(
-            f"🎯 분석 전략: {', '.join(strategies)} ({len(strategies)}개)"
-        )
-        self.logger.log_info(
-            f"📈 분석 모드: {'포트폴리오' if self.portfolio_mode else '단일 종목'}"
-        )
-
-        results = {}
-        completed_count = 0
-
-        for strategy_name in strategies:
-            self.logger.log_info(
-                f"🔄 {strategy_name} 전략 평가 중... ({completed_count + 1}/{len(strategies)})"
+            # Train 데이터에서 평가
+            train_result = self.evaluate_strategy_with_params(
+                best_strategy, {symbol: train_data_dict[symbol]}, best_params
             )
-            result = self.evaluate_strategy(strategy_name, data_dict)
-            if result:
-                results[strategy_name] = result
-                completed_count += 1
-                self.logger.log_success(f"✅ {strategy_name} 전략 평가 완료")
+            if symbol in train_result:
+                all_results["train"][symbol] = train_result[symbol]
+                all_results["train"][symbol]["strategy"] = best_strategy
+
+                pass
             else:
-                self.logger.log_error(f"❌ {strategy_name} 전략 평가 실패")
+                pass
+
+            # Test 데이터에서 평가
+            try:
+                # Test 데이터에서 평가
+                test_data = test_data_dict[symbol]
+                if len(test_data) < 20:  # 최소 20개 데이터 포인트 필요
+                    all_results["test"][symbol] = {
+                        "total_return": 0.0,
+                        "sharpe_ratio": 0.0,
+                        "sortino_ratio": 0.0,
+                        "max_drawdown": 0.0,
+                        "volatility": 0.0,
+                        "beta": 1.0,
+                        "total_trades": 0,
+                        "strategy": best_strategy,
+                    }
+                else:
+                    try:
+                        test_result = self.evaluate_strategy_with_params(
+                            best_strategy, {symbol: test_data}, best_params
+                        )
+                        if symbol in test_result:
+                            all_results["test"][symbol] = test_result[symbol]
+                            all_results["test"][symbol]["strategy"] = best_strategy
+                        else:
+                            all_results["test"][symbol] = {
+                                "total_return": 0.0,
+                                "sharpe_ratio": 0.0,
+                                "sortino_ratio": 0.0,
+                                "max_drawdown": 0.0,
+                                "volatility": 0.0,
+                                "beta": 1.0,
+                                "total_trades": 0,
+                                "strategy": best_strategy,
+                            }
+                    except Exception:
+                        all_results["test"][symbol] = {
+                            "total_return": 0.0,
+                            "sharpe_ratio": 0.0,
+                            "sortino_ratio": 0.0,
+                            "max_drawdown": 0.0,
+                            "volatility": 0.0,
+                            "beta": 1.0,
+                            "total_trades": 0,
+                            "strategy": best_strategy,
+                        }
+            except Exception:
+                all_results["test"][symbol] = {
+                    "total_return": 0.0,
+                    "sharpe_ratio": 0.0,
+                    "sortino_ratio": 0.0,
+                    "max_drawdown": 0.0,
+                    "volatility": 0.0,
+                    "beta": 1.0,
+                    "total_trades": 0,
+                    "strategy": best_strategy,
+                }
+
+        # 최종 필터링 및 순위 결정
+        all_results["filtered_results"], all_results["ranking"] = (
+            self._apply_final_filtering(all_results["train"], all_results["test"])
+        )
+
+        return all_results
+
+    def calculate_portfolio_performance(
+        self,
+        individual_results: Dict[str, Any],
+        portfolio_results: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """포트폴리오 성과 계산"""
+        self.logger.log_section("⚖️ 포트폴리오 성과 계산")
+
+        portfolio_performance = {"train": {}, "test": {}}
+
+        try:
+            # 포트폴리오 비중 가져오기
+            portfolio_weights = portfolio_results.get("portfolio_weights", {})
+            if not portfolio_weights:
+                self.logger.log_warning(
+                    "포트폴리오 비중을 찾을 수 없습니다. 동일 가중치로 계산합니다."
+                )
+                # 동일 가중치로 설정
+                symbols = list(individual_results.get("train", {}).keys())
+                if symbols:
+                    equal_weight = 1.0 / len(symbols)
+                    portfolio_weights = {symbol: equal_weight for symbol in symbols}
+                    self.logger.log_info(
+                        f"동일 가중치 설정: {len(symbols)}개 종목, 각 {equal_weight:.3f}"
+                    )
+
+            # Train 포트폴리오 성과
+            if individual_results["train"]:
+                portfolio_performance["train"] = calculate_portfolio_metrics(
+                    individual_results["train"], portfolio_weights
+                )
+
+            # Test 포트폴리오 성과
+            if individual_results["test"]:
+                portfolio_performance["test"] = calculate_portfolio_metrics(
+                    individual_results["test"], portfolio_weights
+                )
+
+            # Buy & Hold 포트폴리오 성과
+            if individual_results["buy_hold_train"]:
+                portfolio_performance["buy_hold_train"] = calculate_portfolio_metrics(
+                    individual_results["buy_hold_train"], portfolio_weights
+                )
+
+            if individual_results["buy_hold_test"]:
+                portfolio_performance["buy_hold_test"] = calculate_portfolio_metrics(
+                    individual_results["buy_hold_test"], portfolio_weights
+                )
+
+        except Exception as e:
+            self.logger.log_error(f"포트폴리오 성과 계산 중 오류: {e}")
+
+        return portfolio_performance
+
+    def _apply_final_filtering(
+        self, train_results: Dict[str, Any], test_results: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """최종 필터링 및 순위 결정"""
+        self.logger.log_section("🔍 최종 필터링 및 순위 결정")
+
+        # 설정에서 필터링 기준 로드
+        evaluator_config = self.config.get("evaluator", {})
+        minimum_requirements = evaluator_config.get("minimum_requirements", {})
+        risk_penalties = evaluator_config.get("risk_penalties", {})
+
+        # researcher config에서 성과 기준 로드
+        researcher_config = self.config.get("researcher", {})
+        performance_thresholds = researcher_config.get("performance_thresholds", {})
+
+        # 최소 요구사항 (완화된 기준)
+        min_trades = minimum_requirements.get("min_trades", 1)  # 5 → 1로 완화
+        min_sharpe_ratio = minimum_requirements.get(
+            "min_sharpe_ratio", -1.0
+        )  # 0.1 → -1.0으로 완화
+        min_profit_factor = minimum_requirements.get(
+            "min_profit_factor", 0.0
+        )  # 0.8 → 0.0으로 완화
+        min_win_rate = minimum_requirements.get(
+            "min_win_rate", 0.0
+        )  # 0.3 → 0.0으로 완화
+        max_drawdown_limit = minimum_requirements.get(
+            "max_drawdown_limit", 1.0
+        )  # 0.5 → 1.0으로 완화
+
+        # 성과 기준 (researcher config에서 로드)
+        min_return_threshold = performance_thresholds.get("min_return_threshold", 0.0)
+
+        # 위험 페널티
+        max_drawdown_threshold = risk_penalties.get("max_drawdown_threshold", 0.20)
+        max_drawdown_penalty = risk_penalties.get("max_drawdown_penalty", 0.5)
+        volatility_threshold = risk_penalties.get("volatility_threshold", 0.30)
+        volatility_penalty = risk_penalties.get("volatility_penalty", 0.3)
+
+        filtered_results = {}
+        strategy_rankings = []
+
+        for symbol in train_results.keys():
+            if symbol not in test_results:
+                continue
+
+            train_result = train_results[symbol]
+            test_result = test_results[symbol]
+
+            # 최소 요구사항 체크
+            meets_requirements = True
+            rejection_reasons = []
+
+            # 거래 횟수 체크
+            if train_result.get("total_trades", 0) < min_trades:
+                meets_requirements = False
+                rejection_reasons.append(
+                    f"거래 횟수 부족: {train_result.get('total_trades', 0)}/{min_trades}"
+                )
+
+            # 최소 수익률 체크
+            train_return = train_result.get("total_return", 0)
+            test_return = test_result.get("total_return", 0)
+            avg_return = (train_return + test_return) / 2
+            if avg_return < min_return_threshold:
+                meets_requirements = False
+                rejection_reasons.append(
+                    f"수익률 부족: {avg_return:.3f}/{min_return_threshold}"
+                )
+
+            # 샤프 비율 체크 (Train과 Test 모두 고려)
+            train_sharpe = train_result.get("sharpe_ratio", 0)
+            test_sharpe = test_result.get("sharpe_ratio", 0)
+            avg_sharpe = (train_sharpe + test_sharpe) / 2
+            if avg_sharpe < min_sharpe_ratio:
+                meets_requirements = False
+                rejection_reasons.append(
+                    f"샤프 비율 부족: {avg_sharpe:.3f}/{min_sharpe_ratio}"
+                )
+
+            # 최대 낙폭 체크 (Train과 Test 중 더 나쁜 것 기준)
+            train_dd = train_result.get("max_drawdown", 1)
+            test_dd = test_result.get("max_drawdown", 1)
+            max_dd = max(train_dd, test_dd)
+            if max_dd > max_drawdown_limit:
+                meets_requirements = False
+                rejection_reasons.append(
+                    f"최대 낙폭 초과: {max_dd:.3f}/{max_drawdown_limit}"
+                )
+
+            if meets_requirements:
+                # 복합 점수 계산 (Train과 Test 성과를 모두 고려)
+                composite_score = self._calculate_evaluation_score(
+                    train_result,
+                    test_result,
+                    max_drawdown_threshold,
+                    max_drawdown_penalty,
+                    volatility_threshold,
+                    volatility_penalty,
+                )
+
+                filtered_results[symbol] = {
+                    "train": train_result,
+                    "test": test_result,
+                    "composite_score": composite_score,
+                    "avg_sharpe": avg_sharpe,
+                    "max_drawdown": max_dd,
+                    "strategy": train_result.get("strategy", "UNKNOWN"),
+                }
+
+                strategy_rankings.append(
+                    {
+                        "symbol": symbol,
+                        "strategy": train_result.get("strategy", "UNKNOWN"),
+                        "composite_score": composite_score,
+                        "avg_sharpe": avg_sharpe,
+                        "max_drawdown": max_dd,
+                        "train_return": train_result.get("total_return", 0),
+                        "test_return": test_result.get("total_return", 0),
+                    }
+                )
+            else:
+                self.logger.log_warning(
+                    f"❌ {symbol} 필터링 제외: {', '.join(rejection_reasons)}"
+                )
+
+        # 점수 기준으로 순위 정렬
+        strategy_rankings.sort(key=lambda x: x["composite_score"], reverse=True)
 
         self.logger.log_success(
-            f"🎉 전략 비교 분석 완료! ({completed_count}/{len(strategies)} 전략 성공)"
+            f"✅ 필터링 완료: {len(filtered_results)}/{len(train_results)}개 전략 통과"
         )
+        self.logger.log_success(f"📊 상위 3개 전략:")
+        for i, ranking in enumerate(strategy_rankings[:3], 1):
+            self.logger.log_success(
+                f"  {i}. {ranking['symbol']} ({ranking['strategy']}): {ranking['composite_score']:.3f}"
+            )
 
-        return results
+        return filtered_results, strategy_rankings
 
-    def _calculate_buy_and_hold(self, data_dict: Dict[str, pd.DataFrame]) -> dict:
-        """buy&hold 전략의 성과지표 계산 (단일종목/포트폴리오 모두 지원)"""
-        import pandas as pd
-        import numpy as np
-
-        symbols = list(data_dict.keys())
-        if len(symbols) == 1:
-            # 단일 종목: 첫날 매수 후 마지막까지 보유
-            df = data_dict[symbols[0]]
-            prices = df["close"].values
-            returns = pd.Series(prices).pct_change().dropna()
-            total_return = (prices[-1] - prices[0]) / prices[0]
-            sharpe = (
-                (returns.mean() / returns.std() * np.sqrt(252))
-                if returns.std() > 0
-                else 0
-            )
-            cum_returns = (1 + returns).cumprod()
-            max_dd = (
-                (cum_returns - cum_returns.expanding().max())
-                / cum_returns.expanding().max()
-            ).min()
-            return {
-                "total_return": total_return,
-                "sharpe_ratio": sharpe,
-                "max_drawdown": max_dd,
-                "win_rate": np.nan,
-                "profit_factor": np.nan,
-                "sqn": np.nan,
-                "total_trades": 1,
-                "avg_hold_duration": len(df),
-                "name": "buy&hold",
-            }
-        else:
-            # 포트폴리오: 첫 리밸런싱 비중을 끝까지 고정
-            # 모든 종목의 공통 기간
-            common_dates = set.intersection(
-                *[set(df["datetime"]) for df in data_dict.values()]
-            )
-            common_dates = sorted(list(common_dates))
-            if not common_dates:
-                return None
-            first_date = common_dates[0]
-            last_date = common_dates[-1]
-            # 첫날 종가 기준 비중 계산 (동일가중)
-            first_prices = np.array(
-                [
-                    data_dict[s]
-                    .loc[data_dict[s]["datetime"] == first_date, "close"]
-                    .values[0]
-                    for s in symbols
-                ]
-            )
-            weights = np.ones(len(symbols)) / len(symbols)
-            # 초기 자본 1로 가정
-            capital = 1.0
-            shares = (capital * weights) / first_prices
-            # 마지막날 종가
-            last_prices = np.array(
-                [
-                    data_dict[s]
-                    .loc[data_dict[s]["datetime"] == last_date, "close"]
-                    .values[0]
-                    for s in symbols
-                ]
-            )
-            final_value = np.sum(shares * last_prices)
-            total_return = (final_value - capital) / capital
-            # 포트폴리오 일별 수익률 계산
-            port_vals = []
-            for d in common_dates:
-                prices = np.array(
-                    [
-                        data_dict[s]
-                        .loc[data_dict[s]["datetime"] == d, "close"]
-                        .values[0]
-                        for s in symbols
-                    ]
-                )
-                port_vals.append(np.sum(shares * prices))
-            port_vals = pd.Series(port_vals)
-            returns = port_vals.pct_change().dropna()
-            sharpe = (
-                (returns.mean() / returns.std() * np.sqrt(252))
-                if returns.std() > 0
-                else 0
-            )
-            cum_returns = (1 + returns).cumprod()
-            max_dd = (
-                (cum_returns - cum_returns.expanding().max())
-                / cum_returns.expanding().max()
-            ).min()
-            return {
-                "total_return": total_return,
-                "sharpe_ratio": sharpe,
-                "max_drawdown": max_dd,
-                "win_rate": np.nan,
-                "profit_factor": np.nan,
-                "sqn": np.nan,
-                "total_trades": 1,
-                "avg_hold_duration": len(common_dates),
-                "name": "buy&hold",
-            }
-
-    def generate_comparison_report(
+    def _calculate_evaluation_score(
         self,
-        results: Dict[str, StrategyResult],
-        data_dict: Dict[str, pd.DataFrame] = None,
-    ) -> str:
-        """전략 비교 리포트 생성 (buy&hold baseline 항상 맨 위에 추가)"""
-        if not results:
-            return "평가 결과가 없습니다."
+        train_result: Dict[str, Any],
+        test_result: Dict[str, Any],
+        max_dd_threshold: float,
+        max_dd_penalty: float,
+        volatility_threshold: float,
+        volatility_penalty: float,
+    ) -> float:
+        """평가 점수 계산 (Train과 Test 성과를 모두 고려)"""
+        try:
+            # 기본 지표들 (Train과 Test의 평균)
+            train_return = train_result.get("total_return", 0)
+            test_return = test_result.get("total_return", 0)
+            avg_return = (train_return + test_return) / 2
 
-        report_lines = []
-        report_lines.append("\n" + "=" * 80)
-        report_lines.append("📈 전략 비교 분석 리포트")
-        report_lines.append("=" * 80)
+            train_sharpe = train_result.get("sharpe_ratio", 0)
+            test_sharpe = test_result.get("sharpe_ratio", 0)
+            avg_sharpe = (train_sharpe + test_sharpe) / 2
 
-        # buy&hold baseline 추가
-        if data_dict is not None:
-            bh = self._calculate_buy_and_hold(data_dict)
-            report_lines.append("\n📊 성과 지표 비교")
-            report_lines.append("-" * 100)
-            report_lines.append(
-                f"{'전략명':<20} {'수익률':<10} {'샤프비율':<10} {'최대낙폭':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<10}"
+            train_sortino = train_result.get("sortino_ratio", 0)
+            test_sortino = test_result.get("sortino_ratio", 0)
+            avg_sortino = (train_sortino + test_sortino) / 2
+
+            train_dd = train_result.get("max_drawdown", 1)
+            test_dd = test_result.get("max_drawdown", 1)
+            max_dd = max(train_dd, test_dd)
+
+            train_vol = train_result.get("volatility", 0)
+            test_vol = test_result.get("volatility", 0)
+            avg_vol = (train_vol + test_vol) / 2
+
+            # 점수 계산 (0-100 스케일)
+            scores = {}
+
+            # 수익률 점수
+            scores["return"] = min(max(avg_return * 100, 0), 100)
+
+            # 샤프 비율 점수
+            scores["sharpe"] = min(max(avg_sharpe * 20, 0), 100)
+
+            # 소르티노 비율 점수
+            scores["sortino"] = min(max(avg_sortino * 20, 0), 100)
+
+            # 최대 낙폭 점수 (낮을수록 높은 점수)
+            scores["drawdown"] = max(0, 100 - (max_dd * 100))
+
+            # 변동성 점수 (낮을수록 높은 점수)
+            scores["volatility"] = max(0, 100 - (avg_vol * 100))
+
+            # 가중치 (researcher config에서 로드)
+            evaluation_metrics = self.config.get("researcher", {}).get(
+                "evaluation_metrics", {}
             )
-            report_lines.append("-" * 100)
-            report_lines.append(
-                f"{'buy&hold':<20} {bh['total_return']*100:>8.2f}% {bh['sharpe_ratio']:>8.2f} {bh['max_drawdown']*100:>8.2f}% {'-':>6} {bh['total_trades']:>6d} {'보유중':<10}"
-            )
-        else:
-            report_lines.append("\n📊 성과 지표 비교")
-            report_lines.append("-" * 100)
-            report_lines.append(
-                f"{'전략명':<20} {'수익률':<10} {'샤프비율':<10} {'최대낙폭':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<10}"
-            )
-            report_lines.append("-" * 100)
-
-        # 기존 전략들
-        for name, result in results.items():
-            actual_win_rate = self._calculate_actual_win_rate_from_trades(result.trades)
-            current_signal = self._get_current_position(result.signals)
-            report_lines.append(
-                f"{name:<20} {result.total_return*100:>8.2f}% {result.sharpe_ratio:>8.2f} "
-                f"{result.max_drawdown*100:>8.2f}% {actual_win_rate*100:>6.1f}% {result.total_trades:>6d} {current_signal:<10}"
+            weights = evaluation_metrics.get(
+                "weights",
+                {
+                    "sharpe_ratio": 0.25,
+                    "sortino_ratio": 0.20,
+                    "calmar_ratio": 0.15,
+                    "profit_factor": 0.20,
+                    "win_rate": 0.20,
+                },
             )
 
-        # 이하 기존 코드 동일 (최고 성과 전략, 상세 분석 등)
-        # ... (이전 코드 유지)
-        return "\n".join(report_lines)
+            # Train/Test 평가용 가중치 매핑
+            evaluation_weights = {
+                "return": weights.get("total_return", 0.25),
+                "sharpe": weights.get("sharpe_ratio", 0.25),
+                "sortino": weights.get("sortino_ratio", 0.20),
+                "drawdown": 0.15,  # 고정값
+                "volatility": 0.15,  # 고정값
+            }
 
-    def _calculate_actual_win_rate_from_trades(self, trades: List[Dict]) -> float:
-        """거래 데이터에서 실제 승률 계산"""
-        if not trades:
+            # 복합 점수 계산
+            composite_score = sum(
+                scores[metric] * weight for metric, weight in evaluation_weights.items()
+            )
+
+            # 위험 페널티 적용
+            if max_dd > max_dd_threshold:
+                composite_score *= 1 - max_dd_penalty
+
+            if avg_vol > volatility_threshold:
+                composite_score *= 1 - volatility_penalty
+
+            return composite_score
+
+        except Exception as e:
+            self.logger.log_error(f"평가 점수 계산 중 오류: {e}")
             return 0.0
 
-        winning_trades = [trade for trade in trades if trade.get("pnl", 0) > 0]
-        return len(winning_trades) / len(trades)
-
-    def _get_current_position(self, signals) -> str:
-        """마지막 신호를 기반으로 현재 포지션 상태 반환"""
-        if signals is None:
-            return "보유중"
-
-        # 포트폴리오 모드: signals가 dict인 경우
-        if isinstance(signals, dict):
-            total_signal = 0
-            signal_count = 0
-            for symbol, signal_df in signals.items():
-                if (
-                    isinstance(signal_df, pd.DataFrame)
-                    and "signal" in signal_df.columns
-                ):
-                    last_signal = signal_df["signal"].iloc[-1]
-                    total_signal += last_signal
-                    signal_count += 1
-
-            if signal_count > 0:
-                avg_signal = total_signal / signal_count
-                # 현재 포지션 상태 판단
-                if avg_signal > 0.1:
-                    return "보유중"
-                elif avg_signal < -0.1:
-                    return "매도됨"
-                else:
-                    return "보유중"
-            else:
-                return "보유중"
-
-        # 단일 종목 모드: signals가 DataFrame인 경우
-        elif isinstance(signals, pd.DataFrame):
-            if "signal" in signals.columns:
-                last_signal = signals["signal"].iloc[-1]
-                if last_signal > 0.1:
-                    return "보유중"
-                elif last_signal < -0.1:
-                    return "매도됨"
-                else:
-                    return "보유중"
-            else:
-                return "보유중"
-        else:
-            return "보유중"
-
-    def plot_comparison(
-        self, results: Dict[str, StrategyResult], save_path: str = None
-    ):
-        """전략 비교 차트 생성"""
-        if not results:
-            print("차트를 생성할 데이터가 없습니다.")
-            return
-
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        fig.suptitle("전략 비교 분석", fontsize=16, fontweight="bold")
-
-        # 1. 수익률 비교
-        names = list(results.keys())
-        returns = [r.total_return * 100 for r in results.values()]
-
-        bars1 = axes[0, 0].bar(
-            names,
-            returns,
-            color=["#2E86AB", "#A23B72", "#F18F01", "#C73E1D", "#8B5A3C"],
-        )
-        axes[0, 0].set_title("총 수익률 비교 (%)")
-        axes[0, 0].set_ylabel("수익률 (%)")
-        axes[0, 0].tick_params(axis="x", rotation=45)
-
-        # 수치 표시
-        for bar, return_val in zip(bars1, returns):
-            height = bar.get_height()
-            axes[0, 0].text(
-                bar.get_x() + bar.get_width() / 2.0,
-                height + 0.1,
-                f"{return_val:.1f}%",
-                ha="center",
-                va="bottom",
-            )
-
-        # 2. 샤프 비율 비교
-        sharpes = [r.sharpe_ratio for r in results.values()]
-        bars2 = axes[0, 1].bar(
-            names,
-            sharpes,
-            color=["#2E86AB", "#A23B72", "#F18F01", "#C73E1D", "#8B5A3C"],
-        )
-        axes[0, 1].set_title("샤프 비율 비교")
-        axes[0, 1].set_ylabel("샤프 비율")
-        axes[0, 1].tick_params(axis="x", rotation=45)
-
-        for bar, sharpe in zip(bars2, sharpes):
-            height = bar.get_height()
-            axes[0, 1].text(
-                bar.get_x() + bar.get_width() / 2.0,
-                height + 0.01,
-                f"{sharpe:.2f}",
-                ha="center",
-                va="bottom",
-            )
-
-        # 3. 최대 낙폭 비교
-        drawdowns = [abs(r.max_drawdown) * 100 for r in results.values()]
-        bars3 = axes[1, 0].bar(
-            names,
-            drawdowns,
-            color=["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"],
-        )
-        axes[1, 0].set_title("최대 낙폭 비교 (%)")
-        axes[1, 0].set_ylabel("낙폭 (%)")
-        axes[1, 0].tick_params(axis="x", rotation=45)
-
-        for bar, dd in zip(bars3, drawdowns):
-            height = bar.get_height()
-            axes[1, 0].text(
-                bar.get_x() + bar.get_width() / 2.0,
-                height + 0.1,
-                f"{dd:.1f}%",
-                ha="center",
-                va="bottom",
-            )
-
-        # 4. 승률 비교
-        winrates = [r.win_rate * 100 for r in results.values()]
-        bars4 = axes[1, 1].bar(
-            names,
-            winrates,
-            color=["#2ECC71", "#3498DB", "#9B59B6", "#E67E22", "#E74C3C"],
-        )
-        axes[1, 1].set_title("승률 비교 (%)")
-        axes[1, 1].set_ylabel("승률 (%)")
-        axes[1, 1].tick_params(axis="x", rotation=45)
-
-        for bar, wr in zip(bars4, winrates):
-            height = bar.get_height()
-            axes[1, 1].text(
-                bar.get_x() + bar.get_width() / 2.0,
-                height + 0.5,
-                f"{wr:.1f}%",
-                ha="center",
-                va="bottom",
-            )
-
-        plt.tight_layout()
-
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches="tight")
-            print(f"차트가 {save_path}에 저장되었습니다.")
-
-        plt.show()
-
-    def load_and_evaluate_optimized_strategy(
-        self, strategy_name: str, symbol: str = None, results_dir: str = "results"
-    ) -> StrategyResult:
-        """최적화된 파라미터를 로드하여 전략 평가"""
-        import glob
-        import json
-
-        self.logger.log_section(f"🔍 {strategy_name} 최적화된 파라미터 로드 및 평가")
-
-        # 최적화 결과 파일 찾기
-        pattern = f"{results_dir}/evaluation_{strategy_name}_{symbol}_*.json"
-        if symbol is None:
-            pattern = f"{results_dir}/evaluation_{strategy_name}_*.json"
-
-        files = glob.glob(pattern)
-
-        if not files:
-            self.logger.log_error(
-                f"❌ {strategy_name}의 최적화 결과 파일을 찾을 수 없습니다."
-            )
-            self.logger.log_info(f"검색 패턴: {pattern}")
-            return None
-
-        # 가장 최근 파일 선택
-        latest_file = max(files, key=os.path.getctime)
-        self.logger.log_info(f"�� 최적화 결과 파일: {latest_file}")
-
+    def _calculate_portfolio_score(
+        self, portfolio_performance: Dict[str, Any]
+    ) -> float:
+        """포트폴리오 복합 점수 계산"""
         try:
-            # 최적화 결과 로드
-            with open(latest_file, "r", encoding="utf-8") as f:
-                optimization_result = json.load(f)
+            # 기본 지표들
+            total_return = portfolio_performance.get("total_return", 0)
+            sharpe_ratio = portfolio_performance.get("sharpe_ratio", 0)
+            sortino_ratio = portfolio_performance.get("sortino_ratio", 0)
+            max_drawdown = portfolio_performance.get("max_drawdown", 1)
+            volatility = portfolio_performance.get("volatility", 0)
 
-            # 최적 파라미터 추출
-            best_params = optimization_result.get("best_params", {})
-            optimization_score = optimization_result.get("optimization_score", 0)
+            # 점수 계산 (0-100 스케일)
+            scores = {}
 
-            self.logger.log_info(f"📊 최적화 점수: {optimization_score:.4f}")
-            self.logger.log_info(f"🔧 최적 파라미터: {best_params}")
+            # 수익률 점수
+            scores["return"] = min(max(total_return * 100, 0), 100)
 
-            # 데이터 로드
-            data_dict = self.load_data(symbol)
-            if not data_dict:
-                self.logger.log_error("데이터를 로드할 수 없습니다.")
-                return None
+            # 샤프 비율 점수
+            scores["sharpe"] = min(max(sharpe_ratio * 20, 0), 100)
 
-            # 최적화된 파라미터로 전략 평가
-            result = self.evaluate_strategy_with_params(
-                strategy_name, data_dict, best_params
+            # 소르티노 비율 점수
+            scores["sortino"] = min(max(sortino_ratio * 20, 0), 100)
+
+            # 최대 낙폭 점수 (낮을수록 높은 점수)
+            scores["drawdown"] = max(0, 100 - (max_drawdown * 100))
+
+            # 변동성 점수 (낮을수록 높은 점수)
+            scores["volatility"] = max(0, 100 - (volatility * 100))
+
+            # 가중치 (researcher config에서 로드)
+            evaluation_metrics = self.config.get("researcher", {}).get(
+                "evaluation_metrics", {}
             )
-
-            if result:
-                self.logger.log_success(f"✅ 최적화된 {strategy_name} 전략 평가 완료")
-                self.logger.log_info(
-                    f"📈 최적화된 수익률: {result.total_return*100:.2f}%"
-                )
-                self.logger.log_info(f"📊 최적화된 샤프비율: {result.sharpe_ratio:.4f}")
-
-                # 최적화 전후 비교
-                self._compare_optimization_results(
-                    strategy_name, data_dict, best_params, optimization_result
-                )
-
-            return result
-
-        except Exception as e:
-            self.logger.log_error(f"❌ 최적화된 전략 평가 중 오류: {str(e)}")
-            return None
-
-    def _analyze_portfolio_risk(
-        self,
-        strategy_name: str,
-        data_dict: Dict[str, pd.DataFrame],
-        weights_df: pd.DataFrame,
-    ) -> Dict[str, Any]:
-        """포트폴리오 리스크 분석 - portfolio_manager 활용"""
-        self.logger.log_info(f"🔍 {strategy_name} 포트폴리오 리스크 분석")
-
-        try:
-            # portfolio_manager를 사용한 고급 리스크 분석
-            returns_df = self.portfolio_manager.prepare_returns_data(data_dict)
-
-            # 모든 최적화 방법 비교하여 리스크 지표 분석
-            comparison_results = (
-                self.portfolio_manager.compare_all_optimization_methods(data_dict)
-            )
-
-            # 현재 전략의 리스크 지표 추출
-            current_risk_metrics = {}
-            if comparison_results:
-                # 현재 전략에 가장 적합한 방법 찾기
-                strategy_optimization_map = {
-                    "dual_momentum": "sharpe_maximization",
-                    "volatility_breakout": "minimum_variance",
-                    "swing_ema": "risk_parity",
-                    "swing_rsi": "sortino_maximization",
-                    "swing_donchian": "maximum_diversification",
-                }
-
-                method_name = strategy_optimization_map.get(
-                    strategy_name, "sharpe_maximization"
-                )
-
-                # 해당 방법의 결과 찾기
-                for method, result in comparison_results.items():
-                    # method가 enum인지 문자열인지 확인
-                    method_key = method.value if hasattr(method, "value") else method
-                    if method_key == method_name:
-                        current_risk_metrics = {
-                            "expected_return": result.expected_return,
-                            "volatility": result.volatility,
-                            "sharpe_ratio": result.sharpe_ratio,
-                            "sortino_ratio": result.sortino_ratio,
-                            "max_drawdown": result.max_drawdown,
-                            "var_95": result.var_95,
-                            "cvar_95": result.cvar_95,
-                            "diversification_ratio": result.diversification_ratio,
-                        }
-                        break
-
-            # 포트폴리오 비중 기반 추가 리스크 지표 계산
-            portfolio_risk_metrics = self._calculate_portfolio_risk_metrics(
-                returns_df, weights_df
-            )
-
-            # 종합 리스크 분석 결과
-            risk_analysis = {
-                "strategy_name": strategy_name,
-                "optimization_metrics": current_risk_metrics,
-                "portfolio_risk_metrics": portfolio_risk_metrics,
-                "risk_assessment": self._assess_risk_level(
-                    current_risk_metrics, portfolio_risk_metrics
-                ),
-            }
-
-            self.logger.log_success(f"✅ {strategy_name} 리스크 분석 완료")
-            return risk_analysis
-
-        except Exception as e:
-            self.logger.log_error(f"❌ {strategy_name} 리스크 분석 중 오류: {e}")
-            return {}
-
-    def _calculate_portfolio_risk_metrics(
-        self, returns_df: pd.DataFrame, weights_df: pd.DataFrame
-    ) -> Dict[str, float]:
-        """포트폴리오 비중 기반 리스크 지표 계산"""
-        try:
-            # 평균 비중 계산
-            avg_weights = weights_df.mean()
-
-            # 포트폴리오 수익률 계산
-            portfolio_returns = (
-                returns_df * avg_weights.drop("cash", errors="ignore")
-            ).sum(axis=1)
-
-            # 리스크 지표 계산
-            metrics = {
-                "portfolio_volatility": portfolio_returns.std() * np.sqrt(252),
-                "portfolio_sharpe": (
-                    (portfolio_returns.mean() * 252)
-                    / (portfolio_returns.std() * np.sqrt(252))
-                    if portfolio_returns.std() > 0
-                    else 0
-                ),
-                "portfolio_sortino": (
-                    (portfolio_returns.mean() * 252)
-                    / (portfolio_returns[portfolio_returns < 0].std() * np.sqrt(252))
-                    if len(portfolio_returns[portfolio_returns < 0]) > 0
-                    else 0
-                ),
-                "concentration_risk": (avg_weights**2).sum(),  # Herfindahl 지수
-                "max_weight": avg_weights.max(),
-                "min_weight": avg_weights.min(),
-                "weight_spread": avg_weights.max() - avg_weights.min(),
-            }
-
-            # VaR 및 CVaR 계산
-            var_95 = np.percentile(portfolio_returns, 5)
-            cvar_95 = portfolio_returns[portfolio_returns <= var_95].mean()
-
-            metrics.update(
+            weights = evaluation_metrics.get(
+                "weights",
                 {
-                    "var_95": var_95,
-                    "cvar_95": cvar_95,
-                }
+                    "sharpe_ratio": 0.25,
+                    "sortino_ratio": 0.20,
+                    "calmar_ratio": 0.15,
+                    "profit_factor": 0.20,
+                    "win_rate": 0.20,
+                },
             )
 
-            return metrics
-
-        except Exception as e:
-            self.logger.log_error(f"❌ 포트폴리오 리스크 지표 계산 중 오류: {e}")
-            return {}
-
-    def _assess_risk_level(
-        self,
-        optimization_metrics: Dict[str, float],
-        portfolio_metrics: Dict[str, float],
-    ) -> Dict[str, str]:
-        """리스크 수준 평가"""
-        risk_assessment = {}
-
-        try:
-            # 변동성 기반 리스크 평가
-            volatility = optimization_metrics.get("volatility", 0)
-            if volatility < 0.15:
-                risk_assessment["volatility_risk"] = "낮음"
-            elif volatility < 0.25:
-                risk_assessment["volatility_risk"] = "보통"
-            else:
-                risk_assessment["volatility_risk"] = "높음"
-
-            # 샤프 비율 기반 수익성 평가
-            sharpe = optimization_metrics.get("sharpe_ratio", 0)
-            if sharpe > 1.0:
-                risk_assessment["return_risk"] = "낮음"
-            elif sharpe > 0.5:
-                risk_assessment["return_risk"] = "보통"
-            else:
-                risk_assessment["return_risk"] = "높음"
-
-            # 최대 낙폭 기반 손실 위험 평가
-            max_dd = abs(optimization_metrics.get("max_drawdown", 0))
-            if max_dd < 0.1:
-                risk_assessment["drawdown_risk"] = "낮음"
-            elif max_dd < 0.2:
-                risk_assessment["drawdown_risk"] = "보통"
-            else:
-                risk_assessment["drawdown_risk"] = "높음"
-
-            # 집중도 위험 평가
-            concentration = portfolio_metrics.get("concentration_risk", 1.0)
-            if concentration < 0.3:
-                risk_assessment["concentration_risk"] = "낮음"
-            elif concentration < 0.5:
-                risk_assessment["concentration_risk"] = "보통"
-            else:
-                risk_assessment["concentration_risk"] = "높음"
-
-            # 종합 리스크 평가
-            risk_scores = {
-                "volatility_risk": {"낮음": 1, "보통": 2, "높음": 3},
-                "return_risk": {"낮음": 1, "보통": 2, "높음": 3},
-                "drawdown_risk": {"낮음": 1, "보통": 2, "높음": 3},
-                "concentration_risk": {"낮음": 1, "보통": 2, "높음": 3},
+            # 포트폴리오 평가용 가중치 매핑
+            portfolio_weights = {
+                "return": weights.get("total_return", 0.25),
+                "sharpe": weights.get("sharpe_ratio", 0.25),
+                "sortino": weights.get("sortino_ratio", 0.20),
+                "drawdown": 0.15,  # 고정값
+                "volatility": 0.15,  # 고정값
             }
 
-            total_score = sum(
-                risk_scores[risk_type][level]
-                for risk_type, level in risk_assessment.items()
+            # 복합 점수 계산
+            composite_score = sum(
+                scores[metric] * weight for metric, weight in portfolio_weights.items()
             )
-            avg_score = total_score / len(risk_assessment)
 
-            if avg_score <= 1.5:
-                risk_assessment["overall_risk"] = "낮음"
-            elif avg_score <= 2.5:
-                risk_assessment["overall_risk"] = "보통"
-            else:
-                risk_assessment["overall_risk"] = "높음"
+            # 위험 페널티 적용
+            risk_penalties = self.config.get("evaluator", {}).get("risk_penalties", {})
+            max_drawdown_threshold = risk_penalties.get("max_drawdown_threshold", 0.20)
+            max_drawdown_penalty = risk_penalties.get("max_drawdown_penalty", 0.5)
+            volatility_threshold = risk_penalties.get("volatility_threshold", 0.30)
+            volatility_penalty = risk_penalties.get("volatility_penalty", 0.3)
+
+            if max_drawdown > max_drawdown_threshold:
+                composite_score *= 1 - max_drawdown_penalty
+
+            if volatility > volatility_threshold:
+                composite_score *= 1 - volatility_penalty
+
+            return composite_score
 
         except Exception as e:
-            self.logger.log_error(f"❌ 리스크 수준 평가 중 오류: {e}")
-            risk_assessment = {"overall_risk": "평가 불가"}
+            self.logger.log_error(f"포트폴리오 점수 계산 중 오류: {e}")
+            return 0.0
 
-        return risk_assessment
-
-    def _compare_optimization_results(
+    def _calculate_beta(
         self,
-        strategy_name: str,
+        strategy_returns: pd.Series,
+        symbol: str,
         data_dict: Dict[str, pd.DataFrame],
-        best_params: Dict[str, Any],
-        optimization_result: Dict[str, Any],
-    ):
-        """최적화 전후 성과 비교"""
-        self.logger.log_section(f"📊 {strategy_name} 최적화 전후 비교")
+    ) -> float:
+        """베타 계산 (시장 대비 변동성)"""
+        try:
+            # 시장 지수 찾기 (SPY 또는 QQQ)
+            market_symbol = None
+            for market_candidate in ["SPY", "QQQ", "^GSPC"]:
+                if market_candidate in data_dict:
+                    market_symbol = market_candidate
+                    break
 
-        # 기본 파라미터로 평가
-        default_result = self.evaluate_strategy(strategy_name, data_dict)
+            if not market_symbol:
+                self.logger.log_warning(
+                    f"시장 지수를 찾을 수 없습니다. {symbol}의 베타를 1.0으로 설정합니다."
+                )
+                return 1.0
 
-        # 최적화된 파라미터로 평가
-        optimized_result = self.evaluate_strategy_with_params(
-            strategy_name, data_dict, best_params
-        )
+            # 시장 데이터에서 수익률 계산
+            market_data = data_dict[market_symbol]
+            market_returns = market_data["Close"].pct_change().dropna()
 
-        if default_result and optimized_result:
-            print_subsection_header("최적화 전후 성과 비교")
-            print(f"{'지표':<15} {'최적화 전':<12} {'최적화 후':<12} {'개선도':<10}")
-            print("-" * 55)
+            # 전략 수익률과 시장 수익률의 길이 맞추기
+            min_length = min(len(strategy_returns), len(market_returns))
+            if min_length < 10:  # 최소 데이터 포인트
+                return 1.0
 
-            # 수익률 비교
-            return_improvement = (
-                (optimized_result.total_return - default_result.total_return)
-                / abs(default_result.total_return)
-                * 100
-                if default_result.total_return != 0
-                else 0
-            )
-            print(
-                f"{'수익률':<15} {default_result.total_return*100:>10.2f}% {optimized_result.total_return*100:>10.2f}% {return_improvement:>8.1f}%"
-            )
+            strategy_returns_aligned = strategy_returns.iloc[-min_length:]
+            market_returns_aligned = market_returns.iloc[-min_length:]
 
-            # 샤프비율 비교
-            sharpe_improvement = (
-                (optimized_result.sharpe_ratio - default_result.sharpe_ratio)
-                / abs(default_result.sharpe_ratio)
-                * 100
-                if default_result.sharpe_ratio != 0
-                else 0
-            )
-            print(
-                f"{'샤프비율':<15} {default_result.sharpe_ratio:>10.2f} {optimized_result.sharpe_ratio:>10.2f} {sharpe_improvement:>8.1f}%"
-            )
+            # 공분산과 분산 계산
+            covariance = np.cov(strategy_returns_aligned, market_returns_aligned)[0, 1]
+            market_variance = np.var(market_returns_aligned)
 
-            # 승률 비교
-            win_rate_improvement = (
-                (optimized_result.win_rate - default_result.win_rate)
-                / abs(default_result.win_rate)
-                * 100
-                if default_result.win_rate != 0
-                else 0
-            )
-            print(
-                f"{'승률':<15} {default_result.win_rate*100:>10.1f}% {optimized_result.win_rate*100:>10.1f}% {win_rate_improvement:>8.1f}%"
-            )
+            if market_variance == 0:
+                return 1.0
 
-            # 거래횟수 비교
-            trades_improvement = (
-                (optimized_result.total_trades - default_result.total_trades)
-                / max(default_result.total_trades, 1)
-                * 100
-            )
-            print(
-                f"{'거래횟수':<15} {default_result.total_trades:>10d} {optimized_result.total_trades:>10d} {trades_improvement:>8.1f}%"
-            )
+            beta = covariance / market_variance
 
-            # 최대낙폭 비교
-            dd_improvement = (
-                (abs(optimized_result.max_drawdown) - abs(default_result.max_drawdown))
-                / abs(default_result.max_drawdown)
-                * 100
-                if default_result.max_drawdown != 0
-                else 0
-            )
-            print(
-                f"{'최대낙폭':<15} {default_result.max_drawdown*100:>10.2f}% {optimized_result.max_drawdown*100:>10.2f}% {dd_improvement:>8.1f}%"
-            )
+            # 베타 범위 제한 (0.1 ~ 3.0)
+            beta = max(0.1, min(3.0, beta))
 
-    def evaluate_all_optimized_strategies(
+            return beta
+
+        except Exception as e:
+            self.logger.log_error(f"베타 계산 중 오류: {e}")
+            return 1.0
+
+    def generate_performance_table(
         self,
-        strategies: List[str] = None,
+        individual_results: Dict[str, Any],
+        portfolio_performance: Dict[str, Any],
+        portfolio_weights: Dict[str, float],
+    ) -> str:
+        """성과 테이블 생성"""
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"performance_evaluation_{timestamp}.txt"
+            output_path = os.path.join("results", filename)
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write("=" * 100 + "\n")
+                f.write("Train/Test 성과 평가 보고서\n")
+                f.write("=" * 100 + "\n\n")
+
+                f.write(f"평가 시작 시간: {self.evaluation_start_time}\n")
+                f.write(f"평가 완료 시간: {datetime.now()}\n")
+                f.write(f"Train 비율: {self.train_ratio*100:.1f}%\n")
+                f.write(f"주요 평가 지표: {self.primary_metric}\n\n")
+
+                # 포트폴리오 비중 정보
+                f.write("포트폴리오 비중:\n")
+                f.write("-" * 50 + "\n")
+                for symbol, weight in portfolio_weights.items():
+                    f.write(f"{symbol}: {weight*100:.2f}%\n")
+                f.write("\n")
+
+                # Train 성과 테이블
+                f.write("TRAIN 성과 테이블\n")
+                f.write("=" * 100 + "\n")
+                f.write(
+                    f"{'구분':<15} {'전략':<20} {'수익률':<10} {'샤프':<8} {'소르티노':<10} {'최대낙폭':<10} {'변동성':<10} {'베타':<6} {'거래수':<8}\n"
+                )
+                f.write("-" * 100 + "\n")
+
+                # 포트폴리오 전체 성과
+                if "train" in portfolio_performance and portfolio_performance["train"]:
+                    perf = portfolio_performance["train"]
+                    # 포트폴리오 복합 점수 계산
+                    portfolio_score = self._calculate_portfolio_score(perf)
+                    f.write(
+                        f"{'PORTFOLIO':<15} {'OPTIMIZED':<20} {perf['total_return']*100:>8.2f}% {perf['sharpe_ratio']:>6.3f} {perf['sortino_ratio']:>8.3f} {perf['max_drawdown']*100:>8.2f}% {perf['volatility']*100:>8.2f}% {perf.get('beta', 1.0):>5.2f} {perf['total_trades']:>6} [{portfolio_score:>6.1f}]\n"
+                    )
+
+                # Buy & Hold 성과
+                if (
+                    "buy_hold_train" in portfolio_performance
+                    and portfolio_performance["buy_hold_train"]
+                ):
+                    perf = portfolio_performance["buy_hold_train"]
+                    f.write(
+                        f"{'PORTFOLIO':<15} {'BUY&HOLD':<20} {perf['total_return']*100:>8.2f}% {perf['sharpe_ratio']:>6.3f} {perf['sortino_ratio']:>8.3f} {perf['max_drawdown']*100:>8.2f}% {perf['volatility']*100:>8.2f}% {perf.get('beta', 1.0):>5.2f} {perf['total_trades']:>6}\n"
+                    )
+
+                f.write("-" * 100 + "\n")
+
+                # 개별 종목 성과 (필터링된 결과만)
+                filtered_results = individual_results.get("filtered_results", {})
+
+                for symbol, result in filtered_results.items():
+                    train_result = result["train"]
+                    strategy = train_result.get("strategy", "UNKNOWN")
+                    composite_score = result.get("composite_score", 0)
+                    f.write(
+                        f"{symbol:<15} {strategy:<20} {train_result['total_return']*100:>8.2f}% {train_result['sharpe_ratio']:>6.3f} {train_result['sortino_ratio']:>8.3f} {train_result['max_drawdown']*100:>8.2f}% {train_result['volatility']*100:>8.2f}% {train_result.get('beta', 1.0):>5.2f} {train_result['total_trades']:>6} [{composite_score:>6.1f}]\n"
+                    )
+
+                f.write("\n\n")
+
+                # Test 성과 테이블
+                f.write("TEST 성과 테이블\n")
+                f.write("=" * 100 + "\n")
+                f.write(
+                    f"{'구분':<15} {'전략':<20} {'수익률':<10} {'샤프':<8} {'소르티노':<10} {'최대낙폭':<10} {'변동성':<10} {'베타':<6} {'거래수':<8}\n"
+                )
+                f.write("-" * 100 + "\n")
+
+                # 포트폴리오 전체 성과
+                if "test" in portfolio_performance and portfolio_performance["test"]:
+                    perf = portfolio_performance["test"]
+                    # 포트폴리오 복합 점수 계산
+                    portfolio_score = self._calculate_portfolio_score(perf)
+                    f.write(
+                        f"{'PORTFOLIO':<15} {'OPTIMIZED':<20} {perf['total_return']*100:>8.2f}% {perf['sharpe_ratio']:>6.3f} {perf['sortino_ratio']:>8.3f} {perf['max_drawdown']*100:>8.2f}% {perf['volatility']*100:>8.2f}% {perf.get('beta', 1.0):>5.2f} {perf['total_trades']:>6} [{portfolio_score:>6.1f}]\n"
+                    )
+
+                # Buy & Hold 성과
+                if (
+                    "buy_hold_test" in portfolio_performance
+                    and portfolio_performance["buy_hold_test"]
+                ):
+                    perf = portfolio_performance["buy_hold_test"]
+                    f.write(
+                        f"{'PORTFOLIO':<15} {'BUY&HOLD':<20} {perf['total_return']*100:>8.2f}% {perf['sharpe_ratio']:>6.3f} {perf['sortino_ratio']:>8.3f} {perf['max_drawdown']*100:>8.2f}% {perf['volatility']*100:>8.2f}% {perf.get('beta', 1.0):>5.2f} {perf['total_trades']:>6}\n"
+                    )
+
+                f.write("-" * 100 + "\n")
+
+                # 개별 종목 성과 (필터링된 결과만)
+                for symbol, result in filtered_results.items():
+                    test_result = result["test"]
+                    strategy = test_result.get("strategy", "UNKNOWN")
+                    composite_score = result.get("composite_score", 0)
+                    f.write(
+                        f"{symbol:<15} {strategy:<20} {test_result['total_return']*100:>8.2f}% {test_result['sharpe_ratio']:>6.3f} {test_result['sortino_ratio']:>8.3f} {test_result['max_drawdown']*100:>8.2f}% {test_result['volatility']*100:>8.2f}% {test_result.get('beta', 1.0):>5.2f} {test_result['total_trades']:>6} [{composite_score:>6.1f}]\n"
+                    )
+
+                # 성과 요약
+                f.write("\n\n성과 요약:\n")
+                f.write("=" * 50 + "\n")
+
+                # 필터링 결과 요약
+                filtered_count = len(filtered_results)
+                total_count = len(individual_results.get("train", {}))
+                f.write(f"전체 전략 수: {total_count}개\n")
+                f.write(f"필터링 통과: {filtered_count}개\n")
+                if total_count > 0:
+                    f.write(f"필터링 통과율: {filtered_count/total_count*100:.1f}%\n\n")
+                else:
+                    f.write(f"필터링 통과율: 0.0%\n\n")
+
+                # 상위 전략 순위
+                rankings = individual_results.get("ranking", [])
+                if rankings:
+                    f.write("상위 전략 순위:\n")
+                    f.write("-" * 30 + "\n")
+                    for i, ranking in enumerate(rankings[:5], 1):
+                        f.write(
+                            f"{i}. {ranking['symbol']} ({ranking['strategy']}): {ranking['composite_score']:.3f}\n"
+                        )
+                    f.write("\n")
+
+                if (
+                    "train" in portfolio_performance
+                    and "test" in portfolio_performance
+                    and portfolio_performance["train"]
+                    and portfolio_performance["test"]
+                ):
+                    train_perf = portfolio_performance["train"]
+                    test_perf = portfolio_performance["test"]
+
+                    f.write(f"Train 수익률: {train_perf['total_return']*100:.2f}%\n")
+                    f.write(f"Test 수익률: {test_perf['total_return']*100:.2f}%\n")
+                    f.write(f"Train 샤프 비율: {train_perf['sharpe_ratio']:.3f}\n")
+                    f.write(f"Test 샤프 비율: {test_perf['sharpe_ratio']:.3f}\n")
+                    f.write(f"Train 최대 낙폭: {train_perf['max_drawdown']*100:.2f}%\n")
+                    f.write(f"Test 최대 낙폭: {test_perf['max_drawdown']*100:.2f}%\n")
+                else:
+                    f.write("포트폴리오 성과 데이터가 없습니다.\n")
+
+            return output_path
+
+        except Exception as e:
+            self.logger.log_error(f"성과 테이블 생성 중 오류: {e}")
+            return ""
+
+    def run_train_test_evaluation(
+        self,
         symbols: List[str] = None,
-        results_dir: str = "results",
-    ) -> Dict[str, StrategyResult]:
-        """모든 최적화된 전략들을 평가"""
-        self.logger.log_section("🚀 모든 최적화된 전략 평가")
+        save_results: bool = True,
+    ) -> Dict[str, Any]:
+        """Train/Test 평가 실행"""
+        print("=" * 80)
+        print("📊 Train/Test 평가 시스템")
+        print("=" * 80)
 
-        if strategies is None:
-            strategies = list(self.strategy_manager.strategies.keys())
+        try:
+            # 1. 데이터 로드 및 분할
+            train_data_dict, test_data_dict = self.load_data_and_split(symbols)
+            if not train_data_dict or not test_data_dict:
+                return {}
 
-        if symbols is None:
-            symbols = self.config.get("data", {}).get("symbols", [])
+                # 2. 최적화 결과 로드
+            optimization_results = self.load_optimization_results()
+            if not optimization_results:
+                print("❌ 최적화 결과를 찾을 수 없습니다.")
+                return {}
 
-        results = {}
+            # 3. 포트폴리오 결과 로드
+            portfolio_results = self.load_portfolio_results()
+            if not portfolio_results:
+                portfolio_results = {
+                    "portfolio_weights": {},
+                    "portfolio_performance": {},
+                }
 
-        for strategy_name in strategies:
-            for symbol in symbols:
-                key = f"{strategy_name}_{symbol}"
-                self.logger.log_info(f"🔄 {key} 최적화된 전략 평가 중...")
+            # 4. 전략별 Train/Test 성과 평가
+            individual_results = self.evaluate_all_strategies(
+                train_data_dict, test_data_dict, optimization_results
+            )
 
-                result = self.load_and_evaluate_optimized_strategy(
-                    strategy_name, symbol, results_dir
+            # 5. 포트폴리오 성과 계산
+            portfolio_weights = portfolio_results.get("portfolio_weights", {})
+            portfolio_performance = self.calculate_portfolio_performance(
+                individual_results, portfolio_results
+            )
+
+            # 6. 성과 테이블 생성
+            if save_results:
+                table_path = self.generate_performance_table(
+                    individual_results, portfolio_performance, portfolio_weights
+                )
+                self.save_evaluation_results(
+                    individual_results, portfolio_performance, portfolio_weights
                 )
 
-                if result:
-                    results[key] = result
-                    self.logger.log_success(f"✅ {key} 평가 완료")
-                else:
-                    self.logger.log_warning(f"⚠️ {key} 평가 실패")
-
-        # 종합 리포트 생성
-        if results:
-            self._generate_optimization_summary_report(results)
-
-        return results
-
-    def _generate_optimization_summary_report(self, results: Dict[str, StrategyResult]):
-        """최적화된 전략들의 종합 리포트 생성"""
-        self.logger.log_section("📊 최적화된 전략 종합 리포트")
-
-        # 성과별 정렬
-        sorted_results = sorted(
-            results.items(), key=lambda x: x[1].total_return, reverse=True
-        )
-
-        print_subsection_header("최적화된 전략 성과 순위")
-        print(
-            f"{'순위':<4} {'전략-심볼':<25} {'수익률':<10} {'샤프비율':<10} {'승률':<8} {'거래횟수':<8} {'매매의견':<12}"
-        )
-        print("-" * 85)
-
-        for i, (key, result) in enumerate(sorted_results, 1):
-            # 현재 매매의견 계산
-            current_signal = self._get_current_position(result.signals)
-            print(
-                f"{i:<4} {key:<25} {result.total_return*100:>8.2f}% {result.sharpe_ratio:>8.2f} {result.win_rate*100:>6.1f}% {result.total_trades:>6d} {current_signal:<12}"
+            # 6. 성과 요약 테이블 출력
+            self._print_performance_summary(
+                individual_results, portfolio_performance, portfolio_weights
             )
 
-        # 최고 성과 전략
-        best_strategy = sorted_results[0]
-        best_signal = self._get_current_position(best_strategy[1].signals)
-        print(
-            f"\n🏆 최고 성과: {best_strategy[0]} ({best_strategy[1].total_return*100:.2f}%) - 현재 의견: {best_signal}"
-        )
+            # 결과 반환
+            return {
+                "individual_results": individual_results,
+                "portfolio_performance": portfolio_performance,
+                "portfolio_weights": portfolio_weights,
+                "portfolio_results": portfolio_results,  # 누락된 키 추가
+                "table_path": table_path if save_results else None,
+            }
 
-        # 평균 성과
-        avg_return = np.mean([r.total_return for r in results.values()])
-        avg_sharpe = np.mean([r.sharpe_ratio for r in results.values()])
-        print(f"📊 평균 수익률: {avg_return*100:.2f}%")
-        print(f"📊 평균 샤프비율: {avg_sharpe:.2f}")
+        except Exception as e:
+            self.logger.log_error(f"Train/Test 평가 실행 중 오류: {e}")
+            return {}
 
-        # 매매의견 분포
-        signal_counts = {}
-        for result in results.values():
-            signal = self._get_current_position(result.signals)
-            signal_counts[signal] = signal_counts.get(signal, 0) + 1
-
-        print(f"\n📊 현재 매매의견 분포:")
-        for signal, count in signal_counts.items():
-            percentage = (count / len(results)) * 100
-            print(f"  {signal}: {count}개 ({percentage:.1f}%)")
-
-    def run_evaluation(
-        self, symbol: str = None, strategies: List[str] = None, save_chart: bool = False
-    ) -> Dict[str, StrategyResult]:
-        """전체 평가 프로세스 실행"""
-        # 메인 로거 설정 (간소화)
-        symbols = [symbol] if symbol else self.config.get("data", {}).get("symbols", [])
-        self.logger.setup_logger(strategy="main", symbols=symbols, mode="main")
-
-        # 종합 요약 로거 설정
-        self.logger.setup_summary_logger(
-            symbols=symbols, timestamp=self.evaluation_start_time
-        )
-
-        self.logger.log_section("🎯 전략 평가 시스템 시작")
-        self.logger.log_info(f"📁 데이터 디렉토리: {self.data_dir}")
-        self.logger.log_info(f"📝 로그 모드: {self.log_mode}")
-        self.logger.log_info(
-            f"📈 분석 모드: {'포트폴리오' if self.portfolio_mode else '단일 종목'}"
-        )
-
-        # 데이터 로드
-        self.logger.log_info("📂 데이터 로딩 중...")
-        data_dict = self.load_data(symbol)
-        self.logger.log_success(f"✅ 데이터 로딩 완료 ({len(data_dict)}개 종목)")
-
-        # 전략 비교 분석
-        results = self.compare_strategies(data_dict, strategies)
-
-        # 최종 결과 요약
-        if results:
-            best_strategy = max(results.values(), key=lambda x: x.total_return)
-            worst_strategy = min(results.values(), key=lambda x: x.total_return)
-
-            self.logger.log_section("🏆 최종 평가 결과")
-            self.logger.log_success(
-                f"🥇 최고 수익률: {best_strategy.name} ({best_strategy.total_return*100:.2f}%)"
-            )
-            self.logger.log_warning(
-                f"🥉 최저 수익률: {worst_strategy.name} ({worst_strategy.total_return*100:.2f}%)"
-            )
-
-            avg_return = np.mean([r.total_return for r in results.values()])
-            avg_sharpe = np.mean([r.sharpe_ratio for r in results.values()])
-            self.logger.log_info(f"📊 평균 수익률: {avg_return*100:.2f}%")
-            self.logger.log_info(f"📊 평균 샤프 비율: {avg_sharpe:.2f}")
-
-        # 종합 요약 로그 생성
-        self.logger.generate_final_summary(
-            portfolio_mode=self.portfolio_mode, portfolio_method=self.portfolio_method
-        )
-
-        # 리포트 생성 및 출력
-        report = self.generate_comparison_report(results, data_dict)
-        print(report)
-
-        # 차트 생성
-        if save_chart:
+    def save_evaluation_results(
+        self,
+        individual_results: Dict[str, Any],
+        portfolio_performance: Dict[str, Any],
+        portfolio_weights: Dict[str, float],
+    ):
+        """평가 결과 저장"""
+        try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            uuid_suffix = f"_{self.execution_uuid}" if self.execution_uuid else ""
-            chart_path = f"log/strategy_comparison_{timestamp}{uuid_suffix}.png"
-            self.logger.log_info(f"📊 차트 생성 중: {chart_path}")
-            self.plot_comparison(results, chart_path)
-            self.logger.log_success(f"✅ 차트 저장 완료: {chart_path}")
 
-        return results
+            # 개별 결과 저장
+            individual_filename = f"individual_evaluation_{timestamp}.json"
+            individual_path = os.path.join("results", individual_filename)
+
+            with open(individual_path, "w", encoding="utf-8") as f:
+                json.dump(individual_results, f, indent=2, ensure_ascii=False)
+
+            # 포트폴리오 성과 저장
+            portfolio_filename = f"portfolio_performance_{timestamp}.json"
+            portfolio_path = os.path.join("results", portfolio_filename)
+
+            with open(portfolio_path, "w", encoding="utf-8") as f:
+                json.dump(portfolio_performance, f, indent=2, ensure_ascii=False)
+
+            # 포트폴리오 비중 저장
+            weights_filename = f"portfolio_weights_{timestamp}.json"
+            weights_path = os.path.join("results", weights_filename)
+
+            with open(weights_path, "w", encoding="utf-8") as f:
+                json.dump(portfolio_weights, f, indent=2, ensure_ascii=False)
+
+            self.logger.log_success(f"평가 결과 저장 완료:")
+            self.logger.log_success(f"  개별 결과: {individual_path}")
+            self.logger.log_success(f"  포트폴리오 성과: {portfolio_path}")
+            self.logger.log_success(f"  포트폴리오 비중: {weights_path}")
+
+        except Exception as e:
+            self.logger.log_error(f"평가 결과 저장 중 오류: {e}")
+
+    def _print_performance_summary(
+        self,
+        individual_results: Dict[str, Any],
+        portfolio_performance: Dict[str, Any],
+        portfolio_weights: Dict[str, float],
+    ):
+        """성과 요약 테이블 출력"""
+        print("\n" + "=" * 100)
+        print("📊 TRAIN 성과 요약")
+        print("=" * 100)
+        self._print_performance_table(
+            "TRAIN", individual_results, portfolio_performance, portfolio_weights
+        )
+
+        print("\n" + "=" * 100)
+        print("📊 TEST 성과 요약")
+        print("=" * 100)
+        self._print_performance_table(
+            "TEST", individual_results, portfolio_performance, portfolio_weights
+        )
+
+        print("=" * 100)
+
+    def _print_performance_table(
+        self,
+        period: str,
+        individual_results: Dict[str, Any],
+        portfolio_performance: Dict[str, Any],
+        portfolio_weights: Dict[str, float],
+    ):
+        """성과 테이블 출력"""
+        # 헤더 출력
+        print(
+            f"{'종목':<8} {'비중':<6} {'수익률':<8} {'샤프':<6} {'소르티노':<8} {'거래수':<6} {'보유':<4} {'전략':<20}"
+        )
+        print("-" * 100)
+
+        # Buy & Hold 성과 (포트폴리오 비중 기준)
+        buy_hold_data = individual_results.get(f"buy_hold_{period.lower()}", {})
+        if buy_hold_data:
+            total_return = 0
+            total_sharpe = 0
+            total_sortino = 0
+            total_trades = 0
+            symbol_count = 0
+
+            for symbol, weight in portfolio_weights.items():
+                if symbol in buy_hold_data:
+                    data = buy_hold_data[symbol]
+                    total_return += data.get("total_return", 0) * weight
+                    total_sharpe += data.get("sharpe_ratio", 0) * weight
+                    total_sortino += data.get("sortino_ratio", 0) * weight
+                    total_trades += data.get("total_trades", 0)
+                    symbol_count += 1
+
+            if symbol_count > 0:
+                print(
+                    f"{'BUY&HOLD':<8} {'100%':<6} {total_return*100:>7.2f}% {total_sharpe:>5.3f} {total_sortino:>7.3f} {total_trades:>5} {'Y':<4} {'PASSIVE':<20}"
+                )
+
+        # 포트폴리오 성과
+        portfolio_data = portfolio_performance.get(period.lower(), {})
+        if portfolio_data:
+            portfolio_score = self._calculate_portfolio_score(portfolio_data)
+            print(
+                f"{'PORTFOLIO':<8} {'100%':<6} {portfolio_data.get('total_return', 0)*100:>7.2f}% {portfolio_data.get('sharpe_ratio', 0):>5.3f} {portfolio_data.get('sortino_ratio', 0):>7.3f} {portfolio_data.get('total_trades', 0):>5} {'Y':<4} {'OPTIMIZED':<20} [{portfolio_score:>6.1f}]"
+            )
+
+        print("-" * 100)
+
+        # 개별 종목 성과 (포트폴리오 비중 순으로 정렬)
+        individual_data = individual_results.get(period.lower(), {})
+        if individual_data:
+            # 포트폴리오 비중 순으로 정렬
+            sorted_symbols = sorted(
+                portfolio_weights.items(), key=lambda x: x[1], reverse=True
+            )
+
+            for symbol, weight in sorted_symbols:
+                if symbol in individual_data:
+                    data = individual_data[symbol]
+                    strategy = data.get("strategy", "UNKNOWN")
+                    total_return = data.get("total_return", 0) * 100
+                    sharpe = data.get("sharpe_ratio", 0)
+                    sortino = data.get("sortino_ratio", 0)
+                    trades = data.get("total_trades", 0)
+
+                    # 보유 여부 판단 (거래가 있으면 보유)
+                    holding = "Y" if trades > 0 else "N"
+
+                    print(
+                        f"{symbol:<8} {weight*100:>5.1f}% {total_return:>7.2f}% {sharpe:>5.3f} {sortino:>7.3f} {trades:>5} {holding:<4} {strategy:<20}"
+                    )
 
 
 def main():
     """메인 함수"""
-    parser = argparse.ArgumentParser(description="전략 평가 및 비교 분석")
-    parser.add_argument("--data_dir", default="data", help="데이터 디렉토리 경로")
-    parser.add_argument("--symbol", help="분석할 특정 심볼 (예: CONL)")
-    parser.add_argument("--strategies", nargs="+", help="분석할 전략 목록")
+    parser = argparse.ArgumentParser(description="Train/Test 평가 시스템")
+    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="설정 파일")
+    parser.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="데이터 디렉토리")
+    parser.add_argument("--log-mode", default="summary", help="로그 모드")
     parser.add_argument(
-        "--log",
-        choices=["summary", "real_time"],
-        default="summary",
-        help="로그 출력 모드",
+        "--optimization-results", help="개별 전략 최적화 결과 파일 경로"
     )
-    parser.add_argument(
-        "--portfolio", action="store_true", help="포트폴리오 모드 활성화"
-    )
-    parser.add_argument(
-        "--portfolio_method",
-        choices=["fixed", "strategy_weights", "signal_combined"],
-        default="fixed",
-        help="포트폴리오 비중 계산 방법 (fixed: 고정비중, strategy_weights: 전략별비중, signal_combined: 신호결합)",
-    )
-    parser.add_argument("--analysis_results", help="정량 분석 결과 JSON 파일 경로")
-    parser.add_argument("--save_chart", action="store_true", help="차트 저장 여부")
-    parser.add_argument(
-        "--optimized", action="store_true", help="최적화된 파라미터로 평가"
-    )
-    parser.add_argument("--results_dir", default="results", help="최적화 결과 디렉토리")
-    parser.add_argument("--uuid", help="실행 UUID")
-    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="설정 파일 경로")
+    parser.add_argument("--portfolio-results", help="포트폴리오 최적화 결과 파일 경로")
+    parser.add_argument("--symbols", nargs="+", help="평가할 종목 목록")
+    parser.add_argument("--no-save", action="store_true", help="결과 저장 안함")
 
     args = parser.parse_args()
 
     # 평가기 초기화
-    evaluator = StrategyEvaluator(
+    evaluator = TrainTestEvaluator(
         data_dir=args.data_dir,
-        log_mode=args.log,
-        portfolio_mode=args.portfolio,
+        log_mode=args.log_mode,
         config_path=args.config,
-        portfolio_method=args.portfolio_method,
-        analysis_results_path=args.analysis_results,
+        optimization_results_path=args.optimization_results,
+        portfolio_results_path=args.portfolio_results,
     )
 
-    # UUID 설정
-    if args.uuid:
-        evaluator.execution_uuid = args.uuid
-        print(f"🆔 평가 UUID 설정: {args.uuid}")
+    # Train/Test 평가 실행
+    results = evaluator.run_train_test_evaluation(
+        symbols=args.symbols,
+        save_results=not args.no_save,
+    )
 
-    # 평가 실행
-    if args.optimized:
-        # 최적화된 파라미터로 평가
-        results = evaluator.evaluate_all_optimized_strategies(
-            strategies=args.strategies,
-            symbols=[args.symbol] if args.symbol else None,
-            results_dir=args.results_dir,
-        )
-    else:
-        # 기본 파라미터로 평가
-        results = evaluator.run_evaluation(
-            symbol=args.symbol, strategies=args.strategies, save_chart=args.save_chart
-        )
+    if not results:
+        print("❌ Train/Test 평가 실패")
 
 
 if __name__ == "__main__":

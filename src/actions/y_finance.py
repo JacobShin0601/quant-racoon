@@ -170,137 +170,201 @@ class YahooFinanceDataCollector:
                 info = ticker.info
                 if info:
                     # 기업 가치 지표
-                    financial_data.update({
-                        "market_cap": info.get("marketCap", None),
-                        "enterprise_value": info.get("enterpriseValue", None),
-                        "pe_ratio": info.get("trailingPE", None),
-                        "forward_pe": info.get("forwardPE", None),
-                        "peg_ratio": info.get("pegRatio", None),
-                        "price_to_book": info.get("priceToBook", None),
-                        "price_to_sales": info.get("priceToSalesTrailing12Months", None),
-                        "ev_to_ebitda": info.get("enterpriseToEbitda", None),
-                        "ev_to_revenue": info.get("enterpriseToRevenue", None),
-                        "price_to_cashflow": info.get("priceToCashflow", None),
-                        "price_to_free_cashflow": info.get("priceToFreeCashflow", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "market_cap": info.get("marketCap", None),
+                            "enterprise_value": info.get("enterpriseValue", None),
+                            "pe_ratio": info.get("trailingPE", None),
+                            "forward_pe": info.get("forwardPE", None),
+                            "peg_ratio": info.get("pegRatio", None),
+                            "price_to_book": info.get("priceToBook", None),
+                            "price_to_sales": info.get(
+                                "priceToSalesTrailing12Months", None
+                            ),
+                            "ev_to_ebitda": info.get("enterpriseToEbitda", None),
+                            "ev_to_revenue": info.get("enterpriseToRevenue", None),
+                            "price_to_cashflow": info.get("priceToCashflow", None),
+                            "price_to_free_cashflow": info.get(
+                                "priceToFreeCashflow", None
+                            ),
+                        }
+                    )
+
                     # 수익성 지표
-                    financial_data.update({
-                        "return_on_equity": info.get("returnOnEquity", None),
-                        "return_on_assets": info.get("returnOnAssets", None),
-                        "return_on_capital": info.get("returnOnCapital", None),
-                        "return_on_invested_capital": info.get("returnOnInvestedCapital", None),
-                        "profit_margin": info.get("profitMargins", None),
-                        "operating_margin": info.get("operatingMargins", None),
-                        "gross_margin": info.get("grossMargins", None),
-                        "ebitda_margin": info.get("ebitdaMargins", None),
-                        "net_income_margin": info.get("netIncomeToCommon", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "return_on_equity": info.get("returnOnEquity", None),
+                            "return_on_assets": info.get("returnOnAssets", None),
+                            "return_on_capital": info.get("returnOnCapital", None),
+                            "return_on_invested_capital": info.get(
+                                "returnOnInvestedCapital", None
+                            ),
+                            "profit_margin": info.get("profitMargins", None),
+                            "operating_margin": info.get("operatingMargins", None),
+                            "gross_margin": info.get("grossMargins", None),
+                            "ebitda_margin": info.get("ebitdaMargins", None),
+                            "net_income_margin": info.get("netIncomeToCommon", None),
+                        }
+                    )
+
                     # 성장성 지표
-                    financial_data.update({
-                        "revenue_growth": info.get("revenueGrowth", None),
-                        "earnings_growth": info.get("earningsGrowth", None),
-                        "earnings_quarterly_growth": info.get("earningsQuarterlyGrowth", None),
-                        "revenue_quarterly_growth": info.get("revenueQuarterlyGrowth", None),
-                        "earnings_annual_growth": info.get("earningsAnnualGrowth", None),
-                        "revenue_annual_growth": info.get("revenueAnnualGrowth", None),
-                        "revenue_per_employee": info.get("revenuePerEmployee", None),
-                        "revenue_per_share": info.get("revenuePerShare", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "revenue_growth": info.get("revenueGrowth", None),
+                            "earnings_growth": info.get("earningsGrowth", None),
+                            "earnings_quarterly_growth": info.get(
+                                "earningsQuarterlyGrowth", None
+                            ),
+                            "revenue_quarterly_growth": info.get(
+                                "revenueQuarterlyGrowth", None
+                            ),
+                            "earnings_annual_growth": info.get(
+                                "earningsAnnualGrowth", None
+                            ),
+                            "revenue_annual_growth": info.get(
+                                "revenueAnnualGrowth", None
+                            ),
+                            "revenue_per_employee": info.get(
+                                "revenuePerEmployee", None
+                            ),
+                            "revenue_per_share": info.get("revenuePerShare", None),
+                        }
+                    )
+
                     # 재무 건전성 지표
-                    financial_data.update({
-                        "debt_to_equity": info.get("debtToEquity", None),
-                        "debt_to_assets": info.get("debtToAssets", None),
-                        "current_ratio": info.get("currentRatio", None),
-                        "quick_ratio": info.get("quickRatio", None),
-                        "cash_ratio": info.get("cashRatio", None),
-                        "interest_coverage": info.get("interestCoverage", None),
-                        "total_cash": info.get("totalCash", None),
-                        "total_debt": info.get("totalDebt", None),
-                        "net_debt": info.get("netDebt", None),
-                        "cash_per_share": info.get("totalCashPerShare", None),
-                        "book_value": info.get("bookValue", None),
-                        "tangible_book_value": info.get("tangibleBookValue", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "debt_to_equity": info.get("debtToEquity", None),
+                            "debt_to_assets": info.get("debtToAssets", None),
+                            "current_ratio": info.get("currentRatio", None),
+                            "quick_ratio": info.get("quickRatio", None),
+                            "cash_ratio": info.get("cashRatio", None),
+                            "interest_coverage": info.get("interestCoverage", None),
+                            "total_cash": info.get("totalCash", None),
+                            "total_debt": info.get("totalDebt", None),
+                            "net_debt": info.get("netDebt", None),
+                            "cash_per_share": info.get("totalCashPerShare", None),
+                            "book_value": info.get("bookValue", None),
+                            "tangible_book_value": info.get("tangibleBookValue", None),
+                        }
+                    )
+
                     # 현금흐름 지표
-                    financial_data.update({
-                        "operating_cashflow": info.get("operatingCashflow", None),
-                        "free_cashflow": info.get("freeCashflow", None),
-                        "free_cashflow_yield": info.get("freeCashflowYield", None),
-                        "operating_cashflow_per_share": info.get("operatingCashflowPerShare", None),
-                        "free_cashflow_per_share": info.get("freeCashflowPerShare", None),
-                        "cashflow_to_debt": info.get("cashflowToDebt", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "operating_cashflow": info.get("operatingCashflow", None),
+                            "free_cashflow": info.get("freeCashflow", None),
+                            "free_cashflow_yield": info.get("freeCashflowYield", None),
+                            "operating_cashflow_per_share": info.get(
+                                "operatingCashflowPerShare", None
+                            ),
+                            "free_cashflow_per_share": info.get(
+                                "freeCashflowPerShare", None
+                            ),
+                            "cashflow_to_debt": info.get("cashflowToDebt", None),
+                        }
+                    )
+
                     # 배당 관련 지표
-                    financial_data.update({
-                        "dividend_yield": info.get("dividendYield", None),
-                        "dividend_rate": info.get("dividendRate", None),
-                        "payout_ratio": info.get("payoutRatio", None),
-                        "dividend_payout_ratio": info.get("dividendPayoutRatio", None),
-                        "five_year_avg_dividend_yield": info.get("fiveYearAvgDividendYield", None),
-                        "forward_dividend_yield": info.get("forwardDividendYield", None),
-                        "forward_dividend_rate": info.get("forwardDividendRate", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "dividend_yield": info.get("dividendYield", None),
+                            "dividend_rate": info.get("dividendRate", None),
+                            "payout_ratio": info.get("payoutRatio", None),
+                            "dividend_payout_ratio": info.get(
+                                "dividendPayoutRatio", None
+                            ),
+                            "five_year_avg_dividend_yield": info.get(
+                                "fiveYearAvgDividendYield", None
+                            ),
+                            "forward_dividend_yield": info.get(
+                                "forwardDividendYield", None
+                            ),
+                            "forward_dividend_rate": info.get(
+                                "forwardDividendRate", None
+                            ),
+                        }
+                    )
+
                     # 수익성 지표 (EPS 관련)
-                    financial_data.update({
-                        "earnings_ttm": info.get("trailingEps", None),
-                        "earnings_forward": info.get("forwardEps", None),
-                        "earnings_quarterly": info.get("earningsQuarterly", None),
-                        "earnings_annual": info.get("earningsAnnual", None),
-                        "eps_ttm": info.get("trailingEps", None),
-                        "eps_forward": info.get("forwardEps", None),
-                        "eps_quarterly": info.get("earningsQuarterly", None),
-                        "eps_annual": info.get("earningsAnnual", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "earnings_ttm": info.get("trailingEps", None),
+                            "earnings_forward": info.get("forwardEps", None),
+                            "earnings_quarterly": info.get("earningsQuarterly", None),
+                            "earnings_annual": info.get("earningsAnnual", None),
+                            "eps_ttm": info.get("trailingEps", None),
+                            "eps_forward": info.get("forwardEps", None),
+                            "eps_quarterly": info.get("earningsQuarterly", None),
+                            "eps_annual": info.get("earningsAnnual", None),
+                        }
+                    )
+
                     # 매출 관련 지표
-                    financial_data.update({
-                        "total_revenue": info.get("totalRevenue", None),
-                        "revenue_ttm": info.get("trailingRevenue", None),
-                        "revenue_forward": info.get("forwardRevenue", None),
-                        "revenue_quarterly": info.get("revenueQuarterly", None),
-                        "revenue_annual": info.get("revenueAnnual", None),
-                        "gross_profits": info.get("grossProfits", None),
-                        "ebitda": info.get("ebitda", None),
-                        "ebit": info.get("ebit", None),
-                        "net_income": info.get("netIncomeToCommon", None),
-                        "net_income_ttm": info.get("netIncomeToCommon", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "total_revenue": info.get("totalRevenue", None),
+                            "revenue_ttm": info.get("trailingRevenue", None),
+                            "revenue_forward": info.get("forwardRevenue", None),
+                            "revenue_quarterly": info.get("revenueQuarterly", None),
+                            "revenue_annual": info.get("revenueAnnual", None),
+                            "gross_profits": info.get("grossProfits", None),
+                            "ebitda": info.get("ebitda", None),
+                            "ebit": info.get("ebit", None),
+                            "net_income": info.get("netIncomeToCommon", None),
+                            "net_income_ttm": info.get("netIncomeToCommon", None),
+                        }
+                    )
+
                     # 주식 관련 지표
-                    financial_data.update({
-                        "shares_outstanding": info.get("sharesOutstanding", None),
-                        "float_shares": info.get("floatShares", None),
-                        "shares_short": info.get("sharesShort", None),
-                        "shares_short_prior_month": info.get("sharesShortPriorMonth", None),
-                        "short_ratio": info.get("shortRatio", None),
-                        "short_percent_of_float": info.get("shortPercentOfFloat", None),
-                        "shares_percent_shares_out": info.get("sharesPercentSharesOut", None),
-                        "held_percent_insiders": info.get("heldPercentInsiders", None),
-                        "held_percent_institutions": info.get("heldPercentInstitutions", None),
-                        "institutional_ownership": info.get("institutionalOwnershipPercentage", None),
-                    })
-                    
+                    financial_data.update(
+                        {
+                            "shares_outstanding": info.get("sharesOutstanding", None),
+                            "float_shares": info.get("floatShares", None),
+                            "shares_short": info.get("sharesShort", None),
+                            "shares_short_prior_month": info.get(
+                                "sharesShortPriorMonth", None
+                            ),
+                            "short_ratio": info.get("shortRatio", None),
+                            "short_percent_of_float": info.get(
+                                "shortPercentOfFloat", None
+                            ),
+                            "shares_percent_shares_out": info.get(
+                                "sharesPercentSharesOut", None
+                            ),
+                            "held_percent_insiders": info.get(
+                                "heldPercentInsiders", None
+                            ),
+                            "held_percent_institutions": info.get(
+                                "heldPercentInstitutions", None
+                            ),
+                            "institutional_ownership": info.get(
+                                "institutionalOwnershipPercentage", None
+                            ),
+                        }
+                    )
+
                     # 기타 중요 지표
-                    financial_data.update({
-                        "beta": info.get("beta", None),
-                        "fifty_two_week_change": info.get("fiftyTwoWeekChange", None),
-                        "fifty_day_average": info.get("fiftyDayAverage", None),
-                        "two_hundred_day_average": info.get("twoHundredDayAverage", None),
-                        "fifty_two_week_high": info.get("fiftyTwoWeekHigh", None),
-                        "fifty_two_week_low": info.get("fiftyTwoWeekLow", None),
-                        "day_high": info.get("dayHigh", None),
-                        "day_low": info.get("dayLow", None),
-                        "volume": info.get("volume", None),
-                        "average_volume": info.get("averageVolume", None),
-                        "market_cap": info.get("marketCap", None),
-                        "enterprise_value": info.get("enterpriseValue", None),
-                    })
+                    financial_data.update(
+                        {
+                            "beta": info.get("beta", None),
+                            "fifty_two_week_change": info.get(
+                                "fiftyTwoWeekChange", None
+                            ),
+                            "fifty_day_average": info.get("fiftyDayAverage", None),
+                            "two_hundred_day_average": info.get(
+                                "twoHundredDayAverage", None
+                            ),
+                            "fifty_two_week_high": info.get("fiftyTwoWeekHigh", None),
+                            "fifty_two_week_low": info.get("fiftyTwoWeekLow", None),
+                            "day_high": info.get("dayHigh", None),
+                            "day_low": info.get("dayLow", None),
+                            "volume": info.get("volume", None),
+                            "average_volume": info.get("averageVolume", None),
+                            "market_cap": info.get("marketCap", None),
+                            "enterprise_value": info.get("enterpriseValue", None),
+                        }
+                    )
             except Exception as e:
                 self.logger.warning(f"{symbol} 기본 재무정보 수집 실패: {e}")
 
@@ -312,18 +376,34 @@ class YahooFinanceDataCollector:
                     latest_quarter = financials.columns[0]
                     quarter_data = financials[latest_quarter]
 
-                    financial_data.update({
-                        "quarterly_revenue": quarter_data.get("Total Revenue", None),
-                        "quarterly_net_income": quarter_data.get("Net Income", None),
-                        "quarterly_operating_income": quarter_data.get("Operating Income", None),
-                        "quarterly_ebitda": quarter_data.get("EBITDA", None),
-                        "quarterly_eps": quarter_data.get("Basic EPS", None),
-                        "quarterly_gross_profit": quarter_data.get("Gross Profit", None),
-                        "quarterly_ebit": quarter_data.get("EBIT", None),
-                        "quarterly_operating_expense": quarter_data.get("Operating Expense", None),
-                        "quarterly_research_development": quarter_data.get("Research And Development", None),
-                        "quarterly_selling_general_admin": quarter_data.get("Selling General And Administration", None),
-                    })
+                    financial_data.update(
+                        {
+                            "quarterly_revenue": quarter_data.get(
+                                "Total Revenue", None
+                            ),
+                            "quarterly_net_income": quarter_data.get(
+                                "Net Income", None
+                            ),
+                            "quarterly_operating_income": quarter_data.get(
+                                "Operating Income", None
+                            ),
+                            "quarterly_ebitda": quarter_data.get("EBITDA", None),
+                            "quarterly_eps": quarter_data.get("Basic EPS", None),
+                            "quarterly_gross_profit": quarter_data.get(
+                                "Gross Profit", None
+                            ),
+                            "quarterly_ebit": quarter_data.get("EBIT", None),
+                            "quarterly_operating_expense": quarter_data.get(
+                                "Operating Expense", None
+                            ),
+                            "quarterly_research_development": quarter_data.get(
+                                "Research And Development", None
+                            ),
+                            "quarterly_selling_general_admin": quarter_data.get(
+                                "Selling General And Administration", None
+                            ),
+                        }
+                    )
 
                 # 분기별 대차대조표
                 balance_sheet = ticker.balance_sheet
@@ -331,23 +411,49 @@ class YahooFinanceDataCollector:
                     latest_quarter = balance_sheet.columns[0]
                     quarter_data = balance_sheet[latest_quarter]
 
-                    financial_data.update({
-                        "quarterly_total_assets": quarter_data.get("Total Assets", None),
-                        "quarterly_total_liabilities": quarter_data.get("Total Liabilities Net Minority Interest", None),
-                        "quarterly_total_equity": quarter_data.get("Total Equity Gross Minority Interest", None),
-                        "quarterly_cash": quarter_data.get("Cash and Cash Equivalents", None),
-                        "quarterly_debt": quarter_data.get("Total Debt", None),
-                        "quarterly_current_assets": quarter_data.get("Total Current Assets", None),
-                        "quarterly_current_liabilities": quarter_data.get("Total Current Liabilities", None),
-                        "quarterly_inventory": quarter_data.get("Inventory", None),
-                        "quarterly_accounts_receivable": quarter_data.get("Accounts Receivable", None),
-                        "quarterly_accounts_payable": quarter_data.get("Accounts Payable", None),
-                        "quarterly_short_term_debt": quarter_data.get("Short Term Debt", None),
-                        "quarterly_long_term_debt": quarter_data.get("Long Term Debt", None),
-                        "quarterly_goodwill": quarter_data.get("Goodwill", None),
-                        "quarterly_intangible_assets": quarter_data.get("Intangible Assets", None),
-                        "quarterly_property_plant_equipment": quarter_data.get("Property Plant Equipment Net", None),
-                    })
+                    financial_data.update(
+                        {
+                            "quarterly_total_assets": quarter_data.get(
+                                "Total Assets", None
+                            ),
+                            "quarterly_total_liabilities": quarter_data.get(
+                                "Total Liabilities Net Minority Interest", None
+                            ),
+                            "quarterly_total_equity": quarter_data.get(
+                                "Total Equity Gross Minority Interest", None
+                            ),
+                            "quarterly_cash": quarter_data.get(
+                                "Cash and Cash Equivalents", None
+                            ),
+                            "quarterly_debt": quarter_data.get("Total Debt", None),
+                            "quarterly_current_assets": quarter_data.get(
+                                "Total Current Assets", None
+                            ),
+                            "quarterly_current_liabilities": quarter_data.get(
+                                "Total Current Liabilities", None
+                            ),
+                            "quarterly_inventory": quarter_data.get("Inventory", None),
+                            "quarterly_accounts_receivable": quarter_data.get(
+                                "Accounts Receivable", None
+                            ),
+                            "quarterly_accounts_payable": quarter_data.get(
+                                "Accounts Payable", None
+                            ),
+                            "quarterly_short_term_debt": quarter_data.get(
+                                "Short Term Debt", None
+                            ),
+                            "quarterly_long_term_debt": quarter_data.get(
+                                "Long Term Debt", None
+                            ),
+                            "quarterly_goodwill": quarter_data.get("Goodwill", None),
+                            "quarterly_intangible_assets": quarter_data.get(
+                                "Intangible Assets", None
+                            ),
+                            "quarterly_property_plant_equipment": quarter_data.get(
+                                "Property Plant Equipment Net", None
+                            ),
+                        }
+                    )
 
                 # 분기별 현금흐름표 (새로 추가)
                 cashflow = ticker.cashflow
@@ -355,20 +461,46 @@ class YahooFinanceDataCollector:
                     latest_quarter = cashflow.columns[0]
                     quarter_data = cashflow[latest_quarter]
 
-                    financial_data.update({
-                        "quarterly_operating_cashflow": quarter_data.get("Operating Cash Flow", None),
-                        "quarterly_investing_cashflow": quarter_data.get("Investing Cash Flow", None),
-                        "quarterly_financing_cashflow": quarter_data.get("Financing Cash Flow", None),
-                        "quarterly_free_cashflow": quarter_data.get("Free Cash Flow", None),
-                        "quarterly_capital_expenditure": quarter_data.get("Capital Expenditure", None),
-                        "quarterly_dividends_paid": quarter_data.get("Dividends Paid", None),
-                        "quarterly_net_income_cashflow": quarter_data.get("Net Income", None),
-                        "quarterly_depreciation": quarter_data.get("Depreciation", None),
-                        "quarterly_change_in_cash": quarter_data.get("Change In Cash", None),
-                        "quarterly_change_in_receivables": quarter_data.get("Change In Receivables", None),
-                        "quarterly_change_in_inventory": quarter_data.get("Change In Inventory", None),
-                        "quarterly_change_in_payables": quarter_data.get("Change In Payables", None),
-                    })
+                    financial_data.update(
+                        {
+                            "quarterly_operating_cashflow": quarter_data.get(
+                                "Operating Cash Flow", None
+                            ),
+                            "quarterly_investing_cashflow": quarter_data.get(
+                                "Investing Cash Flow", None
+                            ),
+                            "quarterly_financing_cashflow": quarter_data.get(
+                                "Financing Cash Flow", None
+                            ),
+                            "quarterly_free_cashflow": quarter_data.get(
+                                "Free Cash Flow", None
+                            ),
+                            "quarterly_capital_expenditure": quarter_data.get(
+                                "Capital Expenditure", None
+                            ),
+                            "quarterly_dividends_paid": quarter_data.get(
+                                "Dividends Paid", None
+                            ),
+                            "quarterly_net_income_cashflow": quarter_data.get(
+                                "Net Income", None
+                            ),
+                            "quarterly_depreciation": quarter_data.get(
+                                "Depreciation", None
+                            ),
+                            "quarterly_change_in_cash": quarter_data.get(
+                                "Change In Cash", None
+                            ),
+                            "quarterly_change_in_receivables": quarter_data.get(
+                                "Change In Receivables", None
+                            ),
+                            "quarterly_change_in_inventory": quarter_data.get(
+                                "Change In Inventory", None
+                            ),
+                            "quarterly_change_in_payables": quarter_data.get(
+                                "Change In Payables", None
+                            ),
+                        }
+                    )
 
             except Exception as e:
                 self.logger.warning(f"{symbol} 분기별 재무정보 수집 실패: {e}")
@@ -379,27 +511,37 @@ class YahooFinanceDataCollector:
                 dividends = ticker.dividends
                 if not dividends.empty:
                     latest_dividend = dividends.iloc[-1] if len(dividends) > 0 else None
-                    financial_data.update({
-                        "latest_dividend_amount": latest_dividend,
-                        "dividend_frequency": len(dividends) / 4 if len(dividends) > 0 else 0,  # 연간 배당 횟수 추정
-                    })
+                    financial_data.update(
+                        {
+                            "latest_dividend_amount": latest_dividend,
+                            "dividend_frequency": (
+                                len(dividends) / 4 if len(dividends) > 0 else 0
+                            ),  # 연간 배당 횟수 추정
+                        }
+                    )
 
                 # 주식 분할 데이터
                 splits = ticker.splits
                 if not splits.empty:
                     latest_split = splits.iloc[-1] if len(splits) > 0 else None
-                    financial_data.update({
-                        "latest_split_ratio": latest_split,
-                        "split_frequency": len(splits),  # 분할 횟수
-                    })
+                    financial_data.update(
+                        {
+                            "latest_split_ratio": latest_split,
+                            "split_frequency": len(splits),  # 분할 횟수
+                        }
+                    )
 
                 # 자본 이득 데이터
                 capital_gains = ticker.capital_gains
                 if not capital_gains.empty:
-                    latest_capital_gain = capital_gains.iloc[-1] if len(capital_gains) > 0 else None
-                    financial_data.update({
-                        "latest_capital_gain": latest_capital_gain,
-                    })
+                    latest_capital_gain = (
+                        capital_gains.iloc[-1] if len(capital_gains) > 0 else None
+                    )
+                    financial_data.update(
+                        {
+                            "latest_capital_gain": latest_capital_gain,
+                        }
+                    )
 
             except Exception as e:
                 self.logger.warning(f"{symbol} 배당 및 기업 행동 데이터 수집 실패: {e}")
@@ -412,56 +554,120 @@ class YahooFinanceDataCollector:
             # 5. 계산된 재무비율 추가 (새로 추가)
             try:
                 # ROE (Return on Equity) 계산
-                if financial_data.get("net_income") and financial_data.get("book_value"):
-                    df["calculated_roe"] = financial_data["net_income"] / financial_data["book_value"]
+                if financial_data.get("net_income") and financial_data.get(
+                    "book_value"
+                ):
+                    df["calculated_roe"] = (
+                        financial_data["net_income"] / financial_data["book_value"]
+                    )
 
                 # ROA (Return on Assets) 계산
-                if financial_data.get("net_income") and financial_data.get("quarterly_total_assets"):
-                    df["calculated_roa"] = financial_data["net_income"] / financial_data["quarterly_total_assets"]
+                if financial_data.get("net_income") and financial_data.get(
+                    "quarterly_total_assets"
+                ):
+                    df["calculated_roa"] = (
+                        financial_data["net_income"]
+                        / financial_data["quarterly_total_assets"]
+                    )
 
                 # 부채비율 계산
-                if financial_data.get("total_debt") and financial_data.get("quarterly_total_assets"):
-                    df["calculated_debt_to_assets"] = financial_data["total_debt"] / financial_data["quarterly_total_assets"]
+                if financial_data.get("total_debt") and financial_data.get(
+                    "quarterly_total_assets"
+                ):
+                    df["calculated_debt_to_assets"] = (
+                        financial_data["total_debt"]
+                        / financial_data["quarterly_total_assets"]
+                    )
 
                 # 유동비율 계산
-                if financial_data.get("quarterly_current_assets") and financial_data.get("quarterly_current_liabilities"):
-                    df["calculated_current_ratio"] = financial_data["quarterly_current_assets"] / financial_data["quarterly_current_liabilities"]
+                if financial_data.get(
+                    "quarterly_current_assets"
+                ) and financial_data.get("quarterly_current_liabilities"):
+                    df["calculated_current_ratio"] = (
+                        financial_data["quarterly_current_assets"]
+                        / financial_data["quarterly_current_liabilities"]
+                    )
 
                 # 영업이익률 계산
-                if financial_data.get("quarterly_operating_income") and financial_data.get("quarterly_revenue"):
-                    df["calculated_operating_margin"] = financial_data["quarterly_operating_income"] / financial_data["quarterly_revenue"]
+                if financial_data.get(
+                    "quarterly_operating_income"
+                ) and financial_data.get("quarterly_revenue"):
+                    df["calculated_operating_margin"] = (
+                        financial_data["quarterly_operating_income"]
+                        / financial_data["quarterly_revenue"]
+                    )
 
                 # 순이익률 계산
-                if financial_data.get("quarterly_net_income") and financial_data.get("quarterly_revenue"):
-                    df["calculated_net_margin"] = financial_data["quarterly_net_income"] / financial_data["quarterly_revenue"]
+                if financial_data.get("quarterly_net_income") and financial_data.get(
+                    "quarterly_revenue"
+                ):
+                    df["calculated_net_margin"] = (
+                        financial_data["quarterly_net_income"]
+                        / financial_data["quarterly_revenue"]
+                    )
 
                 # EBITDA 마진 계산
-                if financial_data.get("quarterly_ebitda") and financial_data.get("quarterly_revenue"):
-                    df["calculated_ebitda_margin"] = financial_data["quarterly_ebitda"] / financial_data["quarterly_revenue"]
+                if financial_data.get("quarterly_ebitda") and financial_data.get(
+                    "quarterly_revenue"
+                ):
+                    df["calculated_ebitda_margin"] = (
+                        financial_data["quarterly_ebitda"]
+                        / financial_data["quarterly_revenue"]
+                    )
 
                 # 자본회전율 계산
-                if financial_data.get("quarterly_revenue") and financial_data.get("quarterly_total_assets"):
-                    df["calculated_asset_turnover"] = financial_data["quarterly_revenue"] / financial_data["quarterly_total_assets"]
+                if financial_data.get("quarterly_revenue") and financial_data.get(
+                    "quarterly_total_assets"
+                ):
+                    df["calculated_asset_turnover"] = (
+                        financial_data["quarterly_revenue"]
+                        / financial_data["quarterly_total_assets"]
+                    )
 
                 # 재고회전율 계산
-                if financial_data.get("quarterly_revenue") and financial_data.get("quarterly_inventory"):
-                    df["calculated_inventory_turnover"] = financial_data["quarterly_revenue"] / financial_data["quarterly_inventory"]
+                if financial_data.get("quarterly_revenue") and financial_data.get(
+                    "quarterly_inventory"
+                ):
+                    df["calculated_inventory_turnover"] = (
+                        financial_data["quarterly_revenue"]
+                        / financial_data["quarterly_inventory"]
+                    )
 
                 # 매출채권회전율 계산
-                if financial_data.get("quarterly_revenue") and financial_data.get("quarterly_accounts_receivable"):
-                    df["calculated_receivables_turnover"] = financial_data["quarterly_revenue"] / financial_data["quarterly_accounts_receivable"]
+                if financial_data.get("quarterly_revenue") and financial_data.get(
+                    "quarterly_accounts_receivable"
+                ):
+                    df["calculated_receivables_turnover"] = (
+                        financial_data["quarterly_revenue"]
+                        / financial_data["quarterly_accounts_receivable"]
+                    )
 
                 # 현금흐름 대비 부채비율 계산
-                if financial_data.get("quarterly_operating_cashflow") and financial_data.get("total_debt"):
-                    df["calculated_cashflow_to_debt"] = financial_data["quarterly_operating_cashflow"] / financial_data["total_debt"]
+                if financial_data.get(
+                    "quarterly_operating_cashflow"
+                ) and financial_data.get("total_debt"):
+                    df["calculated_cashflow_to_debt"] = (
+                        financial_data["quarterly_operating_cashflow"]
+                        / financial_data["total_debt"]
+                    )
 
                 # 자유현금흐름 수익률 계산
-                if financial_data.get("quarterly_free_cashflow") and financial_data.get("market_cap"):
-                    df["calculated_fcf_yield"] = financial_data["quarterly_free_cashflow"] / financial_data["market_cap"]
+                if financial_data.get("quarterly_free_cashflow") and financial_data.get(
+                    "market_cap"
+                ):
+                    df["calculated_fcf_yield"] = (
+                        financial_data["quarterly_free_cashflow"]
+                        / financial_data["market_cap"]
+                    )
 
                 # 배당성향 계산
-                if financial_data.get("quarterly_dividends_paid") and financial_data.get("quarterly_net_income"):
-                    df["calculated_dividend_payout"] = abs(financial_data["quarterly_dividends_paid"]) / financial_data["quarterly_net_income"]
+                if financial_data.get(
+                    "quarterly_dividends_paid"
+                ) and financial_data.get("quarterly_net_income"):
+                    df["calculated_dividend_payout"] = (
+                        abs(financial_data["quarterly_dividends_paid"])
+                        / financial_data["quarterly_net_income"]
+                    )
 
             except Exception as e:
                 self.logger.warning(f"{symbol} 계산된 재무비율 생성 실패: {e}")
@@ -487,7 +693,9 @@ class YahooFinanceDataCollector:
 
             if financial_columns:
                 # ffill 후 bfill 적용하여 결측치 처리
-                df[financial_columns] = df[financial_columns].fillna(method="ffill").fillna(method="bfill")
+                df[financial_columns] = (
+                    df[financial_columns].fillna(method="ffill").fillna(method="bfill")
+                )
                 self.logger.info(
                     f"{symbol} 재무지표 {len(financial_columns)}개 추가 완료 (ffill + bfill 적용)"
                 )
@@ -549,20 +757,20 @@ class YahooFinanceDataCollector:
             # 출력 디렉토리 생성
             os.makedirs(output_dir, exist_ok=True)
 
-            # 파일명 생성 (티커_분봉_기간_오늘날짜_UUID.csv)
-            today = datetime.now().strftime("%Y%m%d")
+            # 파일명 생성 (티커_분봉_기간_UUID.csv)
             interval_name = self._get_interval_name(interval)
             period = f"{start_date}_{end_date}"
 
             if uuid:
-                filename = f"{symbol}_{interval_name}_{period}_{today}_{uuid}.csv"
+                filename = f"{symbol}_{interval_name}_{period}_{uuid}.csv"
             else:
+                today = datetime.now().strftime("%Y%m%d")
                 filename = f"{symbol}_{interval_name}_{period}_{today}.csv"
             filepath = os.path.join(output_dir, filename)
 
             # 저장 전 결측치 처리: ffill 후 bfill 적용
             df = df.fillna(method="ffill").fillna(method="bfill")
-            
+
             # CSV 저장
             df.to_csv(filepath, index=False, encoding="utf-8")
 

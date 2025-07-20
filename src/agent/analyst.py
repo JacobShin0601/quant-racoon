@@ -66,20 +66,27 @@ class QuantAnalyst:
         # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원
         time_horizon = self.config.get("time_horizon", "unknown")
         if time_horizon and time_horizon != "unknown":
-            # analysis_dir에 시간대 하위폴더 추가
-            analysis_dir = os.path.join(analysis_dir, time_horizon)
-            print(f"📁 시간대별 분석 폴더 설정: {analysis_dir}")
+            # analysis_dir이 이미 시간대별 하위폴더를 포함하고 있는지 확인
+            if analysis_dir and not analysis_dir.endswith(f"/{time_horizon}"):
+                analysis_dir = os.path.join(analysis_dir, time_horizon)
+                print(f"📁 시간대별 분석 폴더 설정: {analysis_dir}")
 
         self.analysis_dir = analysis_dir
 
         # config에서 로그 디렉토리 가져오기
         log_dir = self.config.get("output", {}).get("logs_folder", "log")
+        # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원 (time_horizon 재사용)
+        if time_horizon and time_horizon != "unknown":
+            # log_dir이 이미 시간대별 하위폴더를 포함하고 있는지 확인
+            if log_dir and not log_dir.endswith(f"/{time_horizon}"):
+                log_dir = os.path.join(log_dir, time_horizon)
+                print(f"📁 시간대별 로그 폴더 설정: {log_dir}")
         self.logger = Logger(log_dir=log_dir)
         self.analysis_start_time = datetime.now()
         self.execution_uuid = None  # UUID 초기화
 
         # 분석 폴더 구조 생성
-        if analysis_dir:
+        if analysis_dir is not None:
             create_analysis_folder_structure(analysis_dir)
 
         # 분석기들 초기화
@@ -352,7 +359,7 @@ class QuantAnalyst:
             "volatility": vol_result,
         }
 
-    def run_full_analysis(self, symbols: List[str] = None) -> Dict[str, Any]:
+    def run_full_analysis(self, symbols: List[str] = []) -> Dict[str, Any]:
         """전체 분석 실행"""
         # 로거 설정
         self.logger.setup_logger(
@@ -371,7 +378,9 @@ class QuantAnalyst:
 
         # 데이터 로드
         self.logger.log_info("📂 데이터 로딩 중...")
-        data_dict = load_and_preprocess_data(self.data_dir, symbols)
+        data_dict = load_and_preprocess_data(
+            self.data_dir, symbols if symbols is not None else []
+        )
         self.logger.log_success(f"✅ 데이터 로딩 완료 ({len(data_dict)}개 종목)")
 
         # 데이터 전처리
@@ -497,6 +506,8 @@ class QuantAnalyst:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             uuid_suffix = f"_{self.execution_uuid}" if self.execution_uuid else ""
             output_path = f"quant_analysis_results_{timestamp}{uuid_suffix}.json"
+        if output_path is None:
+            output_path = "quant_analysis_results.json"
 
         # JSON 직렬화 가능한 형태로 변환
         def make_serializable(obj):
@@ -549,16 +560,23 @@ class QuantAnalyst:
                 return obj
 
         serializable_results = {}
-        for symbol, results in self.analysis_results.items():
+        for symbol, results in (self.analysis_results or {}).items():
             serializable_results[symbol] = {}
-            for model_name, result in results.items():
+            for model_name, result in (results or {}).items():
                 serializable_results[symbol][model_name] = clean_nan_inf(
                     make_serializable(result)
                 )
 
         # analysis 폴더에 저장
+        output_path = output_path or "quant_analysis_results.json"
+        analysis_dir = (
+            self.analysis_dir if self.analysis_dir is not None else "analysis"
+        )
         saved_path = save_analysis_results(
-            serializable_results, "quant_analysis", output_path, self.analysis_dir
+            serializable_results,
+            "quant_analysis",
+            output_path,
+            analysis_dir,
         )
 
         self.logger.log_success(f"✅ 분석 결과 저장: {saved_path}")
@@ -574,7 +592,7 @@ class FundamentalAnalyst:
         config_path: str = DEFAULT_CONFIG_PATH,
         return_type: str = "percentage",  # "percentage" or "log"
         top_features: int = 10,
-        analysis_dir: str = None,  # 분석 결과 저장 디렉토리
+        analysis_dir: Optional[str] = None,  # 분석 결과 저장 디렉토리
     ):
         self.data_dir = data_dir
         self.config = load_config(config_path)
@@ -593,14 +611,21 @@ class FundamentalAnalyst:
         # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원
         time_horizon = self.config.get("time_horizon", "unknown")
         if time_horizon and time_horizon != "unknown":
-            # analysis_dir에 시간대 하위폴더 추가
-            analysis_dir = os.path.join(analysis_dir, time_horizon)
-            print(f"📁 시간대별 분석 폴더 설정: {analysis_dir}")
+            # analysis_dir이 이미 시간대별 하위폴더를 포함하고 있는지 확인
+            if analysis_dir and not analysis_dir.endswith(f"/{time_horizon}"):
+                analysis_dir = os.path.join(analysis_dir, time_horizon)
+                print(f"📁 시간대별 분석 폴더 설정: {analysis_dir}")
 
         self.analysis_dir = analysis_dir
 
         # config에서 로그 디렉토리 가져오기
         log_dir = self.config.get("output", {}).get("logs_folder", "log")
+        # 🔥 핵심 수정: 시간대별 하위폴더 구조 지원 (time_horizon 재사용)
+        if time_horizon and time_horizon != "unknown":
+            # log_dir이 이미 시간대별 하위폴더를 포함하고 있는지 확인
+            if log_dir and not log_dir.endswith(f"/{time_horizon}"):
+                log_dir = os.path.join(log_dir, time_horizon)
+                print(f"📁 시간대별 로그 폴더 설정: {log_dir}")
         self.logger = Logger(log_dir=log_dir)
         self.analysis_start_time = datetime.now()
         self.execution_uuid = None  # UUID 초기화
@@ -893,7 +918,7 @@ class FundamentalAnalyst:
         self.analysis_results[symbol]["financial_analysis"] = result
         return result
 
-    def run_full_analysis(self, symbols: List[str] = None) -> Dict[str, Any]:
+    def run_full_analysis(self, symbols: List[str] = []) -> Dict[str, Any]:
         """전체 분석 실행"""
         # 로거 설정
         self.logger.setup_logger(
@@ -912,7 +937,9 @@ class FundamentalAnalyst:
 
         # 데이터 로드
         self.logger.log_info("📂 데이터 로딩 중...")
-        data_dict = load_and_preprocess_data(self.data_dir, symbols)
+        data_dict = load_and_preprocess_data(
+            self.data_dir, symbols if symbols is not None else []
+        )
         self.logger.log_success(f"✅ 데이터 로딩 완료 ({len(data_dict)}개 종목)")
 
         # 데이터 전처리
@@ -1007,6 +1034,8 @@ class FundamentalAnalyst:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             uuid_suffix = f"_{self.execution_uuid}" if self.execution_uuid else ""
             output_path = f"fundamental_analysis_results_{timestamp}{uuid_suffix}.json"
+        if output_path is None:
+            output_path = "fundamental_analysis_results.json"
 
         # JSON 직렬화 가능한 형태로 변환
         def make_serializable(obj):
@@ -1059,16 +1088,23 @@ class FundamentalAnalyst:
                 return obj
 
         serializable_results = {}
-        for symbol, results in self.analysis_results.items():
+        for symbol, results in (self.analysis_results or {}).items():
             serializable_results[symbol] = {}
-            for model_name, result in results.items():
+            for model_name, result in (results or {}).items():
                 serializable_results[symbol][model_name] = clean_nan_inf(
                     make_serializable(result)
                 )
 
         # analysis 폴더에 저장
+        output_path = output_path or "fundamental_analysis_results.json"
+        analysis_dir = (
+            self.analysis_dir if self.analysis_dir is not None else "analysis"
+        )
         saved_path = save_analysis_results(
-            serializable_results, "fundamental_analysis", output_path, self.analysis_dir
+            serializable_results,
+            "fundamental_analysis",
+            output_path,
+            analysis_dir,
         )
 
         self.logger.log_success(f"✅ 분석 결과 저장: {saved_path}")
@@ -1089,6 +1125,8 @@ def main():
     parser.add_argument("--top_features", type=int, default=10, help="상위 특성 수")
     parser.add_argument("--output", help="결과 저장 경로")
     parser.add_argument("--uuid", help="실행 UUID")
+    parser.add_argument("--analysis_dir", help="분석 결과 저장 디렉토리")
+    parser.add_argument("--log-dir", help="로그 디렉토리")
     parser.add_argument(
         "--analysis_type",
         choices=["quant", "fundamental", "both"],
@@ -1103,13 +1141,20 @@ def main():
         data_dir=args.data_dir,
         return_type=args.return_type,
         top_features=args.top_features,
+        analysis_dir=args.analysis_dir,
     )
 
     fundamental_analyst = FundamentalAnalyst(
         data_dir=args.data_dir,
         return_type=args.return_type,
         top_features=args.top_features,
+        analysis_dir=args.analysis_dir,
     )
+
+    # log_dir 설정
+    if args.log_dir:
+        quant_analyst.logger.set_log_dir(args.log_dir)
+        fundamental_analyst.logger.set_log_dir(args.log_dir)
 
     # UUID 설정
     if args.uuid:

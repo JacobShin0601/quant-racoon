@@ -23,12 +23,25 @@ logger = logging.getLogger(__name__)
 class PortfolioWeightCalculator:
     """포트폴리오 비중 계산 클래스"""
 
-    def __init__(self, config_path: str = "../../config/config_long.json"):
+    def __init__(self, config_path: Optional[str] = None):
+        print(f"🔍 PortfolioWeightCalculator 초기화 시작 - config_path: {config_path}")
+
         self.config = self._load_config(config_path)
+        print(f"🔍 설정 로드 완료: {type(self.config)}")
+
         self.portfolio_config = self.config["portfolio"]
-        self.weight_methods = self.config["portfolio"]["weight_methods"]
-        self.rebalance_period = self.portfolio_config["rebalance_period"]
-        self.method = self.portfolio_config["weight_calculation_method"]
+        print(f"🔍 포트폴리오 설정: {self.portfolio_config}")
+
+        # 새로운 설정 구조에 맞게 수정
+        self.rebalance_period = self.portfolio_config.get("rebalance_period", 20)
+        print(f"🔍 리밸런싱 주기: {self.rebalance_period}")
+
+        # optimization_method 사용 (기존 weight_calculation_method 대신)
+        self.method = self.portfolio_config.get(
+            "optimization_method", "sharpe_maximization"
+        )
+        print(f"🔍 선택된 최적화 방법: {self.method}")
+
         # fallback 현황 기록
         self.fallback_stats = {
             "risk_parity": 0,
@@ -41,34 +54,55 @@ class PortfolioWeightCalculator:
         # AdvancedPortfolioManager import (lazy loading)
         self.advanced_manager = None
 
-    def _load_config(self, config_path: str) -> Dict:
+        print("✅ PortfolioWeightCalculator 초기화 완료")
+
+    def _load_config(self, config_path: Optional[str] = None) -> Dict:
         """설정 파일 로드"""
         try:
-            config_file = os.path.join(os.path.dirname(__file__), config_path)
+            # config_path가 None이면 기본값 사용
+            if config_path is None:
+                config_path = "config/config_swing.json"
+
+            # 먼저 절대 경로로 시도
+            if os.path.isabs(config_path):
+                config_file = config_path
+            else:
+                # 상대 경로인 경우 여러 위치에서 시도
+                possible_paths = [
+                    config_path,  # 현재 작업 디렉토리 기준
+                    os.path.join(
+                        os.path.dirname(__file__), "..", "..", config_path
+                    ),  # 프로젝트 루트 기준
+                    os.path.join(
+                        os.path.dirname(__file__), config_path
+                    ),  # actions 디렉토리 기준
+                ]
+
+                config_file = None
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        config_file = path
+                        break
+
+                if config_file is None:
+                    raise FileNotFoundError(
+                        f"Config file not found in any of: {possible_paths}"
+                    )
+
             with open(config_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"설정 파일 로드 실패, 기본값 사용: {e}")
             return {
-                "portfolio_config": {
+                "portfolio": {
                     "initial_capital": 100000,
-                    "rebalance_period": 4,
-                    "weight_calculation_method": "equal_weight",
-                    "max_position_per_symbol": 0.4,
-                    "min_cash_ratio": 0.1,
+                    "rebalance_period": 20,
+                    "optimization_method": "sharpe_maximization",
                     "risk_free_rate": 0.02,
-                },
-                "weight_methods": {
-                    "equal_weight": {"enabled": True},
-                    "volatility_inverse": {"enabled": False, "lookback_period": 30},
-                    "risk_parity": {"enabled": False, "target_volatility": 0.15},
-                    "momentum_weight": {
-                        "enabled": False,
-                        "momentum_period": 20,
-                        "top_n_symbols": 3,
-                    },
-                    "min_variance": {"enabled": False, "lookback_period": 60},
-                },
+                    "target_volatility": 0.20,
+                    "min_weight": 0.0,
+                    "max_weight": 0.8,
+                }
             }
 
     def calculate_optimal_weights(
@@ -549,13 +583,19 @@ class PortfolioWeightCalculator:
         # 평균 비중
         avg_weights = weights_df.mean()
         print("평균 비중:")
-        for symbol, weight in avg_weights.items():
-            print(f"  {symbol}: {weight*100:.1f}%")
+        if isinstance(avg_weights, pd.Series):
+            for symbol, weight in avg_weights.items():
+                print(f"  {symbol}: {weight*100:.1f}%")
+        else:
+            print("  평균 비중 계산 불가")
         # 비중 변동성
         weight_volatility = weights_df.std()
         print(f"\n비중 변동성 (표준편차):")
-        for symbol, vol in weight_volatility.items():
-            print(f"  {symbol}: {vol*100:.1f}%")
+        if isinstance(weight_volatility, pd.Series):
+            for symbol, vol in weight_volatility.items():
+                print(f"  {symbol}: {vol*100:.1f}%")
+        else:
+            print("  비중 변동성 계산 불가")
         # 리밸런싱 횟수
         rebalance_count = len(weights_df) // self.rebalance_period
         print(f"\n총 리밸런싱 횟수: {rebalance_count}회")
@@ -580,7 +620,7 @@ def main():
     data_dict = {}
     for symbol in symbols:
         np.random.seed(hash(symbol) % 1000)
-        close_prices = [100]
+        close_prices = [100.0]  # float로 초기화
         for i in range(len(dates) - 1):
             change = np.random.normal(0, 0.02)
             close_prices.append(close_prices[-1] * (1 + change))

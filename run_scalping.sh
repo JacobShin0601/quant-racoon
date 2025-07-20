@@ -7,6 +7,7 @@ echo "🚀 초단기 전략 실행 시작..."
 echo "📊 데이터: 1분봉, 기간: 7일"
 echo "🎯 전략: VWAPMACDScalping, KeltnerRSIScalping, AbsorptionScalping, RSIBollingerScalping"
 echo "⚡ 고빈도 거래 모드"
+echo "📁 데이터 디렉토리: data/scalping"
 echo ""
 
 # 환경 설정
@@ -19,6 +20,7 @@ echo "⏰ 시작 시간: $START_TIME"
 # 전체 파이프라인 실행 (cleaner → scrapper → analyzer → researcher → evaluator → portfolio_manager)
 echo "🔄 전체 파이프라인 실행 중..."
 echo "📋 단계: cleaner → scrapper → analyzer → researcher → evaluator → portfolio_manager"
+echo "📁 데이터 디렉토리: data/scalping"
 python -m src.agent.orchestrator --time-horizon scalping
 
 # 실행 결과 확인
@@ -28,6 +30,7 @@ if [ $? -eq 0 ]; then
     echo "📁 결과 폴더: results/scalping/"
     echo "📋 로그 폴더: log/scalping/"
     echo "💾 백업 폴더: backup/scalping/"
+    echo "📊 데이터 폴더: data/scalping/"
 else
     echo ""
     echo "❌ 초단기 전략 실행 실패!"

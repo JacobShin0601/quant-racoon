@@ -3,31 +3,211 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from actions.y_finance import YahooFinanceDataCollector
 from actions.calculate_index import TechnicalIndicators, StrategyParams
-from agent.helper import Logger, load_config, print_section_header, print_subsection_header
+from agent.helper import (
+    Logger,
+    load_config,
+    print_section_header,
+    print_subsection_header,
+)
+
+
+class DataScrapper:
+    """데이터 수집 클래스 - orchestrator에서 사용"""
+
+    def __init__(
+        self,
+        config_path: str = "config/config_default.json",
+        time_horizon: str = "swing",
+        uuid: Optional[str] = None,
+    ):
+        self.config_path = config_path
+        self.time_horizon = time_horizon
+        self.uuid = uuid
+        self.config = load_config(config_path)
+        self.logger = Logger()
+
+        # 데이터 디렉토리 설정
+        self.data_dir = f"data/{time_horizon}"
+        self.log_dir = f"log/{time_horizon}"
+
+        # 로거 설정
+        if self.log_dir:
+            self.logger.set_log_dir(self.log_dir)
+
+        if self.uuid:
+            self.logger.setup_logger(
+                strategy="data_collection", mode="scrapper", uuid=self.uuid
+            )
+
+    def run_scrapper(self) -> bool:
+        """데이터 수집 실행"""
+        try:
+            print_subsection_header("📊 데이터 수집 시작")
+
+            # 설정에서 심볼과 설정 가져오기
+            data_config = self.config.get("data", {})
+            symbols = data_config.get("symbols", [])
+            custom_tasks = data_config.get("custom_tasks", [])
+
+            if not symbols and not custom_tasks:
+                print("❌ 수집할 심볼이 설정되지 않았습니다.")
+                return False
+
+            # 공통 설정
+            common_settings = data_config.get("common_settings", data_config)
+
+            # 데이터 수집기 초기화
+            collector = YahooFinanceDataCollector()
+            params = StrategyParams()
+
+            success_count = 0
+            total_symbols = len(symbols) + len(custom_tasks)
+
+            # 1. 공통 설정을 적용한 symbols 처리
+            if symbols:
+                print(f"📈 {len(symbols)}개 종목 데이터 수집 중...")
+
+                for symbol in symbols:
+                    try:
+                        print(f"  🔍 {symbol} 데이터 수집 중...")
+
+                        # 종목 정보 가져오기
+                        info = collector.get_stock_info(symbol)
+                        print(f"    📋 {info['name']} ({info['sector']})")
+
+                        # 기본 데이터 수집
+                        df = collector.get_candle_data(
+                            symbol=symbol,
+                            interval=common_settings.get("interval", "60m"),
+                            start_date=common_settings.get("start_date"),
+                            end_date=common_settings.get("end_date"),
+                            days_back=common_settings.get("lookback_days", 60),
+                        )
+
+                        if df is not None and not df.empty:
+                            # 기술적 지표 계산
+                            df_with_indicators = (
+                                TechnicalIndicators.calculate_all_indicators(df, params)
+                            )
+
+                            # datetime 컬럼 보장
+                            if "datetime" not in df_with_indicators.columns:
+                                df_with_indicators = df_with_indicators.reset_index()
+
+                            # CSV 파일로 저장
+                            filepath = collector.save_to_csv(
+                                df=df_with_indicators,
+                                symbol=symbol,
+                                interval=common_settings.get("interval", "60m"),
+                                start_date=common_settings.get("start_date") or "auto",
+                                end_date=common_settings.get("end_date") or "auto",
+                                output_dir=self.data_dir,
+                                uuid=self.uuid,
+                            )
+
+                            print(
+                                f"    ✅ {symbol} 데이터 저장 완료: {len(df)}개 포인트"
+                            )
+                            success_count += 1
+                        else:
+                            print(f"    ❌ {symbol} 데이터 수집 실패")
+
+                    except Exception as e:
+                        print(f"    ❌ {symbol} 처리 중 오류: {e}")
+                        continue
+
+            # 2. 개별 설정이 있는 custom_tasks 처리
+            if custom_tasks:
+                print(f"📈 {len(custom_tasks)}개 개별 설정 종목 처리 중...")
+
+                for task in custom_tasks:
+                    symbol = task.get("symbol")
+                    try:
+                        print(f"  🔍 {symbol} 데이터 수집 중 (개별 설정)...")
+
+                        # 종목 정보 가져오기
+                        info = collector.get_stock_info(symbol)
+                        print(f"    📋 {info['name']} ({info['sector']})")
+
+                        # 개별 설정으로 데이터 수집
+                        df = collector.get_candle_data(
+                            symbol=symbol,
+                            interval=task.get("interval", "60m"),
+                            start_date=task.get("start_date"),
+                            end_date=task.get("end_date"),
+                            days_back=task.get("days_back", 60),
+                        )
+
+                        if df is not None and not df.empty:
+                            # 기술적 지표 계산
+                            df_with_indicators = (
+                                TechnicalIndicators.calculate_all_indicators(df, params)
+                            )
+
+                            # datetime 컬럼 보장
+                            if "datetime" not in df_with_indicators.columns:
+                                df_with_indicators = df_with_indicators.reset_index()
+
+                            # CSV 파일로 저장
+                            filepath = collector.save_to_csv(
+                                df=df_with_indicators,
+                                symbol=symbol,
+                                interval=task.get("interval", "60m"),
+                                start_date=task.get("start_date") or "auto",
+                                end_date=task.get("end_date") or "auto",
+                                output_dir=self.data_dir,
+                                uuid=self.uuid,
+                            )
+
+                            print(
+                                f"    ✅ {symbol} 데이터 저장 완료: {len(df)}개 포인트"
+                            )
+                            success_count += 1
+                        else:
+                            print(f"    ❌ {symbol} 데이터 수집 실패")
+
+                    except Exception as e:
+                        print(f"    ❌ {symbol} 처리 중 오류: {e}")
+                        continue
+
+            print(f"✅ 데이터 수집 완료: {success_count}/{total_symbols}개 종목 성공")
+            return success_count > 0
+
+        except Exception as e:
+            print(f"❌ 데이터 수집 중 오류: {e}")
+            return False
 
 
 def main():
     import argparse
-    
+
     # 명령행 인자 파싱
     parser = argparse.ArgumentParser(description="데이터 수집 시스템")
     parser.add_argument("--data-dir", default="data", help="데이터 저장 디렉토리")
-    parser.add_argument("--config", default="../../config/config_default.json", help="설정 파일 경로")
+    parser.add_argument(
+        "--config", default="../../config/config_default.json", help="설정 파일 경로"
+    )
+    parser.add_argument("--log-dir", help="로그 디렉토리")
     parser.add_argument("--uuid", help="실행 UUID")
     args = parser.parse_args()
-    
+
     # config.json 경로
     config_path = os.path.abspath(args.config)
     config = load_config(config_path)
-    
-    # Logger 초기화 - config에서 로그 디렉토리 가져오기
-    log_dir = config.get("output", {}).get("logs_folder", "log")
+
+    # Logger 초기화 - 명령행 인자 우선, 없으면 config에서 로그 디렉토리 가져오기
+    log_dir = (
+        args.log_dir
+        if args.log_dir
+        else config.get("output", {}).get("logs_folder", "log")
+    )
     logger = Logger(log_dir=log_dir)
-    
+
     # UUID 설정
     if args.uuid:
         print(f"🆔 스크래퍼 UUID 설정: {args.uuid}")
@@ -77,24 +257,54 @@ def main():
                     interval=common_settings.get("interval", "15m"),
                     start_date=common_settings.get("start_date"),
                     end_date=common_settings.get("end_date"),
-                    days_back=common_settings.get("lookback_days", common_settings.get("days_back", 30)),
+                    days_back=common_settings.get(
+                        "lookback_days", common_settings.get("days_back", 30)
+                    ),
                 )
                 logger.log_success(
                     f"{symbol} 기본 데이터 수집 완료 ({len(df)}개 포인트)"
                 )
-                
+
                 # 수집된 재무지표 정보 로깅
-                financial_columns = [col for col in df.columns if col not in [
-                    "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume"
-                ]]
+                financial_columns = [
+                    col
+                    for col in df.columns
+                    if col
+                    not in [
+                        "datetime",
+                        "date",
+                        "time",
+                        "timestamp",
+                        "open",
+                        "high",
+                        "low",
+                        "close",
+                        "volume",
+                    ]
+                ]
                 if financial_columns:
-                    logger.log_info(f"{symbol} 재무지표 {len(financial_columns)}개 수집됨")
+                    logger.log_info(
+                        f"{symbol} 재무지표 {len(financial_columns)}개 수집됨"
+                    )
                     # 주요 재무지표들만 로깅
-                    key_indicators = ["pe_ratio", "return_on_equity", "debt_to_equity", "dividend_yield", 
-                                    "free_cashflow", "market_cap", "beta"]
-                    available_indicators = [ind for ind in key_indicators if ind in df.columns and df[ind].iloc[0] is not None]
+                    key_indicators = [
+                        "pe_ratio",
+                        "return_on_equity",
+                        "debt_to_equity",
+                        "dividend_yield",
+                        "free_cashflow",
+                        "market_cap",
+                        "beta",
+                    ]
+                    available_indicators = [
+                        ind
+                        for ind in key_indicators
+                        if ind in df.columns and df[ind].iloc[0] is not None
+                    ]
                     if available_indicators:
-                        indicator_values = {ind: df[ind].iloc[0] for ind in available_indicators}
+                        indicator_values = {
+                            ind: df[ind].iloc[0] for ind in available_indicators
+                        }
                         logger.log_info(f"{symbol} 주요 재무지표: {indicator_values}")
 
                 # 2단계: 기술적 지표 계산
@@ -148,19 +358,47 @@ def main():
                 logger.log_success(
                     f"{symbol} 기본 데이터 수집 완료 ({len(df)}개 포인트)"
                 )
-                
+
                 # 수집된 재무지표 정보 로깅
-                financial_columns = [col for col in df.columns if col not in [
-                    "datetime", "date", "time", "timestamp", "open", "high", "low", "close", "volume"
-                ]]
+                financial_columns = [
+                    col
+                    for col in df.columns
+                    if col
+                    not in [
+                        "datetime",
+                        "date",
+                        "time",
+                        "timestamp",
+                        "open",
+                        "high",
+                        "low",
+                        "close",
+                        "volume",
+                    ]
+                ]
                 if financial_columns:
-                    logger.log_info(f"{symbol} 재무지표 {len(financial_columns)}개 수집됨")
+                    logger.log_info(
+                        f"{symbol} 재무지표 {len(financial_columns)}개 수집됨"
+                    )
                     # 주요 재무지표들만 로깅
-                    key_indicators = ["pe_ratio", "return_on_equity", "debt_to_equity", "dividend_yield", 
-                                    "free_cashflow", "market_cap", "beta"]
-                    available_indicators = [ind for ind in key_indicators if ind in df.columns and df[ind].iloc[0] is not None]
+                    key_indicators = [
+                        "pe_ratio",
+                        "return_on_equity",
+                        "debt_to_equity",
+                        "dividend_yield",
+                        "free_cashflow",
+                        "market_cap",
+                        "beta",
+                    ]
+                    available_indicators = [
+                        ind
+                        for ind in key_indicators
+                        if ind in df.columns and df[ind].iloc[0] is not None
+                    ]
                     if available_indicators:
-                        indicator_values = {ind: df[ind].iloc[0] for ind in available_indicators}
+                        indicator_values = {
+                            ind: df[ind].iloc[0] for ind in available_indicators
+                        }
                         logger.log_info(f"{symbol} 주요 재무지표: {indicator_values}")
 
                 # 2단계: 기술적 지표 계산
@@ -186,33 +424,7 @@ def main():
             except Exception as e:
                 logger.log_error(f"{symbol} 데이터 수집 실패: {e}")
 
-    logger.log_success("🎉 모든 데이터 수집이 완료되었습니다!")
-
-    # JSON 로그 저장
-    log_data = {
-        "timestamp": datetime.now().isoformat(),
-        "symbols": all_symbols,
-        "common_settings": common_settings,
-        "custom_tasks": custom_tasks,
-        "total_symbols": len(all_symbols),
-        "uuid": args.uuid,
-        "financial_analysis": {
-            "description": "포괄적인 재무분석을 위한 확장된 지표들 포함",
-            "categories": [
-                "기업 가치 지표 (P/E, P/B, EV/EBITDA 등)",
-                "수익성 지표 (ROE, ROA, 마진 등)",
-                "성장성 지표 (매출성장률, 이익성장률 등)",
-                "재무 건전성 지표 (부채비율, 유동비율 등)",
-                "현금흐름 지표 (영업현금흐름, 자유현금흐름 등)",
-                "배당 관련 지표 (배당수익률, 배당성향 등)",
-                "분기별 재무제표 데이터",
-                "계산된 재무비율들"
-            ]
-        }
-    }
-    logger.save_json_log(
-        log_data, f"data_collection_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    )
+    logger.log_section("📊 데이터 수집 시스템 완료")
 
 
 if __name__ == "__main__":

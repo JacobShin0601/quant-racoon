@@ -25,6 +25,8 @@ class BaseStrategy(ABC):
         self.params = params
         self.positions = []
         self.trades = []
+        # 전략 타입 구분 (단일종목 vs 포트폴리오)
+        self.strategy_type = "single_asset"  # 기본값: 단일종목 전략
 
     @abstractmethod
     def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -73,6 +75,7 @@ class BaseStrategy(ABC):
 # ============================================================================
 # 모멘텀 전략 (Momentum Strategies)
 # ============================================================================
+
 
 # [스윙] 1~3주 보유
 class DualMomentumStrategy(BaseStrategy):
@@ -194,34 +197,79 @@ class VolatilityAdjustedBreakoutStrategy(BaseStrategy):
 # 자산배분/리스크 관리 전략 (Asset Allocation & Risk Management)
 # ============================================================================
 
+
 # [장기] 3개월~1년 리밸런싱
 class RiskParityLeverageStrategy(BaseStrategy):
     """실전형 리스크 패리티 + 레버리지 ETF 전략"""
-    def __init__(self, params: StrategyParams, symbols: list = None, group_constraints: dict = None, max_weight: float = 0.4, cash_weight: float = 0.05, leverage: float = 1.0):
+
+    def __init__(
+        self,
+        params: StrategyParams,
+        symbols: list = None,
+        group_constraints: dict = None,
+        max_weight: float = 0.4,
+        cash_weight: float = 0.05,
+        leverage: float = 1.0,
+    ):
         super().__init__(params)
-        # 실전형 ETF 리스트 기본값
+        # 실전형 ETF 리스트 기본값 - 설정에서 동적으로 가져오기
         if symbols is None:
-            self.symbols = ["SPY", "QQQ", "TLT", "GLD", "DBMF", "SHY"]
+            # 설정에서 심볼 목록을 가져오거나 기본값 사용
+            try:
+                import json
+                import os
+
+                config_path = os.path.join(os.getcwd(), "config", "config_swing.json")
+                if os.path.exists(config_path):
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        config = json.load(f)
+                    self.symbols = config.get("data", {}).get("symbols", ["SPY", "QQQ"])
+                else:
+                    self.symbols = ["SPY", "QQQ"]
+            except Exception:
+                self.symbols = ["SPY", "QQQ"]
         else:
             self.symbols = symbols
-        # 자산군별 제약조건 예시
+
+        # 자산군별 제약조건 - 동적으로 생성
         if group_constraints is None:
-            self.group_constraints = {
-                "equity": {"assets": ["SPY", "QQQ"], "min": 0.2, "max": 0.6},
-                "bond": {"assets": ["TLT", "SHY"], "min": 0.2, "max": 0.6},
-                "alt": {"assets": ["GLD", "DBMF"], "min": 0.0, "max": 0.3},
-            }
+            # 주식 자산군 (SPY, QQQ 등)
+            equity_symbols = [
+                s
+                for s in self.symbols
+                if s in ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "TSLA", "META", "NFLX"]
+            ]
+            # 기타 자산군 (나머지)
+            other_symbols = [s for s in self.symbols if s not in equity_symbols]
+
+            self.group_constraints = {}
+            if equity_symbols:
+                self.group_constraints["equity"] = {
+                    "assets": equity_symbols,
+                    "min": 0.2,
+                    "max": 0.8,
+                }
+            if other_symbols:
+                self.group_constraints["other"] = {
+                    "assets": other_symbols,
+                    "min": 0.0,
+                    "max": 0.6,
+                }
         else:
             self.group_constraints = group_constraints
         self.max_weight = max_weight
         self.cash_weight = cash_weight
         self.leverage = leverage
 
-    def generate_signals(self, data_dict: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
         """리스크 패리티 기반 가중치 계산 및 신호 생성"""
         signals = {}
         # 공통 날짜 추출
-        common_dates = set.intersection(*[set(df["datetime"]) for df in data_dict.values()])
+        common_dates = set.intersection(
+            *[set(df["datetime"]) for df in data_dict.values()]
+        )
         common_dates = sorted(list(common_dates))
         # (여기서는 단순히 고정 비중 예시, 실제 구현은 리스크 패리티 최적화 필요)
         n = len(self.symbols)
@@ -238,6 +286,7 @@ class RiskParityLeverageStrategy(BaseStrategy):
 # ============================================================================
 # 추세추종 전략 (Trend Following Strategies)
 # ============================================================================
+
 
 # [스윙] 1~3주 보유
 class SwingEMACrossoverStrategy(BaseStrategy):
@@ -281,22 +330,26 @@ class SwingEMACrossoverStrategy(BaseStrategy):
         df["ema_short_slope"] = df["ema_short"].diff(self.slope_period)
         df["ema_long_slope"] = df["ema_long"].diff(self.slope_period)
 
-        # 2. 볼륨 확인 (하이퍼파라미터 적용)
+        # 2. 볼륨 확인 (하이퍼파라미터 적용) - 조건 완화
         if "volume" in df.columns:
             df["volume_ma"] = df["volume"].rolling(window=20).mean()
-            volume_filter = df["volume"] > df["volume_ma"] * self.volume_threshold
+            volume_filter = df["volume"] > df["volume_ma"] * (
+                self.volume_threshold * 0.5
+            )  # 조건 완화
         else:
             volume_filter = pd.Series([True] * len(df), index=df.index)
 
-        # 3. 변동성 필터 (ATR 기반) - 하이퍼파라미터 적용
+        # 3. 변동성 필터 (ATR 기반) - 하이퍼파라미터 적용 - 조건 완화
         if "atr" in df.columns:
             df["atr_ma"] = df["atr"].rolling(window=20).mean()
-            volatility_filter = df["atr"] > df["atr_ma"] * self.volatility_threshold
+            volatility_filter = df["atr"] > df["atr_ma"] * (
+                self.volatility_threshold * 0.5
+            )  # 조건 완화
         else:
             volatility_filter = pd.Series([True] * len(df), index=df.index)
 
-        # 필터 적용
-        valid_signals = volume_filter & volatility_filter
+        # 필터 적용 - OR 조건으로 변경 (둘 중 하나만 만족하면 됨)
+        valid_signals = volume_filter | volatility_filter
         df.loc[~valid_signals, "signal"] = 0
 
         return df
@@ -327,12 +380,12 @@ class SwingRSIReversalStrategy(BaseStrategy):
         if "rsi" not in df.columns:
             df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], self.rsi_period)
 
-        # RSI 과매도/과매수 신호
+        # RSI 과매도/과매수 신호 (기본 신호)
         df["rsi_signal"] = 0
         df.loc[df["rsi"] < self.rsi_oversold, "rsi_signal"] = 1  # 매수 신호
         df.loc[df["rsi"] > self.rsi_overbought, "rsi_signal"] = -1  # 매도 신호
 
-        # 신호 변화점 감지
+        # 신호 변화점 감지 (기존 방식)
         df["rsi_signal_change"] = df["rsi_signal"].diff()
 
         # 매수 신호: RSI가 과매도에서 벗어날 때
@@ -340,30 +393,67 @@ class SwingRSIReversalStrategy(BaseStrategy):
         # 매도 신호: RSI가 과매수에서 벗어날 때
         df.loc[df["rsi_signal_change"] == -1, "signal"] = -1
 
-        # 추가 필터링
-        # 1. RSI 모멘텀 확인 (하이퍼파라미터 적용)
-        df["rsi_momentum"] = df["rsi"].diff(self.rsi_momentum_period)
+        # 추가 신호 생성 (RSI 반전 신호)
+        # RSI가 중간값(50) 근처에서 방향 전환할 때
+        df["rsi_above_50"] = df["rsi"] > 50
+        df["rsi_cross_50"] = df["rsi_above_50"].diff()
 
-        # 2. 가격 모멘텀 확인 (하이퍼파라미터 적용)
+        # RSI가 50을 상향 돌파할 때 매수 신호 추가
+        df.loc[
+            (df["rsi_cross_50"] == True) & (df["rsi"] > 45) & (df["rsi"] < 55), "signal"
+        ] = 1
+        # RSI가 50을 하향 돌파할 때 매도 신호 추가
+        df.loc[
+            (df["rsi_cross_50"] == False) & (df["rsi"] > 45) & (df["rsi"] < 55),
+            "signal",
+        ] = -1
+
+        # RSI 모멘텀 기반 신호 추가
+        df["rsi_momentum"] = df["rsi"].diff(self.rsi_momentum_period)
+        df["rsi_momentum_prev"] = df["rsi_momentum"].shift(1)
+
+        # RSI 모멘텀이 음수에서 양수로 전환할 때 매수 신호
+        df.loc[
+            (df["rsi_momentum_prev"] < 0) & (df["rsi_momentum"] > 0) & (df["rsi"] < 60),
+            "signal",
+        ] = 1
+        # RSI 모멘텀이 양수에서 음수로 전환할 때 매도 신호
+        df.loc[
+            (df["rsi_momentum_prev"] > 0) & (df["rsi_momentum"] < 0) & (df["rsi"] > 40),
+            "signal",
+        ] = -1
+
+        # 가격 모멘텀 확인 (하이퍼파라미터 적용)
         df["price_momentum"] = df["close"].pct_change(self.price_momentum_period)
 
-        # 3. 볼륨 확인 (하이퍼파라미터 적용)
+        # 볼륨 확인 (하이퍼파라미터 적용) - 조건 완화
         if "volume" in df.columns:
             df["volume_ma"] = df["volume"].rolling(window=20).mean()
             volume_filter = df["volume"] > df["volume_ma"] * self.volume_threshold
+            # 볼륨 필터는 선택적으로 적용 (너무 엄격하지 않게)
+            volume_strict_filter = df["volume"] > df["volume_ma"] * (
+                self.volume_threshold * 0.5
+            )  # 조건 완화
         else:
             volume_filter = pd.Series([True] * len(df), index=df.index)
+            volume_strict_filter = pd.Series([True] * len(df), index=df.index)
 
-        # 필터 적용
-        # RSI 매수: RSI 모멘텀 양수이고 가격 모멘텀 양수일 때
-        rsi_buy_filter = (df["rsi_momentum"] > 0) & (df["price_momentum"] > 0)
-        # RSI 매도: RSI 모멘텀 음수이고 가격 모멘텀 음수일 때
-        rsi_sell_filter = (df["rsi_momentum"] < 0) & (df["price_momentum"] < 0)
+        # 필터링 조건 완화
+        # RSI 매수: RSI 모멘텀 양수이거나 가격 모멘텀 양수일 때 (OR 조건으로 변경)
+        rsi_buy_filter = (df["rsi_momentum"] > 0) | (df["price_momentum"] > 0)
+        # RSI 매도: RSI 모멘텀 음수이거나 가격 모멘텀 음수일 때 (OR 조건으로 변경)
+        rsi_sell_filter = (df["rsi_momentum"] < 0) | (df["price_momentum"] < 0)
 
-        # 필터 적용
+        # 필터 적용 (조건 완화)
         df.loc[(df["signal"] == 1) & ~rsi_buy_filter, "signal"] = 0
         df.loc[(df["signal"] == -1) & ~rsi_sell_filter, "signal"] = 0
-        df.loc[~volume_filter, "signal"] = 0
+
+        # 볼륨 필터 적용
+        df.loc[~volume_strict_filter, "signal"] = 0
+
+        # 중복 신호 제거 (연속된 같은 방향 신호는 첫 번째만 유지)
+        df["signal_shift"] = df["signal"].shift(1)
+        df.loc[(df["signal"] == df["signal_shift"]) & (df["signal"] != 0), "signal"] = 0
 
         return df
 
@@ -1951,12 +2041,20 @@ class MeanReversionStrategy(BaseStrategy):
 # [장기] 연 1회 리밸런싱
 class FixedWeightRebalanceStrategy(BaseStrategy):
     """2-ETF 고정비중 연 1회 리밸런싱 전략"""
-    def __init__(self, params: StrategyParams, symbols: list, weights: list, rebalance_month: int = 1):
+
+    def __init__(
+        self,
+        params: StrategyParams,
+        symbols: list,
+        weights: list,
+        rebalance_month: int = 1,
+    ):
         super().__init__(params)
         self.symbols = symbols
         # numpy 배열일 경우 리스트로 변환
         try:
             import numpy as np
+
             if isinstance(weights, np.ndarray):
                 weights = weights.tolist()
         except ImportError:
@@ -1966,47 +2064,58 @@ class FixedWeightRebalanceStrategy(BaseStrategy):
         self.weights = weights
         self.rebalance_month = rebalance_month  # 1=1월, 7=7월 등
 
-    def generate_signals(self, data_dict: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
         """각 종목별로 고정 비중, 연 1회 리밸런싱 신호 생성"""
         signals = {}
         import pandas as pd
+
         # 인자 타입 체크: DataFrame이 들어오면 dict로 변환
         if isinstance(data_dict, pd.DataFrame):
             df = data_dict
             # 'datetime' 컬럼이 없으면 인덱스에서 복원 시도
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
                     df = df.copy()
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
-            data_dict = {'single_symbol': df}
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
+            data_dict = {"single_symbol": df}
             self.symbols = list(data_dict.keys())
         # 공통 날짜 추출
-        common_dates = set.intersection(*[set(df["datetime"]) for df in data_dict.values()])
+        common_dates = set.intersection(
+            *[set(df["datetime"]) for df in data_dict.values()]
+        )
         common_dates = sorted(list(common_dates))
         for idx, symbol in enumerate(self.symbols):
             df = data_dict[symbol].copy()
             # 'datetime' 컬럼이 없으면 인덱스에서 복원 시도
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
             df = df[df["datetime"].isin(common_dates)].sort_values("datetime")
             df["signal"] = 0
             # weights가 numpy array일 수 있으니 list로 변환
-            weight = self.weights[idx] if isinstance(self.weights, (list, tuple)) else float(self.weights)
+            weight = (
+                self.weights[idx]
+                if isinstance(self.weights, (list, tuple))
+                else float(self.weights)
+            )
             df["weight"] = weight
             # 연 1회 리밸런싱: 1월 첫 거래일에만 신호 1, 나머지는 0
             df["rebalance"] = df["datetime"].dt.month == self.rebalance_month
             if df["rebalance"].any():
                 first_rebalance_day = df[df["rebalance"]]["datetime"].dt.day.min()
-                df["rebalance"] = df["rebalance"] & (df["datetime"].dt.day == first_rebalance_day)
+                df["rebalance"] = df["rebalance"] & (
+                    df["datetime"].dt.day == first_rebalance_day
+                )
             df.loc[df["rebalance"], "signal"] = 1
             df.loc[df["rebalance"], "weight"] = weight
             signals[symbol] = df
@@ -2016,42 +2125,54 @@ class FixedWeightRebalanceStrategy(BaseStrategy):
 # [장기] 20일 주기 리밸런싱
 class ETFMomentumRotationStrategy(BaseStrategy):
     """ETF 모멘텀 로테이션 전략"""
-    def __init__(self, params: StrategyParams, top_n: int = 2, lookback_period: int =20, rebalance_period: int = 20):
+
+    def __init__(
+        self,
+        params: StrategyParams,
+        top_n: int = 2,
+        lookback_period: int = 20,
+        rebalance_period: int = 20,
+    ):
         super().__init__(params)
         self.top_n = top_n  # 상위 N개 선택
         self.lookback_period = lookback_period  # 모멘텀 계산 기간
         self.rebalance_period = rebalance_period  # 리밸런싱 주기
-        
-    def generate_signals(self, data_dict: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
         import pandas as pd
+
         # DataFrame이 들어오면 dict로 변환
         if isinstance(data_dict, pd.DataFrame):
             df = data_dict
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
                     df = df.copy()
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
-            data_dict = {'single_symbol': df}
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
+            data_dict = {"single_symbol": df}
             symbols = list(data_dict.keys())
         else:
             symbols = list(data_dict.keys())
         # 공통 날짜 추출
-        common_dates = set.intersection(*[set(df["datetime"]) for df in data_dict.values()])
+        common_dates = set.intersection(
+            *[set(df["datetime"]) for df in data_dict.values()]
+        )
         common_dates = sorted(list(common_dates))
         signals = {}
         for symbol in symbols:
             df = data_dict[symbol].copy()
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
             df = df[df["datetime"].isin(common_dates)].sort_values("datetime")
             df["momentum"] = df["close"].pct_change(self.lookback_period)
             df["signal"] = 0
@@ -2060,61 +2181,84 @@ class ETFMomentumRotationStrategy(BaseStrategy):
         for i in range(self.lookback_period, len(common_dates)):
             if i % self.rebalance_period == 0:
                 current_date = common_dates[i]
-                momentums = [(symbol, signals[symbol].iloc[i]["momentum"]) for symbol in symbols]
-                top_symbols = [symbol for symbol, _ in sorted(momentums, key=lambda x: x[1], reverse=True)[:self.top_n]]
+                momentums = [
+                    (symbol, signals[symbol].iloc[i]["momentum"]) for symbol in symbols
+                ]
+                top_symbols = [
+                    symbol
+                    for symbol, _ in sorted(
+                        momentums, key=lambda x: x[1], reverse=True
+                    )[: self.top_n]
+                ]
                 weight_per_symbol = 1.0 / len(top_symbols) if top_symbols else 0.0
                 for symbol in symbols:
                     if i < len(signals[symbol]):
                         if symbol in top_symbols:
-                            signals[symbol].iloc[i, signals[symbol].columns.get_loc("signal")] = 1.0
-                            signals[symbol].iloc[i, signals[symbol].columns.get_loc("weight")] = weight_per_symbol
+                            signals[symbol].iloc[
+                                i, signals[symbol].columns.get_loc("signal")
+                            ] = 1.0
+                            signals[symbol].iloc[
+                                i, signals[symbol].columns.get_loc("weight")
+                            ] = weight_per_symbol
                         else:
-                            signals[symbol].iloc[i, signals[symbol].columns.get_loc("signal")] = 0.0
-                            signals[symbol].iloc[i, signals[symbol].columns.get_loc("weight")] = 0.0
+                            signals[symbol].iloc[
+                                i, signals[symbol].columns.get_loc("signal")
+                            ] = 0.0
+                            signals[symbol].iloc[
+                                i, signals[symbol].columns.get_loc("weight")
+                            ] = 0.0
             else:
                 for symbol in symbols:
                     if i < len(signals[symbol]) and i > 0:
-                        prev_signal = signals[symbol].iloc[i-1]["signal"]
-                        prev_weight = signals[symbol].iloc[i-1]["weight"]
-                        signals[symbol].iloc[i, signals[symbol].columns.get_loc("signal")] = prev_signal
-                        signals[symbol].iloc[i, signals[symbol].columns.get_loc("weight")] = prev_weight
+                        prev_signal = signals[symbol].iloc[i - 1]["signal"]
+                        prev_weight = signals[symbol].iloc[i - 1]["weight"]
+                        signals[symbol].iloc[
+                            i, signals[symbol].columns.get_loc("signal")
+                        ] = prev_signal
+                        signals[symbol].iloc[
+                            i, signals[symbol].columns.get_loc("weight")
+                        ] = prev_weight
         return signals
 
 
 # [장기] 장기 추세 기반
 class TrendFollowingMA200Strategy(BaseStrategy):
     """200일 이동평균 돌파/이탈 스위칭 전략"""
+
     def __init__(self, params: StrategyParams, ma_period: int = 200):
         super().__init__(params)
         self.ma_period = ma_period
 
-    def generate_signals(self, data_dict: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
         import pandas as pd
+
         # DataFrame이 들어오면 dict로 변환
         if isinstance(data_dict, pd.DataFrame):
             df = data_dict
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
                     df = df.copy()
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
-            data_dict = {'single_symbol': df}
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
+            data_dict = {"single_symbol": df}
             symbols = list(data_dict.keys())
         else:
             symbols = list(data_dict.keys())
         signals = {}
         for symbol in symbols:
             df = data_dict[symbol].copy()
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
             df["ma"] = df["close"].rolling(self.ma_period).mean()
             df["signal"] = 0
             df.loc[df["close"] > df["ma"], "signal"] = 1
@@ -2127,11 +2271,19 @@ class TrendFollowingMA200Strategy(BaseStrategy):
 # [장기] 20일 주기 리밸런싱
 class ReturnStackingStrategy(BaseStrategy):
     """Return Stacking 전략"""
-    def __init__(self, params: StrategyParams, symbols: list, weights: list, rebalance_period: int = 20):
+
+    def __init__(
+        self,
+        params: StrategyParams,
+        symbols: list,
+        weights: list,
+        rebalance_period: int = 20,
+    ):
         super().__init__(params)
         self.symbols = symbols
         try:
             import numpy as np
+
             if isinstance(weights, np.ndarray):
                 weights = weights.tolist()
         except ImportError:
@@ -2141,34 +2293,39 @@ class ReturnStackingStrategy(BaseStrategy):
         self.weights = weights
         self.rebalance_period = rebalance_period
 
-    def generate_signals(self, data_dict: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
         import pandas as pd
+
         # DataFrame이 들어오면 dict로 변환
         if isinstance(data_dict, pd.DataFrame):
             df = data_dict
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
                     df = df.copy()
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
-            data_dict = {'single_symbol': df}
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
+            data_dict = {"single_symbol": df}
             self.symbols = list(data_dict.keys())
         # 공통 날짜 추출
-        common_dates = set.intersection(*[set(df["datetime"]) for df in data_dict.values()])
+        common_dates = set.intersection(
+            *[set(df["datetime"]) for df in data_dict.values()]
+        )
         common_dates = sorted(list(common_dates))
         signals = {}
         for idx, symbol in enumerate(self.symbols):
             df = data_dict[symbol].copy()
-            if 'datetime' not in df.columns:
+            if "datetime" not in df.columns:
                 if isinstance(df.index, pd.DatetimeIndex):
-                    df['datetime'] = df.index
+                    df["datetime"] = df.index
                 else:
                     df = df.reset_index()
-                    if 'datetime' not in df.columns:
-                        df['datetime'] = pd.to_datetime('today')
+                    if "datetime" not in df.columns:
+                        df["datetime"] = pd.to_datetime("today")
             df = df[df["datetime"].isin(common_dates)].sort_values("datetime")
             df["signal"] = 1
             df["weight"] = self.weights[idx]
@@ -2305,7 +2462,10 @@ def main():
     manager.add_strategy("rsi_bollinger", RSIBollingerScalpingStrategy(params))
     manager.add_strategy("mean_reversion", MeanReversionStrategy(params))
     manager.add_strategy("trend_following_ma200", TrendFollowingMA200Strategy(params))
-    manager.add_strategy("return_stacking", ReturnStackingStrategy(params, ["NVDL", "TSLL", "CONL"], [0.33, 0.33, 0.34]))
+    manager.add_strategy(
+        "return_stacking",
+        ReturnStackingStrategy(params, ["NVDL", "TSLL", "CONL"], [0.33, 0.33, 0.34]),
+    )
 
     print("퀀트 전략 클래스가 성공적으로 초기화되었습니다.")
     print("사용 가능한 전략:")
@@ -2334,6 +2494,412 @@ def main():
     print("21. mean_reversion - Bollinger Band 기반 Mean Reversion(평균회귀) 전략")
     print("22. trend_following_ma200 - 200일 이동평균 돌파/이탈 스위칭 전략")
     print("23. return_stacking - Return Stacking 전략")
+
+
+# ============================================================================
+# 새로운 스윙 전략들 (New Swing Strategies)
+# ============================================================================
+
+
+# [스윙] 1~3주 보유 - 돌파 전략
+class SwingBreakoutStrategy(BaseStrategy):
+    """스윙 돌파 전략 - 저항선/지지선 돌파 시 매매"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "single_asset"
+        # 돌파 전략 파라미터
+        self.resistance_period = getattr(params, "resistance_period", 20)
+        self.support_period = getattr(params, "support_period", 20)
+        self.breakout_threshold = getattr(params, "breakout_threshold", 0.02)  # 2% 돌파
+        self.volume_confirmation = getattr(params, "volume_confirmation", True)
+        self.volume_multiplier = getattr(params, "volume_multiplier", 1.5)
+        self.confirmation_candles = getattr(params, "confirmation_candles", 2)
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """돌파 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+
+        # 저항선/지지선 계산
+        df["resistance"] = df["high"].rolling(window=self.resistance_period).max()
+        df["support"] = df["low"].rolling(window=self.support_period).min()
+
+        # 상향 돌파 신호 (저항선 돌파) - 조건 완화
+        resistance_breakout = df["close"] > df["resistance"].shift(1)
+
+        # 하향 돌파 신호 (지지선 돌파) - 조건 완화
+        support_breakdown = df["close"] < df["support"].shift(1)
+
+        # 볼륨 확인 - 조건 완화
+        if self.volume_confirmation and "volume" in df.columns:
+            df["volume_ma"] = df["volume"].rolling(window=20).mean()
+            volume_confirmed = df["volume"] > df["volume_ma"] * 0.5  # 0.5배로 완화
+        else:
+            volume_confirmed = pd.Series([True] * len(df), index=df.index)
+
+        # 돌파 확인 (연속 캔들 확인)
+        confirmed_breakout = resistance_breakout & volume_confirmed
+        confirmed_breakdown = support_breakdown & volume_confirmed
+
+        # 신호 생성
+        df.loc[confirmed_breakout, "signal"] = 1  # 상향 돌파 시 매수
+        df.loc[confirmed_breakdown, "signal"] = -1  # 하향 돌파 시 매도
+
+        return df
+
+
+# [스윙] 1~3주 보유 - 조정 후 진입 전략
+class SwingPullbackEntryStrategy(BaseStrategy):
+    """스윙 조정 후 진입 전략 - 추세 중 일시 하락 시 매수"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "single_asset"
+        # 조정 후 진입 파라미터
+        self.trend_period = getattr(params, "trend_period", 50)
+        self.pullback_period = getattr(params, "pullback_period", 10)
+        self.pullback_threshold = getattr(params, "pullback_threshold", 0.05)  # 5% 조정
+        self.rsi_oversold = getattr(params, "rsi_oversold", 35)
+        self.rsi_period = getattr(params, "rsi_period", 14)
+        self.min_trend_strength = getattr(params, "min_trend_strength", 0.02)
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """조정 후 진입 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+
+        # 추세 계산 (EMA 기반)
+        df["ema_trend"] = df["close"].ewm(span=self.trend_period).mean()
+        df["trend_slope"] = df["ema_trend"].diff(self.trend_period // 2)
+
+        # 상승 추세 확인
+        uptrend = df["trend_slope"] > self.min_trend_strength
+
+        # 조정 확인 (단기 하락)
+        df["short_ma"] = df["close"].rolling(window=self.pullback_period).mean()
+        pullback = df["close"] < df["short_ma"] * (1 - self.pullback_threshold)
+
+        # RSI 과매도 확인
+        if "rsi" not in df.columns:
+            df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], self.rsi_period)
+        oversold = df["rsi"] < self.rsi_oversold
+
+        # 조정 후 진입 신호 (상승 추세 + 조정 + 과매도)
+        entry_signal = uptrend & pullback & oversold
+
+        # 신호 생성
+        df.loc[entry_signal, "signal"] = 1
+
+        return df
+
+
+# [스윙] 1~3주 보유 - 캔들 패턴 기반 전략
+class SwingCandlePatternStrategy(BaseStrategy):
+    """스윙 캔들 패턴 기반 전략 - 장악형, 십자형 등 활용"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "single_asset"
+        # 캔들 패턴 파라미터
+        self.body_threshold = getattr(params, "body_threshold", 0.6)  # 몸통 비율
+        self.shadow_threshold = getattr(params, "shadow_threshold", 0.3)  # 그림자 비율
+        self.confirmation_period = getattr(params, "confirmation_period", 3)
+        self.volume_confirmation = getattr(params, "volume_confirmation", True)
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """캔들 패턴 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+
+        # 캔들 구성요소 계산
+        df["body"] = abs(df["close"] - df["open"])
+        df["upper_shadow"] = df["high"] - df[["open", "close"]].max(axis=1)
+        df["lower_shadow"] = df[["open", "close"]].min(axis=1) - df["low"]
+        df["total_range"] = df["high"] - df["low"]
+
+        # 몸통과 그림자 비율
+        df["body_ratio"] = df["body"] / df["total_range"]
+        df["upper_shadow_ratio"] = df["upper_shadow"] / df["total_range"]
+        df["lower_shadow_ratio"] = df["lower_shadow"] / df["total_range"]
+
+        # 캔들 패턴 감지
+        # 1. 장악형 (Engulfing)
+        bullish_engulfing = (
+            (df["body_ratio"].shift(1) < self.body_threshold)  # 전일 작은 몸통
+            & (df["body_ratio"] > self.body_threshold)  # 당일 큰 몸통
+            & (df["close"] > df["open"])  # 당일 양봉
+            & (df["close"] > df["high"].shift(1))  # 전일 고가 돌파
+            & (df["open"] < df["low"].shift(1))  # 전일 저가 하향 돌파
+        )
+
+        bearish_engulfing = (
+            (df["body_ratio"].shift(1) < self.body_threshold)
+            & (df["body_ratio"] > self.body_threshold)
+            & (df["close"] < df["open"])  # 당일 음봉
+            & (df["close"] < df["low"].shift(1))
+            & (df["open"] > df["high"].shift(1))
+        )
+
+        # 2. 십자형 (Doji)
+        doji = df["body_ratio"] < 0.1  # 몸통이 매우 작음
+
+        # 3. 망치형 (Hammer) / 교수형 (Hanging Man)
+        hammer = (
+            (df["lower_shadow_ratio"] > self.shadow_threshold)
+            & (df["upper_shadow_ratio"] < 0.1)
+            & (df["body_ratio"] < 0.3)
+        )
+
+        # 볼륨 확인
+        if self.volume_confirmation and "volume" in df.columns:
+            df["volume_ma"] = df["volume"].rolling(window=20).mean()
+            volume_confirmed = df["volume"] > df["volume_ma"]
+        else:
+            volume_confirmed = pd.Series([True] * len(df), index=df.index)
+
+        # 신호 생성
+        df.loc[bullish_engulfing & volume_confirmed, "signal"] = 1  # 상승 신호
+        df.loc[bearish_engulfing & volume_confirmed, "signal"] = -1  # 하락 신호
+
+        # 십자형은 추세 방향에 따라 신호 생성
+        uptrend = df["close"] > df["close"].rolling(window=20).mean()
+        df.loc[doji & uptrend & volume_confirmed, "signal"] = 1
+        df.loc[doji & ~uptrend & volume_confirmed, "signal"] = -1
+
+        return df
+
+
+# [스윙] 1~3주 보유 - 볼린저 밴드 스윙 전략
+class SwingBollingerBandStrategy(BaseStrategy):
+    """스윙 볼린저 밴드 전략 - 밴드 하단 터치 시 매수, 상단 터치 시 매도"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "single_asset"
+        # 볼린저 밴드 파라미터
+        self.bb_period = getattr(params, "bb_period", 20)
+        self.bb_std = getattr(params, "bb_std", 2.0)
+        self.rsi_period = getattr(params, "rsi_period", 14)
+        self.rsi_oversold = getattr(params, "rsi_oversold", 30)
+        self.rsi_overbought = getattr(params, "rsi_overbought", 70)
+        self.confirmation_candles = getattr(params, "confirmation_candles", 2)
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """볼린저 밴드 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+
+        # 볼린저 밴드 계산
+        df["bb_middle"] = df["close"].rolling(window=self.bb_period).mean()
+        bb_std = df["close"].rolling(window=self.bb_period).std()
+        df["bb_upper"] = df["bb_middle"] + (self.bb_std * bb_std)
+        df["bb_lower"] = df["bb_middle"] - (self.bb_std * bb_std)
+
+        # RSI 계산
+        if "rsi" not in df.columns:
+            df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], self.rsi_period)
+        oversold = df["rsi"] < self.rsi_oversold
+        overbought = df["rsi"] > self.rsi_overbought
+
+        # 밴드 하단 터치 + RSI 과매도 = 매수 신호
+        lower_band_touch = df["close"] <= df["bb_lower"]
+        buy_signal = lower_band_touch & oversold
+
+        # 밴드 상단 터치 + RSI 과매수 = 매도 신호
+        upper_band_touch = df["close"] >= df["bb_upper"]
+        sell_signal = upper_band_touch & overbought
+
+        # 신호 생성
+        df.loc[buy_signal, "signal"] = 1
+        df.loc[sell_signal, "signal"] = -1
+
+        return df
+
+
+# [스윙] 1~3주 보유 - MACD 스윙 전략
+class SwingMACDStrategy(BaseStrategy):
+    """스윙 MACD 전략 - MACD 크로스오버 + 히스토그램 변화"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "single_asset"
+        # MACD 파라미터
+        self.macd_fast = getattr(params, "macd_fast", 12)
+        self.macd_slow = getattr(params, "macd_slow", 26)
+        self.macd_signal = getattr(params, "macd_signal", 9)
+        self.histogram_threshold = getattr(params, "histogram_threshold", 0.001)
+        self.confirmation_period = getattr(params, "confirmation_period", 3)
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """MACD 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+
+        # MACD 계산
+        ema_fast = df["close"].ewm(span=self.macd_fast).mean()
+        ema_slow = df["close"].ewm(span=self.macd_slow).mean()
+        df["macd"] = ema_fast - ema_slow
+        df["macd_signal"] = df["macd"].ewm(span=self.macd_signal).mean()
+        df["macd_histogram"] = df["macd"] - df["macd_signal"]
+
+        # MACD 크로스오버
+        macd_cross_up = (df["macd"] > df["macd_signal"]) & (
+            df["macd"].shift(1) <= df["macd_signal"].shift(1)
+        )
+        macd_cross_down = (df["macd"] < df["macd_signal"]) & (
+            df["macd"].shift(1) >= df["macd_signal"].shift(1)
+        )
+
+        # 히스토그램 변화 확인
+        histogram_increasing = df["macd_histogram"] > df["macd_histogram"].shift(1)
+        histogram_decreasing = df["macd_histogram"] < df["macd_histogram"].shift(1)
+
+        # 신호 생성
+        df.loc[macd_cross_up & histogram_increasing, "signal"] = 1  # 상승 신호
+        df.loc[macd_cross_down & histogram_decreasing, "signal"] = -1  # 하락 신호
+
+        return df
+
+
+# ============================================================================
+# 포트폴리오 전략들 (Portfolio Strategies)
+# ============================================================================
+
+
+class PortfolioStrategy(BaseStrategy):
+    """포트폴리오 전략 기본 클래스"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "portfolio"  # 포트폴리오 전략으로 설정
+
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
+        """포트폴리오 신호 생성 (하위 클래스에서 구현)"""
+        pass
+
+
+# [포트폴리오] 동적 자산배분 전략
+class DynamicAssetAllocationStrategy(PortfolioStrategy):
+    """동적 자산배분 전략 - 시장 상황에 따른 자산 비중 조정"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "portfolio"
+        # 동적 배분 파라미터
+        self.volatility_lookback = getattr(params, "volatility_lookback", 60)
+        self.momentum_lookback = getattr(params, "momentum_lookback", 20)
+        self.risk_aversion = getattr(params, "risk_aversion", 0.5)
+        self.max_weight = getattr(params, "max_weight", 0.4)
+        self.min_weight = getattr(params, "min_weight", 0.05)
+
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
+        """동적 자산배분 신호 생성"""
+        signals = {}
+
+        # 모든 종목의 공통 날짜 추출
+        common_dates = set.intersection(
+            *[set(df["datetime"]) for df in data_dict.values()]
+        )
+        common_dates = sorted(list(common_dates))
+
+        # 각 종목별 신호 생성
+        for symbol, df in data_dict.items():
+            df_signal = df[df["datetime"].isin(common_dates)].copy()
+            df_signal["signal"] = 1  # 기본적으로 보유
+            df_signal["weight"] = 1.0 / len(data_dict)  # 동일가중
+
+            # 변동성 기반 가중치 조정
+            if len(df_signal) > self.volatility_lookback:
+                volatility = (
+                    df_signal["close"]
+                    .pct_change()
+                    .rolling(self.volatility_lookback)
+                    .std()
+                )
+                momentum = df_signal["close"].pct_change(self.momentum_lookback)
+
+                # 변동성이 낮고 모멘텀이 양수인 종목에 더 높은 가중치
+                risk_score = volatility * self.risk_aversion - momentum * (
+                    1 - self.risk_aversion
+                )
+                weight_adjustment = 1 / (1 + risk_score)
+
+                # 가중치 범위 제한
+                weight_adjustment = np.clip(
+                    weight_adjustment, self.min_weight, self.max_weight
+                )
+                df_signal["weight"] = weight_adjustment
+
+            signals[symbol] = df_signal
+
+        return signals
+
+
+# [포트폴리오] 섹터 로테이션 전략
+class SectorRotationStrategy(PortfolioStrategy):
+    """섹터 로테이션 전략 - 섹터별 모멘텀 기반 로테이션"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "portfolio"
+        # 섹터 로테이션 파라미터
+        self.momentum_period = getattr(params, "momentum_period", 60)
+        self.top_sectors = getattr(params, "top_sectors", 3)
+        self.rebalance_frequency = getattr(params, "rebalance_frequency", 20)
+        self.momentum_threshold = getattr(params, "momentum_threshold", 0.02)
+
+    def generate_signals(
+        self, data_dict: Dict[str, pd.DataFrame]
+    ) -> Dict[str, pd.DataFrame]:
+        """섹터 로테이션 신호 생성"""
+        signals = {}
+
+        # 모든 종목의 공통 날짜 추출
+        common_dates = set.intersection(
+            *[set(df["datetime"]) for df in data_dict.values()]
+        )
+        common_dates = sorted(list(common_dates))
+
+        # 각 종목별 모멘텀 계산
+        momentum_scores = {}
+        for symbol, df in data_dict.items():
+            df_temp = df[df["datetime"].isin(common_dates)].copy()
+            if len(df_temp) > self.momentum_period:
+                momentum = (
+                    df_temp["close"].iloc[-1]
+                    / df_temp["close"].iloc[-self.momentum_period]
+                ) - 1
+                momentum_scores[symbol] = momentum
+
+        # 모멘텀 기준 상위 종목 선택
+        sorted_symbols = sorted(
+            momentum_scores.items(), key=lambda x: x[1], reverse=True
+        )
+        top_symbols = [
+            symbol
+            for symbol, momentum in sorted_symbols[: self.top_sectors]
+            if momentum > self.momentum_threshold
+        ]
+
+        # 신호 생성
+        for symbol, df in data_dict.items():
+            df_signal = df[df["datetime"].isin(common_dates)].copy()
+
+            if symbol in top_symbols:
+                df_signal["signal"] = 1
+                df_signal["weight"] = 1.0 / len(top_symbols)
+            else:
+                df_signal["signal"] = 0
+                df_signal["weight"] = 0.0
+
+            signals[symbol] = df_signal
+
+        return signals
 
 
 if __name__ == "__main__":
