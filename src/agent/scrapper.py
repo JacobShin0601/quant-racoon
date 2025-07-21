@@ -24,10 +24,12 @@ class DataScrapper:
         config_path: str = "config/config_default.json",
         time_horizon: str = "swing",
         uuid: Optional[str] = None,
+        end_date: Optional[str] = None,
     ):
         self.config_path = config_path
         self.time_horizon = time_horizon
         self.uuid = uuid
+        self.end_date = end_date
         self.config = load_config(config_path)
         self.logger = Logger()
 
@@ -81,11 +83,15 @@ class DataScrapper:
                         print(f"    📋 {info['name']} ({info['sector']})")
 
                         # 기본 데이터 수집
+                        # end_date 우선순위: 인스턴스 변수 > 설정 파일 > None (오늘 날짜)
+                        effective_end_date = self.end_date or data_config.get(
+                            "end_date"
+                        )
                         df = collector.get_candle_data(
                             symbol=symbol,
                             interval=common_settings.get("interval", "60m"),
                             start_date=common_settings.get("start_date"),
-                            end_date=common_settings.get("end_date"),
+                            end_date=effective_end_date,
                             days_back=common_settings.get("lookback_days", 60),
                         )
 
@@ -135,11 +141,13 @@ class DataScrapper:
                         print(f"    📋 {info['name']} ({info['sector']})")
 
                         # 개별 설정으로 데이터 수집
+                        # end_date 우선순위: 인스턴스 변수 > 개별 설정 > None (오늘 날짜)
+                        effective_end_date = self.end_date or task.get("end_date")
                         df = collector.get_candle_data(
                             symbol=symbol,
                             interval=task.get("interval", "60m"),
                             start_date=task.get("start_date"),
-                            end_date=task.get("end_date"),
+                            end_date=effective_end_date,
                             days_back=task.get("days_back", 60),
                         )
 
@@ -194,6 +202,9 @@ def main():
     )
     parser.add_argument("--log-dir", help="로그 디렉토리")
     parser.add_argument("--uuid", help="실행 UUID")
+    parser.add_argument(
+        "--end-date", help="데이터 수집 종료 날짜 (YYYY-MM-DD 형식, 기본값: 오늘 날짜)"
+    )
     args = parser.parse_args()
 
     # config.json 경로
@@ -211,6 +222,12 @@ def main():
     # UUID 설정
     if args.uuid:
         print(f"🆔 스크래퍼 UUID 설정: {args.uuid}")
+
+    # 종료 날짜 설정
+    if args.end_date:
+        print(f"📅 데이터 수집 종료 날짜 설정: {args.end_date}")
+    else:
+        print(f"📅 데이터 수집 종료 날짜: 오늘 날짜 (기본값)")
 
     # 공통 설정 가져오기
     data_config = config.get("data", {})
@@ -252,11 +269,13 @@ def main():
             try:
                 # 1단계: 기본 데이터 수집 (재무지표 포함)
                 logger.log_info(f"{symbol} 기본 데이터 수집 중...")
+                # end_date 우선순위: 명령행 인자 > 설정 파일 > None (오늘 날짜)
+                effective_end_date = args.end_date or data_config.get("end_date")
                 df = collector.get_candle_data(
                     symbol=symbol,
                     interval=common_settings.get("interval", "15m"),
                     start_date=common_settings.get("start_date"),
-                    end_date=common_settings.get("end_date"),
+                    end_date=effective_end_date,
                     days_back=common_settings.get(
                         "lookback_days", common_settings.get("days_back", 30)
                     ),
@@ -348,11 +367,13 @@ def main():
             try:
                 # 1단계: 기본 데이터 수집 (재무지표 포함)
                 logger.log_info(f"{symbol} 기본 데이터 수집 중...")
+                # end_date 우선순위: 명령행 인자 > 개별 설정 > None (오늘 날짜)
+                effective_end_date = args.end_date or task.get("end_date")
                 df = collector.get_candle_data(
                     symbol=symbol,
                     interval=task.get("interval", "15m"),
                     start_date=task.get("start_date"),
-                    end_date=task.get("end_date"),
+                    end_date=effective_end_date,
                     days_back=task.get("days_back", 30),
                 )
                 logger.log_success(

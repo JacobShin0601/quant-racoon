@@ -6,7 +6,8 @@
     "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
     "interval": "1d",
     "lookback_days": 365,
-    "train_ratio": 0.6
+    "train_ratio": 0.6,
+    "end_date": null
   },
 
   "strategies": [

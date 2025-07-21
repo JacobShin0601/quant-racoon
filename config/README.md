@@ -66,6 +66,9 @@ python -m src.agent.orchestrator --config config/config_swing.json
 
 # 연구용 설정 사용
 python -m src.agent.orchestrator --config config/config_research.json
+
+# 종료날짜 지정하여 실행
+python -m src.agent.orchestrator --config config/config_swing.json --end-date 2024-12-31
 ```
 
 ### 연구용 설정 사용
@@ -94,7 +97,8 @@ python -m src.agent.researcher
   "data": {
     "symbols": ["종목 목록"],
     "interval": "데이터 간격",
-    "lookback_days": 기간
+    "lookback_days": 기간,
+    "end_date": "종료날짜 (YYYY-MM-DD 형식, null이면 오늘 날짜)"
   },
   "evaluator": {
     "portfolio_mode": true/false
@@ -132,6 +136,7 @@ python -m src.agent.researcher
 2. **경로 설정**: 상대 경로 사용 권장
 3. **전략명 일치**: strategies 배열의 전략명은 실제 구현된 전략과 일치해야 함
 4. **데이터 기간**: lookback_days는 데이터 수집 가능 범위 내에서 설정
+5. **종료날짜 설정**: end_date는 YYYY-MM-DD 형식으로 지정 (null이면 오늘 날짜 기준)
 
 ## 🔄 Flow 설정
 

@@ -19,7 +19,8 @@
     "data_source": "yfinance",
     "auto_adjust": true,
     "prepost": false,
-    "train_ratio": 0.8
+    "train_ratio": 0.8,
+    "end_date": null
   },
   "evaluator": {
     "portfolio_mode": true
