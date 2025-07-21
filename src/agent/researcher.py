@@ -276,13 +276,11 @@ class IndividualStrategyResearcher:
                 signals = strategy.generate_signals(symbol_data)
 
                 if signals is None or signals.empty:
-                    logger.error(f"시그널 생성 실패: {strategy_name} - {symbol}")
                     return -999999.0
 
-                # 디버그: 시그널 통계 확인 (간단하게)
+                # 시그널이 모두 0인 경우 체크
                 signal_counts = signals["signal"].value_counts()
                 if len(signal_counts) == 1 and 0 in signal_counts:
-                    logger.info(f"모든 시그널이 0입니다: {strategy_name} - {symbol}")
                     return -999999.0
 
                 # 거래 시뮬레이션
@@ -292,7 +290,6 @@ class IndividualStrategyResearcher:
                 )
 
                 if not simulation_result:
-                    logger.error(f"거래 시뮬레이션 실패: {strategy_name} - {symbol}")
                     return -999999.0
 
                 # TradingSimulator 결과에서 performance metrics 추출
@@ -301,7 +298,6 @@ class IndividualStrategyResearcher:
 
                 # 거래가 없는 경우 체크
                 if not trades:
-                    logger.info(f"거래가 없음: {strategy_name} - {symbol}")
                     return -999999.0
 
                 # 추가 정보 추가
@@ -309,10 +305,6 @@ class IndividualStrategyResearcher:
 
                 # 복합 점수 계산
                 composite_score = self._calculate_composite_score(strategy_result)
-
-                # 디버깅: 점수가 -999999인 경우만 로그 출력
-                if composite_score == -999999.0:
-                    logger.debug(f"복합 점수가 -999999: {strategy_name} - {symbol}")
 
                 return composite_score
 
@@ -523,7 +515,6 @@ class IndividualStrategyResearcher:
                 optimization_method = self.source_config.get("researcher", {}).get(
                     "optimization_method", "bayesian_optimization"
                 )
-            logger.info(f"🔧 최적화 방법: {optimization_method}")
 
             # 데이터 로드
             data_dict = load_and_preprocess_data(self.data_dir, [symbol])
@@ -542,9 +533,6 @@ class IndividualStrategyResearcher:
                 .get(strategy_name, {})
                 .get("param_ranges", {})
             )
-
-            logger.info(f"🔍 {strategy_name} 파라미터 범위 로드: {param_ranges}")
-            logger.info(f"🔍 파라미터 개수: {len(param_ranges)}")
 
             # 최적화 설정 (source_config에서 로드)
             settings = self.source_config.get("researcher", {}).get(
@@ -587,8 +575,7 @@ class IndividualStrategyResearcher:
             )
 
             logger.info(
-                f"✅ {symbol} - {strategy_name} 최적화 완료 "
-                f"(점수: {best_result['score']:.2f}, 시간: {execution_time:.1f}초)"
+                f"✅ {symbol} - {strategy_name} 완료 (점수: {best_result['score']:.2f}, 시간: {execution_time:.1f}초)"
             )
 
             return result
@@ -638,28 +625,18 @@ class IndividualStrategyResearcher:
                     top_results.sort(key=lambda x: x["score"], reverse=True)
                     top_results = top_results[:10]  # 상위 10개만 유지
 
-                # 새로운 최고 점수 발견 시 로그 출력
+                # 새로운 최고 점수 발견 시에만 로그 출력
                 if score > best_score and score > -999999.0:
                     best_score = score
                     best_params = params
                     progress = (i + 1) / len(all_combinations) * 100
                     logger.info(
-                        f"🎯 조합 {i+1}/{len(all_combinations)}: 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
-                    )
-                    logger.info(f"   최적 파라미터: {best_params}")
-
-                # 진행률 로그를 10% 단위로만 출력
-                if (i + 1) % max(1, len(all_combinations) // 10) == 0:
-                    progress = (i + 1) / len(all_combinations) * 100
-                    logger.info(
-                        f"📊 진행률: {progress:.0f}% ({i+1}/{len(all_combinations)})"
+                        f"🎯 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
                     )
 
             # 최적화 결과 요약
-            logger.info(f"✅ 그리드 서치 최적화 완료: {len(all_combinations)} 조합")
-            logger.info(f"🏆 최종 최고 점수: {best_score:.2f}")
             if best_score > -999999.0:
-                logger.info(f"🎯 최적 파라미터: {best_params}")
+                logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
             else:
                 logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
 
@@ -680,10 +657,11 @@ class IndividualStrategyResearcher:
         """Optuna를 사용한 베이지안 최적화"""
         try:
             import optuna
+            import logging
 
-            # 파라미터 범위는 한 번만 출력 (디버그용)
-            if len(param_ranges) <= 5:  # 파라미터가 적을 때만 출력
-                logger.info(f"🔍 베이지안 최적화 파라미터 개수: {len(param_ranges)}")
+            # Optuna 로그 레벨을 WARNING으로 설정하여 불필요한 로그 억제
+            optuna_logger = logging.getLogger("optuna")
+            optuna_logger.setLevel(logging.WARNING)
 
             best_score_so_far = -999999.0
             best_params_so_far = {}
@@ -711,28 +689,18 @@ class IndividualStrategyResearcher:
                 # 평가 함수 실행
                 score = evaluation_function(params)
 
-                # 최고 점수 업데이트 및 로그 출력
+                # 최고 점수 업데이트 시에만 로그 출력
                 if score > best_score_so_far and score > -999999.0:
                     best_score_so_far = score
                     best_params_so_far = params.copy()
 
-                    # 현재 trial 번호와 진행률 계산
                     current_trial = trial.number + 1
-                    total_trials = (
-                        trial.study.n_trials
-                        if hasattr(trial.study, "n_trials")
-                        else "unknown"
-                    )
-                    progress = (
-                        (current_trial / trial.study.n_trials * 100)
-                        if hasattr(trial.study, "n_trials")
-                        else 0
-                    )
+                    # n_trials는 총 trial 수이므로 올바른 진행률 계산
+                    progress = (current_trial / n_trials * 100)
 
                     logger.info(
                         f"🎯 Trial {current_trial}: 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
                     )
-                    logger.info(f"   최적 파라미터: {best_params_so_far}")
 
                 return score
 
@@ -753,10 +721,8 @@ class IndividualStrategyResearcher:
             best_score = study.best_value
 
             # 최적화 결과 요약
-            logger.info(f"✅ 베이지안 최적화 완료: {n_trials} trials")
-            logger.info(f"🏆 최종 최고 점수: {best_score:.2f}")
             if best_score > -999999.0:
-                logger.info(f"🎯 최적 파라미터: {best_params}")
+                logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
             else:
                 logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
 
@@ -855,7 +821,7 @@ class IndividualStrategyResearcher:
                 ]
                 fitness_scores.sort(reverse=True)
 
-                # 최고 개체 업데이트 및 로그 출력
+                # 최고 개체 업데이트 시에만 로그 출력
                 current_best_score = fitness_scores[0][0]
                 if current_best_score > best_score and current_best_score > -999999.0:
                     best_score = current_best_score
@@ -865,7 +831,6 @@ class IndividualStrategyResearcher:
                     logger.info(
                         f"🎯 세대 {generation+1}/{generations}: 새로운 최고 점수 {best_score:.2f} (진행률: {progress:.1f}%)"
                     )
-                    logger.info(f"   최적 파라미터: {best_individual}")
 
                 # 새로운 개체군 생성
                 new_population = fitness_scores[: population_size // 2]  # 상위 50% 유지
@@ -885,18 +850,9 @@ class IndividualStrategyResearcher:
                     individual for _, individual in new_population[:population_size]
                 ]
 
-                # 5세대마다 진행상황 출력
-                if generation % 5 == 0:
-                    progress = (generation + 1) / generations * 100
-                    logger.info(
-                        f"📊 세대 {generation+1}/{generations}: 현재 최고 점수 = {best_score:.2f} (진행률: {progress:.1f}%)"
-                    )
-
             # 최적화 결과 요약
-            logger.info(f"✅ 유전 알고리즘 최적화 완료: {generations}세대")
-            logger.info(f"🏆 최종 최고 점수: {best_score:.2f}")
             if best_score > -999999.0:
-                logger.info(f"🎯 최적 파라미터: {best_individual}")
+                logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
             else:
                 logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
 
@@ -927,15 +883,13 @@ class IndividualStrategyResearcher:
         if not symbols:
             symbols = self._load_source_config_symbols()
 
-        logger.info(f"📊 대상 전략: {len(strategies)}개")
-        logger.info(f"📈 대상 심볼: {len(symbols)}개")
+        logger.info(f"📊 대상: {len(strategies)}개 전략, {len(symbols)}개 심볼")
 
         # 최적화 방법 설정 (config에서 로드)
         if optimization_method is None:
             optimization_method = self.source_config.get("researcher", {}).get(
                 "optimization_method", "bayesian_optimization"
             )
-        logger.info(f"🔧 최적화 방법: {optimization_method}")
 
         # 데이터 로드 및 Train/Test 분할
         data_dict = load_and_preprocess_data(self.data_dir, symbols)
@@ -950,11 +904,6 @@ class IndividualStrategyResearcher:
                 data_dict, train_ratio
             )
             data_dict = train_data_dict  # train 데이터만 사용
-            logger.info(
-                f"Train/Test 분할 완료: Train {len(train_data_dict)}개 종목, Test {len(test_data_dict)}개 종목"
-            )
-
-        logger.info(f"데이터 로드 완료: {list(data_dict.keys())}")
 
         results = {}
         total_combinations = len(strategies) * len(symbols)
@@ -963,9 +912,9 @@ class IndividualStrategyResearcher:
         for strategy_name in strategies:
             for symbol in symbols:
                 current_combination += 1
+                overall_progress = (current_combination / total_combinations) * 100
                 logger.info(
-                    f"🔬 진행률: {current_combination}/{total_combinations} "
-                    f"({strategy_name} - {symbol})"
+                    f"🔬 [{overall_progress:.1f}%] {current_combination}/{total_combinations}: {strategy_name} - {symbol}"
                 )
 
                 result = self.optimize_single_strategy_for_symbol(
@@ -975,7 +924,6 @@ class IndividualStrategyResearcher:
                 if result:
                     key = f"{strategy_name}_{symbol}"
                     results[key] = result
-                    logger.info(f"✅ {key}: 점수 {result.best_score:.2f}")
                 else:
                     logger.warning(f"❌ {strategy_name} - {symbol}: 최적화 실패")
 

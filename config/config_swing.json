@@ -1,12 +1,12 @@
 {
   "time_horizon": "swing",
-  "description": "스윙 전략 설정 - 2단계 평가 구조",
+  "description": "스윙 전략 최적화 및 평가",
   
   "data": {
-    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT"],
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
     "interval": "1d",
     "lookback_days": 365,
-    "train_ratio": 0.7
+    "train_ratio": 0.6
   },
 
   "strategies": [
@@ -65,36 +65,37 @@
     },
     "evaluation_metrics": {
       "weights": {
-        "sharpe_ratio": 0.35,
-        "sortino_ratio": 0.30,
+        "total_return": 0.20,
+        "sharpe_ratio": 0.20,
+        "sortino_ratio": 0.20,
         "calmar_ratio": 0.15,
-        "profit_factor": 0.20,
-        "win_rate": 0.0
+        "profit_factor": 0.15,
+        "win_rate": 0.10
       }
     },
     "risk_penalties": {
-      "max_drawdown_threshold": 0.20,
+      "max_drawdown_threshold": 0.25,
       "max_drawdown_penalty": 0.5,
       "volatility_threshold": 0.30,
       "volatility_penalty": 0.3
     },
     "performance_thresholds": {
-      "min_return_threshold": 0.0,
-      "min_sharpe_ratio": 0.1,
-      "min_profit_factor": 0.0,
-      "min_win_rate": 0.0,
+      "min_return_threshold": -0.20,
+      "min_sharpe_ratio": -0.5,
+      "min_profit_factor": 0.5,
+      "min_win_rate": 0.3,
       "min_trades": 1
     }
   },
 
   "portfolio": {
-    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT"],
-    "optimization_method": "sharpe_maximization",
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
+    "optimization_method": "risk_parity",
     "fallback_method": "equal_weight",
-    "rebalance_period": 4,
+    "rebalance_period": 30,
     "risk_free_rate": 0.02,
-    "min_weight": 0.0,
-    "max_weight": 1.0,
+    "min_weight": 0.01,
+    "max_weight": 0.25,
     "cash_weight": 0.05,
     "leverage": 1.0,
     "target_return": null,
@@ -107,10 +108,10 @@
     "save_results": true,
     "primary_metric": "sharpe_ratio",
     "minimum_requirements": {
-      "min_sharpe_ratio": 0.1,
-      "min_profit_factor": 0.0,
-      "min_win_rate": 0.0,
-      "max_drawdown_limit": 1.0,
+      "min_sharpe_ratio": -0.5,
+      "min_profit_factor": 0.5,
+      "min_win_rate": 0.3,
+      "max_drawdown_limit": 0.5,
       "min_trades": 1
     },
     "risk_penalties": {

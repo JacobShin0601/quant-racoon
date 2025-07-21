@@ -1069,17 +1069,17 @@ def calculate_buy_hold_returns(
     buy_hold_results = {}
 
     for symbol, data in data_dict.items():
-        if data.empty or "Close" not in data.columns:
+        if data.empty or "close" not in data.columns:
             continue
 
         try:
             # 수익률 계산
-            initial_price = data["Close"].iloc[0]
-            final_price = data["Close"].iloc[-1]
+            initial_price = data["close"].iloc[0]
+            final_price = data["close"].iloc[-1]
             total_return = (final_price - initial_price) / initial_price
 
             # 일별 수익률 계산
-            daily_returns = data["Close"].pct_change().dropna()
+            daily_returns = data["close"].pct_change().dropna()
 
             # 샤프 비율 계산 (연율화)
             mean_return = daily_returns.mean()

@@ -1,0 +1,34 @@
+{
+  "train": {
+    "total_return": 0.0006614350170917049,
+    "sharpe_ratio": 0.7216484894971114,
+    "sortino_ratio": 1.188856283542464,
+    "max_drawdown": 0.701637664793526,
+    "volatility": 0.27004297432608415,
+    "total_trades": 28
+  },
+  "test": {
+    "total_return": 0.0008235156180254931,
+    "sharpe_ratio": 0.7574742139299793,
+    "sortino_ratio": 1.1734617913917291,
+    "max_drawdown": 0.6563644630939007,
+    "volatility": 0.3785970074543565,
+    "total_trades": 20
+  },
+  "buy_hold_train": {
+    "total_return": 0.21849643635626223,
+    "sharpe_ratio": 1.013378110383867,
+    "sortino_ratio": 1.6692775483638158,
+    "max_drawdown": 0.701637664793526,
+    "volatility": 0.3262667263883029,
+    "total_trades": 12
+  },
+  "buy_hold_test": {
+    "total_return": 0.16601955679293323,
+    "sharpe_ratio": 0.930473189511263,
+    "sortino_ratio": 1.4332164724569305,
+    "max_drawdown": 0.6563644630939007,
+    "volatility": 0.43745420331569285,
+    "total_trades": 12
+  }
+}

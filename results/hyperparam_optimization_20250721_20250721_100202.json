@@ -1,0 +1,3566 @@
+{
+  "dual_momentum_AAPL": {
+    "strategy_name": "dual_momentum",
+    "symbol": "AAPL",
+    "best_params": {
+      "donchian_period": 39,
+      "rsi_period": 27,
+      "rsi_oversold": 33,
+      "rsi_overbought": 65,
+      "momentum_period": 30,
+      "momentum_threshold": 0.029350023753792157
+    },
+    "best_score": 67.0527738190338,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.048888,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_META": {
+    "strategy_name": "dual_momentum",
+    "symbol": "META",
+    "best_params": {
+      "donchian_period": 31,
+      "rsi_period": 26,
+      "rsi_oversold": 32,
+      "rsi_overbought": 75,
+      "momentum_period": 27,
+      "momentum_threshold": 0.07849585398029472
+    },
+    "best_score": 63.06950101322376,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.040168,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_NFLX": {
+    "strategy_name": "dual_momentum",
+    "symbol": "NFLX",
+    "best_params": {
+      "donchian_period": 24,
+      "rsi_period": 24,
+      "rsi_oversold": 30,
+      "rsi_overbought": 73,
+      "momentum_period": 26,
+      "momentum_threshold": 0.07509078533960174
+    },
+    "best_score": 70.27325667794149,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.029803,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_QQQ": {
+    "strategy_name": "dual_momentum",
+    "symbol": "QQQ",
+    "best_params": {
+      "donchian_period": 40,
+      "rsi_period": 26,
+      "rsi_oversold": 31,
+      "rsi_overbought": 68,
+      "momentum_period": 21,
+      "momentum_threshold": 0.02575916539519408
+    },
+    "best_score": 49.301265521192434,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.964008,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_SPY": {
+    "strategy_name": "dual_momentum",
+    "symbol": "SPY",
+    "best_params": {
+      "donchian_period": 36,
+      "rsi_period": 22,
+      "rsi_oversold": 35,
+      "rsi_overbought": 68,
+      "momentum_period": 28,
+      "momentum_threshold": 0.07798467523246791
+    },
+    "best_score": 38.1671009921507,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.953504,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_NVDA": {
+    "strategy_name": "dual_momentum",
+    "symbol": "NVDA",
+    "best_params": {
+      "donchian_period": 31,
+      "rsi_period": 19,
+      "rsi_oversold": 33,
+      "rsi_overbought": 68,
+      "momentum_period": 17,
+      "momentum_threshold": 0.06252890424486823
+    },
+    "best_score": 76.34888729963102,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.074219,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_TSLA": {
+    "strategy_name": "dual_momentum",
+    "symbol": "TSLA",
+    "best_params": {
+      "donchian_period": 43,
+      "rsi_period": 28,
+      "rsi_oversold": 27,
+      "rsi_overbought": 74,
+      "momentum_period": 10,
+      "momentum_threshold": 0.07212379027250337
+    },
+    "best_score": 50.18625827326159,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.056354,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_MSFT": {
+    "strategy_name": "dual_momentum",
+    "symbol": "MSFT",
+    "best_params": {
+      "donchian_period": 26,
+      "rsi_period": 24,
+      "rsi_oversold": 33,
+      "rsi_overbought": 65,
+      "momentum_period": 12,
+      "momentum_threshold": 0.045376562995935225
+    },
+    "best_score": 65.08825016725693,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.052201,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_PLTR": {
+    "strategy_name": "dual_momentum",
+    "symbol": "PLTR",
+    "best_params": {
+      "donchian_period": 24,
+      "rsi_period": 16,
+      "rsi_oversold": 29,
+      "rsi_overbought": 71,
+      "momentum_period": 25,
+      "momentum_threshold": 0.03950968040841061
+    },
+    "best_score": 87.24779683190368,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.030916,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_NVO": {
+    "strategy_name": "dual_momentum",
+    "symbol": "NVO",
+    "best_params": {
+      "donchian_period": 50,
+      "rsi_period": 25,
+      "rsi_oversold": 28,
+      "rsi_overbought": 69,
+      "momentum_period": 10,
+      "momentum_threshold": 0.06566014389299173
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.052884,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_CONL": {
+    "strategy_name": "dual_momentum",
+    "symbol": "CONL",
+    "best_params": {
+      "donchian_period": 45,
+      "rsi_period": 24,
+      "rsi_oversold": 26,
+      "rsi_overbought": 68,
+      "momentum_period": 26,
+      "momentum_threshold": 0.039545799731748564
+    },
+    "best_score": 72.90025128603199,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.90405,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "dual_momentum_ETHU": {
+    "strategy_name": "dual_momentum",
+    "symbol": "ETHU",
+    "best_params": {
+      "donchian_period": 24,
+      "rsi_period": 25,
+      "rsi_oversold": 27,
+      "rsi_overbought": 74,
+      "momentum_period": 22,
+      "momentum_threshold": 0.06691097145189571
+    },
+    "best_score": 50.689768424003475,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.915262,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_AAPL": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "AAPL",
+    "best_params": {
+      "keltner_period": 16,
+      "keltner_multiplier": 1.5969605140719132,
+      "volume_period": 16,
+      "volume_threshold": 1.189157772673643,
+      "volatility_period": 23,
+      "volatility_threshold": 0.8735175129033486
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.271384,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_META": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "META",
+    "best_params": {
+      "keltner_period": 27,
+      "keltner_multiplier": 2.24548437382091,
+      "volume_period": 25,
+      "volume_threshold": 0.7950677957448261,
+      "volatility_period": 24,
+      "volatility_threshold": 0.8280928241690029
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.416052,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_NFLX": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "NFLX",
+    "best_params": {
+      "keltner_period": 26,
+      "keltner_multiplier": 2.130873732484276,
+      "volume_period": 15,
+      "volume_threshold": 0.9136610944378214,
+      "volatility_period": 18,
+      "volatility_threshold": 0.6081546552407536
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.36794,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_QQQ": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "QQQ",
+    "best_params": {
+      "keltner_period": 22,
+      "keltner_multiplier": 2.1039207977266257,
+      "volume_period": 25,
+      "volume_threshold": 1.1599581755856887,
+      "volatility_period": 23,
+      "volatility_threshold": 0.5045705569722145
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.273671,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_SPY": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "SPY",
+    "best_params": {
+      "keltner_period": 15,
+      "keltner_multiplier": 2.810849296257486,
+      "volume_period": 18,
+      "volume_threshold": 0.7141534055362047,
+      "volatility_period": 22,
+      "volatility_threshold": 0.37675455648269107
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.308756,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_NVDA": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "NVDA",
+    "best_params": {
+      "keltner_period": 28,
+      "keltner_multiplier": 1.8273226415258557,
+      "volume_period": 23,
+      "volume_threshold": 1.1504032710701262,
+      "volatility_period": 15,
+      "volatility_threshold": 0.8912317357051625
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.263423,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_TSLA": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "TSLA",
+    "best_params": {
+      "keltner_period": 26,
+      "keltner_multiplier": 2.6623246843678063,
+      "volume_period": 16,
+      "volume_threshold": 0.9210604336302062,
+      "volatility_period": 24,
+      "volatility_threshold": 0.739481390405051
+    },
+    "best_score": 55.60752050013487,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.457075,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_MSFT": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "MSFT",
+    "best_params": {
+      "keltner_period": 21,
+      "keltner_multiplier": 2.6102167407292733,
+      "volume_period": 19,
+      "volume_threshold": 1.1369057091348869,
+      "volatility_period": 21,
+      "volatility_threshold": 0.7543207121519862
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.417831,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_PLTR": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "PLTR",
+    "best_params": {
+      "keltner_period": 23,
+      "keltner_multiplier": 1.6721279248988468,
+      "volume_period": 24,
+      "volume_threshold": 0.8253834751114314,
+      "volatility_period": 16,
+      "volatility_threshold": 0.5785353154517103
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.367566,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_NVO": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "NVO",
+    "best_params": {
+      "keltner_period": 21,
+      "keltner_multiplier": 2.9075977341445602,
+      "volume_period": 17,
+      "volume_threshold": 0.906239557973977,
+      "volatility_period": 20,
+      "volatility_threshold": 0.4207651458920133
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.395933,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_CONL": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "CONL",
+    "best_params": {
+      "keltner_period": 20,
+      "keltner_multiplier": 2.158718668452867,
+      "volume_period": 16,
+      "volume_threshold": 0.9647575528854655,
+      "volatility_period": 22,
+      "volatility_threshold": 0.7438340686484373
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.238551,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_breakout_ETHU": {
+    "strategy_name": "volatility_breakout",
+    "symbol": "ETHU",
+    "best_params": {
+      "keltner_period": 26,
+      "keltner_multiplier": 2.291240426665099,
+      "volume_period": 21,
+      "volume_threshold": 1.1402832544102408,
+      "volatility_period": 15,
+      "volatility_threshold": 0.5199886742726583
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.270166,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_AAPL": {
+    "strategy_name": "swing_ema",
+    "symbol": "AAPL",
+    "best_params": {
+      "ema_short_period": 41,
+      "ema_long_period": 53,
+      "min_holding_days": 7,
+      "max_holding_days": 39,
+      "slope_period": 14,
+      "volume_threshold": 1.0061036940097177,
+      "volatility_threshold": 0.8314779164369925
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.14491,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_META": {
+    "strategy_name": "swing_ema",
+    "symbol": "META",
+    "best_params": {
+      "ema_short_period": 46,
+      "ema_long_period": 71,
+      "min_holding_days": 15,
+      "max_holding_days": 34,
+      "slope_period": 7,
+      "volume_threshold": 0.9413650019011113,
+      "volatility_threshold": 0.30976474738130794
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.127065,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_NFLX": {
+    "strategy_name": "swing_ema",
+    "symbol": "NFLX",
+    "best_params": {
+      "ema_short_period": 42,
+      "ema_long_period": 79,
+      "min_holding_days": 14,
+      "max_holding_days": 29,
+      "slope_period": 9,
+      "volume_threshold": 1.2998320827087424,
+      "volatility_threshold": 0.8650055091748843
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.608635,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_QQQ": {
+    "strategy_name": "swing_ema",
+    "symbol": "QQQ",
+    "best_params": {
+      "ema_short_period": 47,
+      "ema_long_period": 77,
+      "min_holding_days": 8,
+      "max_holding_days": 23,
+      "slope_period": 8,
+      "volume_threshold": 1.4437611119383473,
+      "volatility_threshold": 0.8191763381427704
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.010249,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_SPY": {
+    "strategy_name": "swing_ema",
+    "symbol": "SPY",
+    "best_params": {
+      "ema_short_period": 37,
+      "ema_long_period": 93,
+      "min_holding_days": 6,
+      "max_holding_days": 21,
+      "slope_period": 12,
+      "volume_threshold": 0.8847701830141121,
+      "volatility_threshold": 0.4666813878422565
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.007783,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_NVDA": {
+    "strategy_name": "swing_ema",
+    "symbol": "NVDA",
+    "best_params": {
+      "ema_short_period": 30,
+      "ema_long_period": 58,
+      "min_holding_days": 8,
+      "max_holding_days": 27,
+      "slope_period": 5,
+      "volume_threshold": 0.9241676819432152,
+      "volatility_threshold": 0.8142713002885558
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.164852,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_TSLA": {
+    "strategy_name": "swing_ema",
+    "symbol": "TSLA",
+    "best_params": {
+      "ema_short_period": 21,
+      "ema_long_period": 84,
+      "min_holding_days": 5,
+      "max_holding_days": 38,
+      "slope_period": 12,
+      "volume_threshold": 1.3080479884918041,
+      "volatility_threshold": 0.4610532246638327
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.17229,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_MSFT": {
+    "strategy_name": "swing_ema",
+    "symbol": "MSFT",
+    "best_params": {
+      "ema_short_period": 25,
+      "ema_long_period": 97,
+      "min_holding_days": 14,
+      "max_holding_days": 27,
+      "slope_period": 13,
+      "volume_threshold": 1.226343329059632,
+      "volatility_threshold": 0.570574155386163
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.193291,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_PLTR": {
+    "strategy_name": "swing_ema",
+    "symbol": "PLTR",
+    "best_params": {
+      "ema_short_period": 27,
+      "ema_long_period": 99,
+      "min_holding_days": 15,
+      "max_holding_days": 33,
+      "slope_period": 8,
+      "volume_threshold": 1.3923522690185202,
+      "volatility_threshold": 0.3938276378395368
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.488228,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_NVO": {
+    "strategy_name": "swing_ema",
+    "symbol": "NVO",
+    "best_params": {
+      "ema_short_period": 38,
+      "ema_long_period": 60,
+      "min_holding_days": 13,
+      "max_holding_days": 31,
+      "slope_period": 5,
+      "volume_threshold": 1.2534584918237783,
+      "volatility_threshold": 0.7492437205678744
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.223166,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_CONL": {
+    "strategy_name": "swing_ema",
+    "symbol": "CONL",
+    "best_params": {
+      "ema_short_period": 31,
+      "ema_long_period": 92,
+      "min_holding_days": 8,
+      "max_holding_days": 39,
+      "slope_period": 10,
+      "volume_threshold": 1.1778020031123704,
+      "volatility_threshold": 0.3835306461724818
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.078197,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_ema_ETHU": {
+    "strategy_name": "swing_ema",
+    "symbol": "ETHU",
+    "best_params": {
+      "ema_short_period": 31,
+      "ema_long_period": 98,
+      "min_holding_days": 12,
+      "max_holding_days": 28,
+      "slope_period": 10,
+      "volume_threshold": 1.08912254033161,
+      "volatility_threshold": 0.7631749893769321
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.035729,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_AAPL": {
+    "strategy_name": "swing_rsi",
+    "symbol": "AAPL",
+    "best_params": {
+      "rsi_period": 13,
+      "rsi_oversold": 28,
+      "rsi_overbought": 70,
+      "min_holding_days": 9,
+      "max_holding_days": 11,
+      "rsi_momentum_period": 4,
+      "price_momentum_period": 3,
+      "volume_threshold": 0.7846402353264562
+    },
+    "best_score": 61.34099929560435,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.329415,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_META": {
+    "strategy_name": "swing_rsi",
+    "symbol": "META",
+    "best_params": {
+      "rsi_period": 16,
+      "rsi_oversold": 31,
+      "rsi_overbought": 67,
+      "min_holding_days": 4,
+      "max_holding_days": 8,
+      "rsi_momentum_period": 2,
+      "price_momentum_period": 9,
+      "volume_threshold": 0.956480797401273
+    },
+    "best_score": 70.99774190681507,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.290928,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_NFLX": {
+    "strategy_name": "swing_rsi",
+    "symbol": "NFLX",
+    "best_params": {
+      "rsi_period": 16,
+      "rsi_oversold": 29,
+      "rsi_overbought": 77,
+      "min_holding_days": 10,
+      "max_holding_days": 7,
+      "rsi_momentum_period": 5,
+      "price_momentum_period": 4,
+      "volume_threshold": 1.026903202308051
+    },
+    "best_score": 75.06865866537174,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.314266,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_QQQ": {
+    "strategy_name": "swing_rsi",
+    "symbol": "QQQ",
+    "best_params": {
+      "rsi_period": 12,
+      "rsi_oversold": 29,
+      "rsi_overbought": 79,
+      "min_holding_days": 8,
+      "max_holding_days": 12,
+      "rsi_momentum_period": 5,
+      "price_momentum_period": 3,
+      "volume_threshold": 0.8790467386550473
+    },
+    "best_score": 60.02663577268433,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.167908,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_SPY": {
+    "strategy_name": "swing_rsi",
+    "symbol": "SPY",
+    "best_params": {
+      "rsi_period": 15,
+      "rsi_oversold": 21,
+      "rsi_overbought": 79,
+      "min_holding_days": 5,
+      "max_holding_days": 8,
+      "rsi_momentum_period": 5,
+      "price_momentum_period": 9,
+      "volume_threshold": 0.6224572444577757
+    },
+    "best_score": 24.75067124289578,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.201953,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_NVDA": {
+    "strategy_name": "swing_rsi",
+    "symbol": "NVDA",
+    "best_params": {
+      "rsi_period": 11,
+      "rsi_oversold": 27,
+      "rsi_overbought": 75,
+      "min_holding_days": 8,
+      "max_holding_days": 20,
+      "rsi_momentum_period": 2,
+      "price_momentum_period": 10,
+      "volume_threshold": 0.7871681647811345
+    },
+    "best_score": 76.00743633620706,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.32432,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_TSLA": {
+    "strategy_name": "swing_rsi",
+    "symbol": "TSLA",
+    "best_params": {
+      "rsi_period": 16,
+      "rsi_oversold": 31,
+      "rsi_overbought": 69,
+      "min_holding_days": 3,
+      "max_holding_days": 15,
+      "rsi_momentum_period": 4,
+      "price_momentum_period": 8,
+      "volume_threshold": 0.9596983482539856
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.31712,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_MSFT": {
+    "strategy_name": "swing_rsi",
+    "symbol": "MSFT",
+    "best_params": {
+      "rsi_period": 13,
+      "rsi_oversold": 27,
+      "rsi_overbought": 76,
+      "min_holding_days": 9,
+      "max_holding_days": 9,
+      "rsi_momentum_period": 4,
+      "price_momentum_period": 7,
+      "volume_threshold": 0.9270019828117756
+    },
+    "best_score": 43.58484960901578,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.316553,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_PLTR": {
+    "strategy_name": "swing_rsi",
+    "symbol": "PLTR",
+    "best_params": {
+      "rsi_period": 20,
+      "rsi_oversold": 34,
+      "rsi_overbought": 73,
+      "min_holding_days": 5,
+      "max_holding_days": 15,
+      "rsi_momentum_period": 3,
+      "price_momentum_period": 10,
+      "volume_threshold": 1.0312467138960977
+    },
+    "best_score": 104.91388480964622,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.265924,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_NVO": {
+    "strategy_name": "swing_rsi",
+    "symbol": "NVO",
+    "best_params": {
+      "rsi_period": 17,
+      "rsi_oversold": 29,
+      "rsi_overbought": 78,
+      "min_holding_days": 6,
+      "max_holding_days": 18,
+      "rsi_momentum_period": 3,
+      "price_momentum_period": 7,
+      "volume_threshold": 0.6863174485803916
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.352285,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_CONL": {
+    "strategy_name": "swing_rsi",
+    "symbol": "CONL",
+    "best_params": {
+      "rsi_period": 15,
+      "rsi_oversold": 21,
+      "rsi_overbought": 77,
+      "min_holding_days": 10,
+      "max_holding_days": 11,
+      "rsi_momentum_period": 3,
+      "price_momentum_period": 7,
+      "volume_threshold": 0.8367650977160298
+    },
+    "best_score": 81.22094880295631,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.131937,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_rsi_ETHU": {
+    "strategy_name": "swing_rsi",
+    "symbol": "ETHU",
+    "best_params": {
+      "rsi_period": 19,
+      "rsi_oversold": 26,
+      "rsi_overbought": 65,
+      "min_holding_days": 7,
+      "max_holding_days": 16,
+      "rsi_momentum_period": 3,
+      "price_momentum_period": 3,
+      "volume_threshold": 0.567792459516088
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.150182,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_AAPL": {
+    "strategy_name": "swing_donchian",
+    "symbol": "AAPL",
+    "best_params": {
+      "donchian_period": 20,
+      "min_holding_days": 9,
+      "max_holding_days": 14,
+      "volume_threshold": 1.255717145694228,
+      "volatility_threshold": 0.628533896906482,
+      "breakout_strength_threshold": 0.004373619232428268
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.745513,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_META": {
+    "strategy_name": "swing_donchian",
+    "symbol": "META",
+    "best_params": {
+      "donchian_period": 16,
+      "min_holding_days": 6,
+      "max_holding_days": 13,
+      "volume_threshold": 1.140731650128229,
+      "volatility_threshold": 0.7911728763678406,
+      "breakout_strength_threshold": 0.0030805675990747804
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.636163,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_NFLX": {
+    "strategy_name": "swing_donchian",
+    "symbol": "NFLX",
+    "best_params": {
+      "donchian_period": 21,
+      "min_holding_days": 10,
+      "max_holding_days": 20,
+      "volume_threshold": 0.8192562007875175,
+      "volatility_threshold": 0.9851475033014867,
+      "breakout_strength_threshold": 0.0042548709443748535
+    },
+    "best_score": 95.62550985197753,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.797522,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_QQQ": {
+    "strategy_name": "swing_donchian",
+    "symbol": "QQQ",
+    "best_params": {
+      "donchian_period": 18,
+      "min_holding_days": 5,
+      "max_holding_days": 16,
+      "volume_threshold": 0.8011690231755028,
+      "volatility_threshold": 0.9504203867718279,
+      "breakout_strength_threshold": 0.004246824378332417
+    },
+    "best_score": 49.64891449291932,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.793857,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_SPY": {
+    "strategy_name": "swing_donchian",
+    "symbol": "SPY",
+    "best_params": {
+      "donchian_period": 14,
+      "min_holding_days": 5,
+      "max_holding_days": 12,
+      "volume_threshold": 0.8254966352785635,
+      "volatility_threshold": 0.9157331351901692,
+      "breakout_strength_threshold": 0.005863914517603856
+    },
+    "best_score": 38.75911848471512,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.596142,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_NVDA": {
+    "strategy_name": "swing_donchian",
+    "symbol": "NVDA",
+    "best_params": {
+      "donchian_period": 13,
+      "min_holding_days": 9,
+      "max_holding_days": 15,
+      "volume_threshold": 0.9014578253712843,
+      "volatility_threshold": 0.7794451642404414,
+      "breakout_strength_threshold": 0.007294922232802348
+    },
+    "best_score": 39.0208612647628,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.864756,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_TSLA": {
+    "strategy_name": "swing_donchian",
+    "symbol": "TSLA",
+    "best_params": {
+      "donchian_period": 21,
+      "min_holding_days": 10,
+      "max_holding_days": 18,
+      "volume_threshold": 0.844479266164634,
+      "volatility_threshold": 0.9329739834648638,
+      "breakout_strength_threshold": 0.004862375820311328
+    },
+    "best_score": 67.34797012008765,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.837575,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_MSFT": {
+    "strategy_name": "swing_donchian",
+    "symbol": "MSFT",
+    "best_params": {
+      "donchian_period": 22,
+      "min_holding_days": 7,
+      "max_holding_days": 8,
+      "volume_threshold": 0.8027313515878612,
+      "volatility_threshold": 0.9582694620285088,
+      "breakout_strength_threshold": 0.004698529902776405
+    },
+    "best_score": 83.5117763695028,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.897082,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_PLTR": {
+    "strategy_name": "swing_donchian",
+    "symbol": "PLTR",
+    "best_params": {
+      "donchian_period": 11,
+      "min_holding_days": 6,
+      "max_holding_days": 19,
+      "volume_threshold": 0.9052521376112389,
+      "volatility_threshold": 0.9963380661937077,
+      "breakout_strength_threshold": 0.00212769115027784
+    },
+    "best_score": 73.36553521636384,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.834335,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_NVO": {
+    "strategy_name": "swing_donchian",
+    "symbol": "NVO",
+    "best_params": {
+      "donchian_period": 12,
+      "min_holding_days": 4,
+      "max_holding_days": 11,
+      "volume_threshold": 1.312888016238491,
+      "volatility_threshold": 0.5756001556279402,
+      "breakout_strength_threshold": 0.0026502730517108074
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.640287,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_CONL": {
+    "strategy_name": "swing_donchian",
+    "symbol": "CONL",
+    "best_params": {
+      "donchian_period": 19,
+      "min_holding_days": 6,
+      "max_holding_days": 17,
+      "volume_threshold": 0.9390378366620731,
+      "volatility_threshold": 0.8799695077209035,
+      "breakout_strength_threshold": 0.004551846816200072
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.573713,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_donchian_ETHU": {
+    "strategy_name": "swing_donchian",
+    "symbol": "ETHU",
+    "best_params": {
+      "donchian_period": 23,
+      "min_holding_days": 3,
+      "max_holding_days": 14,
+      "volume_threshold": 1.1785524977385449,
+      "volatility_threshold": 0.9509891681258471,
+      "breakout_strength_threshold": 0.007613476641978165
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.59,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_AAPL": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "AAPL",
+    "best_params": {
+      "donchian_period": 23,
+      "stoch_k_period": 7,
+      "stoch_d_period": 4,
+      "stoch_oversold": 21,
+      "stoch_overbought": 73,
+      "volume_threshold": 0.7196551724129229
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.484607,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_META": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "META",
+    "best_params": {
+      "donchian_period": 20,
+      "stoch_k_period": 11,
+      "stoch_d_period": 4,
+      "stoch_oversold": 17,
+      "stoch_overbought": 81,
+      "volume_threshold": 0.7510059951079112
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.48268,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_NFLX": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "NFLX",
+    "best_params": {
+      "donchian_period": 18,
+      "stoch_k_period": 11,
+      "stoch_d_period": 7,
+      "stoch_oversold": 27,
+      "stoch_overbought": 82,
+      "volume_threshold": 0.7257970921302388
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.485455,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_QQQ": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "QQQ",
+    "best_params": {
+      "donchian_period": 19,
+      "stoch_k_period": 9,
+      "stoch_d_period": 6,
+      "stoch_oversold": 24,
+      "stoch_overbought": 78,
+      "volume_threshold": 1.1333317553049809
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.478539,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_SPY": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "SPY",
+    "best_params": {
+      "donchian_period": 21,
+      "stoch_k_period": 12,
+      "stoch_d_period": 6,
+      "stoch_oversold": 19,
+      "stoch_overbought": 82,
+      "volume_threshold": 1.108626785019062
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.483409,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_NVDA": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "NVDA",
+    "best_params": {
+      "donchian_period": 23,
+      "stoch_k_period": 11,
+      "stoch_d_period": 5,
+      "stoch_oversold": 26,
+      "stoch_overbought": 81,
+      "volume_threshold": 0.994925923109852
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.481681,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_TSLA": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "TSLA",
+    "best_params": {
+      "donchian_period": 22,
+      "stoch_k_period": 9,
+      "stoch_d_period": 4,
+      "stoch_oversold": 18,
+      "stoch_overbought": 79,
+      "volume_threshold": 0.7218159647513651
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.486949,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_MSFT": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "MSFT",
+    "best_params": {
+      "donchian_period": 21,
+      "stoch_k_period": 12,
+      "stoch_d_period": 3,
+      "stoch_oversold": 20,
+      "stoch_overbought": 72,
+      "volume_threshold": 0.6180141170774017
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.483537,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_PLTR": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "PLTR",
+    "best_params": {
+      "donchian_period": 19,
+      "stoch_k_period": 8,
+      "stoch_d_period": 4,
+      "stoch_oversold": 28,
+      "stoch_overbought": 78,
+      "volume_threshold": 0.6448546711077844
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.487447,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_NVO": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "NVO",
+    "best_params": {
+      "donchian_period": 15,
+      "stoch_k_period": 12,
+      "stoch_d_period": 5,
+      "stoch_oversold": 27,
+      "stoch_overbought": 79,
+      "volume_threshold": 0.9250830718746731
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.50067,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_CONL": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "CONL",
+    "best_params": {
+      "donchian_period": 13,
+      "stoch_k_period": 10,
+      "stoch_d_period": 5,
+      "stoch_oversold": 24,
+      "stoch_overbought": 76,
+      "volume_threshold": 0.8561112195787883
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.476237,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "stoch_donchian_ETHU": {
+    "strategy_name": "stoch_donchian",
+    "symbol": "ETHU",
+    "best_params": {
+      "donchian_period": 12,
+      "stoch_k_period": 10,
+      "stoch_d_period": 4,
+      "stoch_oversold": 30,
+      "stoch_overbought": 81,
+      "volume_threshold": 0.6656895895514018
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.478604,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_AAPL": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "AAPL",
+    "best_params": {
+      "atr_period": 15,
+      "atr_multiplier": 2.1518975439752466,
+      "volume_filter_period": 17,
+      "volume_threshold": 1.155168284022007,
+      "confirmation_candles": 1
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.517616,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_META": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "META",
+    "best_params": {
+      "atr_period": 11,
+      "atr_multiplier": 1.32705944964546,
+      "volume_filter_period": 9,
+      "volume_threshold": 0.9188556382069595,
+      "confirmation_candles": 1
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.490498,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_NFLX": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "NFLX",
+    "best_params": {
+      "atr_period": 17,
+      "atr_multiplier": 2.0371539446028373,
+      "volume_filter_period": 14,
+      "volume_threshold": 0.9681727874139603,
+      "confirmation_candles": 3
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.460923,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_QQQ": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "QQQ",
+    "best_params": {
+      "atr_period": 10,
+      "atr_multiplier": 1.5310224354911337,
+      "volume_filter_period": 10,
+      "volume_threshold": 1.1205024802220682,
+      "confirmation_candles": 1
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.278525,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_SPY": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "SPY",
+    "best_params": {
+      "atr_period": 13,
+      "atr_multiplier": 1.1987030189621521,
+      "volume_filter_period": 8,
+      "volume_threshold": 0.7474380913798458,
+      "confirmation_candles": 2
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.444622,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_NVDA": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "NVDA",
+    "best_params": {
+      "atr_period": 14,
+      "atr_multiplier": 2.180837457713037,
+      "volume_filter_period": 9,
+      "volume_threshold": 0.7087724892898519,
+      "confirmation_candles": 2
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.540463,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_TSLA": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "TSLA",
+    "best_params": {
+      "atr_period": 13,
+      "atr_multiplier": 1.8290557168084383,
+      "volume_filter_period": 8,
+      "volume_threshold": 0.6904655374400321,
+      "confirmation_candles": 2
+    },
+    "best_score": 64.44267440212326,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.653756,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_MSFT": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "MSFT",
+    "best_params": {
+      "atr_period": 13,
+      "atr_multiplier": 2.0054323153120217,
+      "volume_filter_period": 11,
+      "volume_threshold": 0.7252932150076657,
+      "confirmation_candles": 2
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.49532,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_PLTR": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "PLTR",
+    "best_params": {
+      "atr_period": 16,
+      "atr_multiplier": 1.2956408618185182,
+      "volume_filter_period": 18,
+      "volume_threshold": 0.6182161270442097,
+      "confirmation_candles": 2
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.592196,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_NVO": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "NVO",
+    "best_params": {
+      "atr_period": 15,
+      "atr_multiplier": 2.093980337094604,
+      "volume_filter_period": 15,
+      "volume_threshold": 0.8286238063208902,
+      "confirmation_candles": 1
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.651913,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_CONL": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "CONL",
+    "best_params": {
+      "atr_period": 8,
+      "atr_multiplier": 1.75187991751138,
+      "volume_filter_period": 10,
+      "volume_threshold": 0.7314480977971564,
+      "confirmation_candles": 3
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.51402,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "whipsaw_prevention_ETHU": {
+    "strategy_name": "whipsaw_prevention",
+    "symbol": "ETHU",
+    "best_params": {
+      "atr_period": 13,
+      "atr_multiplier": 2.4790955741105454,
+      "volume_filter_period": 20,
+      "volume_threshold": 0.8120007793231708,
+      "confirmation_candles": 3
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.470527,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_AAPL": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "AAPL",
+    "best_params": {
+      "donchian_period": 16,
+      "rsi_period": 19,
+      "rsi_oversold": 31,
+      "rsi_overbought": 67,
+      "atr_period": 14,
+      "atr_multiplier": 1.9034366091959438
+    },
+    "best_score": 47.92140811323718,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.191357,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_META": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "META",
+    "best_params": {
+      "donchian_period": 20,
+      "rsi_period": 20,
+      "rsi_oversold": 20,
+      "rsi_overbought": 70,
+      "atr_period": 20,
+      "atr_multiplier": 2.2133878261378968
+    },
+    "best_score": 36.52953678858833,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.16715,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_NFLX": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "NFLX",
+    "best_params": {
+      "donchian_period": 15,
+      "rsi_period": 18,
+      "rsi_oversold": 20,
+      "rsi_overbought": 74,
+      "atr_period": 14,
+      "atr_multiplier": 1.613562432093465
+    },
+    "best_score": 70.14781575298193,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.217402,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_QQQ": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "QQQ",
+    "best_params": {
+      "donchian_period": 20,
+      "rsi_period": 12,
+      "rsi_oversold": 32,
+      "rsi_overbought": 68,
+      "atr_period": 13,
+      "atr_multiplier": 2.1753165252076596
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.138002,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_SPY": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "SPY",
+    "best_params": {
+      "donchian_period": 22,
+      "rsi_period": 16,
+      "rsi_oversold": 35,
+      "rsi_overbought": 79,
+      "atr_period": 18,
+      "atr_multiplier": 2.0507509020218078
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.079187,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_NVDA": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "NVDA",
+    "best_params": {
+      "donchian_period": 26,
+      "rsi_period": 17,
+      "rsi_oversold": 33,
+      "rsi_overbought": 69,
+      "atr_period": 15,
+      "atr_multiplier": 1.7969384731885971
+    },
+    "best_score": 66.34542644313031,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.179557,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_TSLA": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "TSLA",
+    "best_params": {
+      "donchian_period": 20,
+      "rsi_period": 16,
+      "rsi_oversold": 28,
+      "rsi_overbought": 77,
+      "atr_period": 14,
+      "atr_multiplier": 2.1003457740818274
+    },
+    "best_score": 84.53004547711816,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.189042,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_MSFT": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "MSFT",
+    "best_params": {
+      "donchian_period": 21,
+      "rsi_period": 18,
+      "rsi_oversold": 26,
+      "rsi_overbought": 67,
+      "atr_period": 10,
+      "atr_multiplier": 1.5195616971666177
+    },
+    "best_score": 68.71471074200409,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.184255,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_PLTR": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "PLTR",
+    "best_params": {
+      "donchian_period": 15,
+      "rsi_period": 10,
+      "rsi_oversold": 29,
+      "rsi_overbought": 80,
+      "atr_period": 13,
+      "atr_multiplier": 2.051527917361901
+    },
+    "best_score": 79.93484242429696,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.171904,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_NVO": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "NVO",
+    "best_params": {
+      "donchian_period": 25,
+      "rsi_period": 14,
+      "rsi_oversold": 33,
+      "rsi_overbought": 76,
+      "atr_period": 15,
+      "atr_multiplier": 1.8027737313407006
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.202187,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_CONL": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "CONL",
+    "best_params": {
+      "donchian_period": 30,
+      "rsi_period": 13,
+      "rsi_oversold": 35,
+      "rsi_overbought": 80,
+      "atr_period": 20,
+      "atr_multiplier": 1.5405051335744897
+    },
+    "best_score": 70.58356491186454,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.079846,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "donchian_rsi_whipsaw_ETHU": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "ETHU",
+    "best_params": {
+      "donchian_period": 25,
+      "rsi_period": 15,
+      "rsi_oversold": 24,
+      "rsi_overbought": 74,
+      "atr_period": 16,
+      "atr_multiplier": 1.505206746723592
+    },
+    "best_score": 38.148858981175934,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.069059,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_AAPL": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "AAPL",
+    "best_params": {
+      "breakout_period": 17,
+      "volatility_period": 18,
+      "volatility_threshold": 0.8433518550942862,
+      "volume_period": 19,
+      "volume_threshold": 0.8131220107457123
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.734364,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_META": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "META",
+    "best_params": {
+      "breakout_period": 21,
+      "volatility_period": 11,
+      "volatility_threshold": 0.6642437858070127,
+      "volume_period": 20,
+      "volume_threshold": 1.4417176494882336
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.595178,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_NFLX": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "NFLX",
+    "best_params": {
+      "breakout_period": 15,
+      "volatility_period": 20,
+      "volatility_threshold": 0.6348554576472403,
+      "volume_period": 19,
+      "volume_threshold": 1.17048836699659
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.62991,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_QQQ": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "QQQ",
+    "best_params": {
+      "breakout_period": 30,
+      "volatility_period": 18,
+      "volatility_threshold": 0.5141723336757131,
+      "volume_period": 19,
+      "volume_threshold": 0.9508298752271064
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.61621,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_SPY": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "SPY",
+    "best_params": {
+      "breakout_period": 26,
+      "volatility_period": 12,
+      "volatility_threshold": 0.39414382405136805,
+      "volume_period": 17,
+      "volume_threshold": 1.3151964266696874
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.602977,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_NVDA": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "NVDA",
+    "best_params": {
+      "breakout_period": 19,
+      "volatility_period": 16,
+      "volatility_threshold": 0.8552818772455988,
+      "volume_period": 12,
+      "volume_threshold": 1.3145790142756075
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.755086,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_TSLA": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "TSLA",
+    "best_params": {
+      "breakout_period": 26,
+      "volatility_period": 14,
+      "volatility_threshold": 0.7005550815517286,
+      "volume_period": 18,
+      "volume_threshold": 1.3227529612230113
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.769103,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_MSFT": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "MSFT",
+    "best_params": {
+      "breakout_period": 19,
+      "volatility_period": 17,
+      "volatility_threshold": 0.7717242401645701,
+      "volume_period": 14,
+      "volume_threshold": 0.8518575169278885
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.652306,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_PLTR": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "PLTR",
+    "best_params": {
+      "breakout_period": 22,
+      "volatility_period": 13,
+      "volatility_threshold": 0.44095841353936627,
+      "volume_period": 12,
+      "volume_threshold": 1.3129047057651766
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.877389,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_NVO": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "NVO",
+    "best_params": {
+      "breakout_period": 25,
+      "volatility_period": 11,
+      "volatility_threshold": 0.374381069818731,
+      "volume_period": 19,
+      "volume_threshold": 1.0724155234428372
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.623663,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_CONL": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "CONL",
+    "best_params": {
+      "breakout_period": 16,
+      "volatility_period": 20,
+      "volatility_threshold": 0.6015448487032218,
+      "volume_period": 12,
+      "volume_threshold": 1.495745930684489
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.771353,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "volatility_filtered_breakout_ETHU": {
+    "strategy_name": "volatility_filtered_breakout",
+    "symbol": "ETHU",
+    "best_params": {
+      "breakout_period": 26,
+      "volatility_period": 14,
+      "volatility_threshold": 0.406874366684599,
+      "volume_period": 11,
+      "volume_threshold": 1.0914660380817371
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.731672,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_AAPL": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "AAPL",
+    "best_params": {
+      "short_period": 8,
+      "medium_period": 24,
+      "long_period": 45,
+      "atr_period": 17,
+      "atr_multiplier": 2.391927810925791
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.127173,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_META": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "META",
+    "best_params": {
+      "short_period": 7,
+      "medium_period": 21,
+      "long_period": 53,
+      "atr_period": 13,
+      "atr_multiplier": 1.6541701141357148
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.11453,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_NFLX": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "NFLX",
+    "best_params": {
+      "short_period": 5,
+      "medium_period": 27,
+      "long_period": 49,
+      "atr_period": 17,
+      "atr_multiplier": 2.353881942857501
+    },
+    "best_score": 76.68179787981066,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.112565,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_QQQ": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "QQQ",
+    "best_params": {
+      "short_period": 8,
+      "medium_period": 15,
+      "long_period": 51,
+      "atr_period": 19,
+      "atr_multiplier": 2.2096131703656994
+    },
+    "best_score": 43.815174927123664,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.982017,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_SPY": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "SPY",
+    "best_params": {
+      "short_period": 10,
+      "medium_period": 16,
+      "long_period": 57,
+      "atr_period": 19,
+      "atr_multiplier": 1.5249059465567103
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.008997,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_NVDA": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "NVDA",
+    "best_params": {
+      "short_period": 11,
+      "medium_period": 17,
+      "long_period": 50,
+      "atr_period": 17,
+      "atr_multiplier": 2.1398291464893098
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.140339,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_TSLA": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "TSLA",
+    "best_params": {
+      "short_period": 11,
+      "medium_period": 25,
+      "long_period": 54,
+      "atr_period": 15,
+      "atr_multiplier": 2.3561950727204346
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.127752,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_MSFT": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "MSFT",
+    "best_params": {
+      "short_period": 12,
+      "medium_period": 20,
+      "long_period": 42,
+      "atr_period": 16,
+      "atr_multiplier": 2.4290838168070605
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.129262,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_PLTR": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "PLTR",
+    "best_params": {
+      "short_period": 7,
+      "medium_period": 29,
+      "long_period": 44,
+      "atr_period": 20,
+      "atr_multiplier": 1.6293702009841429
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.120671,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_NVO": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "NVO",
+    "best_params": {
+      "short_period": 11,
+      "medium_period": 19,
+      "long_period": 52,
+      "atr_period": 15,
+      "atr_multiplier": 2.3333666323100175
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.116975,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_CONL": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "CONL",
+    "best_params": {
+      "short_period": 10,
+      "medium_period": 27,
+      "long_period": 54,
+      "atr_period": 17,
+      "atr_multiplier": 1.853017996701019
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.973856,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "multi_timeframe_whipsaw_ETHU": {
+    "strategy_name": "multi_timeframe_whipsaw",
+    "symbol": "ETHU",
+    "best_params": {
+      "short_period": 9,
+      "medium_period": 16,
+      "long_period": 57,
+      "atr_period": 19,
+      "atr_multiplier": 1.5740549904211798
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.980324,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_AAPL": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "AAPL",
+    "best_params": {
+      "base_period": 25,
+      "adaptation_factor": 0.3493655045028895,
+      "volatility_lookback": 15,
+      "volume_lookback": 20
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.440587,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_META": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "META",
+    "best_params": {
+      "base_period": 21,
+      "adaptation_factor": 0.8299132686146944,
+      "volatility_lookback": 10,
+      "volume_lookback": 20
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.463984,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_NFLX": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "NFLX",
+    "best_params": {
+      "base_period": 24,
+      "adaptation_factor": 0.37509974997633244,
+      "volatility_lookback": 12,
+      "volume_lookback": 20
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.465046,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_QQQ": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "QQQ",
+    "best_params": {
+      "base_period": 14,
+      "adaptation_factor": 0.985144075672471,
+      "volatility_lookback": 15,
+      "volume_lookback": 8
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.459009,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_SPY": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "SPY",
+    "best_params": {
+      "base_period": 19,
+      "adaptation_factor": 0.597770465462732,
+      "volatility_lookback": 20,
+      "volume_lookback": 17
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.457805,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_NVDA": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "NVDA",
+    "best_params": {
+      "base_period": 23,
+      "adaptation_factor": 0.5839019592302926,
+      "volatility_lookback": 19,
+      "volume_lookback": 13
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.451583,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_TSLA": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "TSLA",
+    "best_params": {
+      "base_period": 16,
+      "adaptation_factor": 0.5817007223479784,
+      "volatility_lookback": 9,
+      "volume_lookback": 15
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.435626,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_MSFT": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "MSFT",
+    "best_params": {
+      "base_period": 16,
+      "adaptation_factor": 0.9139884798430511,
+      "volatility_lookback": 8,
+      "volume_lookback": 19
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.450319,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_PLTR": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "PLTR",
+    "best_params": {
+      "base_period": 23,
+      "adaptation_factor": 0.7555694173462191,
+      "volatility_lookback": 9,
+      "volume_lookback": 13
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.440605,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_NVO": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "NVO",
+    "best_params": {
+      "base_period": 11,
+      "adaptation_factor": 0.9365756695918692,
+      "volatility_lookback": 20,
+      "volume_lookback": 19
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.437333,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_CONL": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "CONL",
+    "best_params": {
+      "base_period": 17,
+      "adaptation_factor": 0.7193754564214332,
+      "volatility_lookback": 18,
+      "volume_lookback": 20
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.430331,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "adaptive_whipsaw_ETHU": {
+    "strategy_name": "adaptive_whipsaw",
+    "symbol": "ETHU",
+    "best_params": {
+      "base_period": 11,
+      "adaptation_factor": 0.3890220328174697,
+      "volatility_lookback": 10,
+      "volume_lookback": 19
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.431256,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_AAPL": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "AAPL",
+    "best_params": {
+      "cci_period": 13,
+      "cci_oversold": -79,
+      "cci_overbought": 84,
+      "bb_period": 26,
+      "bb_std": 1.5700136167411445
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.651571,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_META": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "META",
+    "best_params": {
+      "cci_period": 16,
+      "cci_oversold": -88,
+      "cci_overbought": 91,
+      "bb_period": 21,
+      "bb_std": 2.2598239905753967
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.591678,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_NFLX": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "NFLX",
+    "best_params": {
+      "cci_period": 10,
+      "cci_oversold": -73,
+      "cci_overbought": 99,
+      "bb_period": 16,
+      "bb_std": 1.5073064344113962
+    },
+    "best_score": 75.0442861291118,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.908274,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_QQQ": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "QQQ",
+    "best_params": {
+      "cci_period": 17,
+      "cci_oversold": -99,
+      "cci_overbought": 71,
+      "bb_period": 27,
+      "bb_std": 1.5756092923642273
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.692978,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_SPY": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "SPY",
+    "best_params": {
+      "cci_period": 14,
+      "cci_oversold": -87,
+      "cci_overbought": 88,
+      "bb_period": 25,
+      "bb_std": 1.8673346405976337
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.502992,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_NVDA": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "NVDA",
+    "best_params": {
+      "cci_period": 18,
+      "cci_oversold": -93,
+      "cci_overbought": 84,
+      "bb_period": 28,
+      "bb_std": 1.6659024210131839
+    },
+    "best_score": 50.903257735920626,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.664201,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_TSLA": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "TSLA",
+    "best_params": {
+      "cci_period": 10,
+      "cci_oversold": -70,
+      "cci_overbought": 73,
+      "bb_period": 27,
+      "bb_std": 2.102770625618458
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.628384,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_MSFT": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "MSFT",
+    "best_params": {
+      "cci_period": 16,
+      "cci_oversold": -86,
+      "cci_overbought": 70,
+      "bb_period": 28,
+      "bb_std": 1.528558481960502
+    },
+    "best_score": 44.5467390362293,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.834105,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_PLTR": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "PLTR",
+    "best_params": {
+      "cci_period": 19,
+      "cci_oversold": -97,
+      "cci_overbought": 91,
+      "bb_period": 23,
+      "bb_std": 1.868975424725361
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.79199,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_NVO": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "NVO",
+    "best_params": {
+      "cci_period": 17,
+      "cci_oversold": -72,
+      "cci_overbought": 84,
+      "bb_period": 28,
+      "bb_std": 2.229301799960007
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.823191,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_CONL": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "CONL",
+    "best_params": {
+      "cci_period": 20,
+      "cci_oversold": -70,
+      "cci_overbought": 92,
+      "bb_period": 15,
+      "bb_std": 1.6723131545477743
+    },
+    "best_score": 65.33269311513672,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.800566,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "cci_bollinger_ETHU": {
+    "strategy_name": "cci_bollinger",
+    "symbol": "ETHU",
+    "best_params": {
+      "cci_period": 19,
+      "cci_oversold": -85,
+      "cci_overbought": 61,
+      "bb_period": 15,
+      "bb_std": 2.5158033304123277
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.540931,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_AAPL": {
+    "strategy_name": "mean_reversion",
+    "symbol": "AAPL",
+    "best_params": {
+      "lookback_period": 40,
+      "std_multiplier": 2.607809942804346,
+      "rsi_period": 14,
+      "rsi_oversold": 23,
+      "rsi_overbought": 80
+    },
+    "best_score": 24.120066113334538,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.065148,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_META": {
+    "strategy_name": "mean_reversion",
+    "symbol": "META",
+    "best_params": {
+      "lookback_period": 47,
+      "std_multiplier": 2.792999121691348,
+      "rsi_period": 20,
+      "rsi_oversold": 33,
+      "rsi_overbought": 71
+    },
+    "best_score": 49.585177423350764,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.091951,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_NFLX": {
+    "strategy_name": "mean_reversion",
+    "symbol": "NFLX",
+    "best_params": {
+      "lookback_period": 48,
+      "std_multiplier": 2.2661030433618965,
+      "rsi_period": 19,
+      "rsi_oversold": 29,
+      "rsi_overbought": 78
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.104813,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_QQQ": {
+    "strategy_name": "mean_reversion",
+    "symbol": "QQQ",
+    "best_params": {
+      "lookback_period": 45,
+      "std_multiplier": 2.0632664022712404,
+      "rsi_period": 16,
+      "rsi_oversold": 31,
+      "rsi_overbought": 77
+    },
+    "best_score": 38.940078933829525,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.950843,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_SPY": {
+    "strategy_name": "mean_reversion",
+    "symbol": "SPY",
+    "best_params": {
+      "lookback_period": 34,
+      "std_multiplier": 2.4736014575915304,
+      "rsi_period": 19,
+      "rsi_oversold": 20,
+      "rsi_overbought": 65
+    },
+    "best_score": 59.00942043853121,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.919994,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_NVDA": {
+    "strategy_name": "mean_reversion",
+    "symbol": "NVDA",
+    "best_params": {
+      "lookback_period": 24,
+      "std_multiplier": 2.4678404109181122,
+      "rsi_period": 17,
+      "rsi_oversold": 26,
+      "rsi_overbought": 74
+    },
+    "best_score": 40.798991666655134,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.065406,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_TSLA": {
+    "strategy_name": "mean_reversion",
+    "symbol": "TSLA",
+    "best_params": {
+      "lookback_period": 21,
+      "std_multiplier": 1.8947195859972075,
+      "rsi_period": 11,
+      "rsi_oversold": 27,
+      "rsi_overbought": 80
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.055609,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_MSFT": {
+    "strategy_name": "mean_reversion",
+    "symbol": "MSFT",
+    "best_params": {
+      "lookback_period": 31,
+      "std_multiplier": 1.7890012430466573,
+      "rsi_period": 15,
+      "rsi_oversold": 24,
+      "rsi_overbought": 69
+    },
+    "best_score": 61.71881006934744,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.070199,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_PLTR": {
+    "strategy_name": "mean_reversion",
+    "symbol": "PLTR",
+    "best_params": {
+      "lookback_period": 43,
+      "std_multiplier": 2.6034664287932427,
+      "rsi_period": 19,
+      "rsi_oversold": 25,
+      "rsi_overbought": 79
+    },
+    "best_score": 52.31277496418116,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.056132,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_NVO": {
+    "strategy_name": "mean_reversion",
+    "symbol": "NVO",
+    "best_params": {
+      "lookback_period": 28,
+      "std_multiplier": 2.070624747890445,
+      "rsi_period": 18,
+      "rsi_oversold": 24,
+      "rsi_overbought": 80
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.069832,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_CONL": {
+    "strategy_name": "mean_reversion",
+    "symbol": "CONL",
+    "best_params": {
+      "lookback_period": 40,
+      "std_multiplier": 1.5600345604555519,
+      "rsi_period": 15,
+      "rsi_oversold": 21,
+      "rsi_overbought": 67
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.982168,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "mean_reversion_ETHU": {
+    "strategy_name": "mean_reversion",
+    "symbol": "ETHU",
+    "best_params": {
+      "lookback_period": 26,
+      "std_multiplier": 2.0376231713118607,
+      "rsi_period": 13,
+      "rsi_oversold": 22,
+      "rsi_overbought": 74
+    },
+    "best_score": 46.63888349851071,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.002083,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_AAPL": {
+    "strategy_name": "swing_breakout",
+    "symbol": "AAPL",
+    "best_params": {
+      "breakout_period": 15,
+      "confirmation_period": 3,
+      "volume_threshold": 1.5011690000444948,
+      "price_threshold": 0.01519591572712391
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.974171,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_META": {
+    "strategy_name": "swing_breakout",
+    "symbol": "META",
+    "best_params": {
+      "breakout_period": 21,
+      "confirmation_period": 2,
+      "volume_threshold": 1.007638719832673,
+      "price_threshold": 0.015285838815867096
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.943565,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_NFLX": {
+    "strategy_name": "swing_breakout",
+    "symbol": "NFLX",
+    "best_params": {
+      "breakout_period": 21,
+      "confirmation_period": 5,
+      "volume_threshold": 1.049096332870299,
+      "price_threshold": 0.01589330898764778
+    },
+    "best_score": 63.054259851074974,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.909723,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_QQQ": {
+    "strategy_name": "swing_breakout",
+    "symbol": "QQQ",
+    "best_params": {
+      "breakout_period": 24,
+      "confirmation_period": 4,
+      "volume_threshold": 1.085755550562737,
+      "price_threshold": 0.0075934375431575395
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.788019,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_SPY": {
+    "strategy_name": "swing_breakout",
+    "symbol": "SPY",
+    "best_params": {
+      "breakout_period": 23,
+      "confirmation_period": 4,
+      "volume_threshold": 1.4788957113817562,
+      "price_threshold": 0.012897221057470893
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.786966,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_NVDA": {
+    "strategy_name": "swing_breakout",
+    "symbol": "NVDA",
+    "best_params": {
+      "breakout_period": 24,
+      "confirmation_period": 3,
+      "volume_threshold": 1.0224524314544046,
+      "price_threshold": 0.010220821120194935
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.919064,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_TSLA": {
+    "strategy_name": "swing_breakout",
+    "symbol": "TSLA",
+    "best_params": {
+      "breakout_period": 28,
+      "confirmation_period": 2,
+      "volume_threshold": 1.7245788635818668,
+      "price_threshold": 0.006702138408283069
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.918504,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_MSFT": {
+    "strategy_name": "swing_breakout",
+    "symbol": "MSFT",
+    "best_params": {
+      "breakout_period": 21,
+      "confirmation_period": 4,
+      "volume_threshold": 1.7490253035363221,
+      "price_threshold": 0.018123452075780425
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.922575,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_PLTR": {
+    "strategy_name": "swing_breakout",
+    "symbol": "PLTR",
+    "best_params": {
+      "breakout_period": 23,
+      "confirmation_period": 3,
+      "volume_threshold": 1.5226189398359333,
+      "price_threshold": 0.017191510699200413
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.917206,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_NVO": {
+    "strategy_name": "swing_breakout",
+    "symbol": "NVO",
+    "best_params": {
+      "breakout_period": 19,
+      "confirmation_period": 3,
+      "volume_threshold": 1.3232321270122356,
+      "price_threshold": 0.018996298504655788
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.936958,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_CONL": {
+    "strategy_name": "swing_breakout",
+    "symbol": "CONL",
+    "best_params": {
+      "breakout_period": 26,
+      "confirmation_period": 5,
+      "volume_threshold": 1.2541661918364624,
+      "price_threshold": 0.006859746684274441
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.802093,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_breakout_ETHU": {
+    "strategy_name": "swing_breakout",
+    "symbol": "ETHU",
+    "best_params": {
+      "breakout_period": 18,
+      "confirmation_period": 4,
+      "volume_threshold": 1.5884270508921747,
+      "price_threshold": 0.013735782406296814
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.836972,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_AAPL": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "AAPL",
+    "best_params": {
+      "breakout_period": 24,
+      "pullback_period": 4,
+      "retracement_threshold": 0.3833656794710121,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.572786,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_META": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "META",
+    "best_params": {
+      "breakout_period": 18,
+      "pullback_period": 8,
+      "retracement_threshold": 0.44434204676067596,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.833434,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_NFLX": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "NFLX",
+    "best_params": {
+      "breakout_period": 15,
+      "pullback_period": 5,
+      "retracement_threshold": 0.35937296734667323,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.912379,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_QQQ": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "QQQ",
+    "best_params": {
+      "breakout_period": 30,
+      "pullback_period": 4,
+      "retracement_threshold": 0.5917739867496864,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.219783,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_SPY": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "SPY",
+    "best_params": {
+      "breakout_period": 25,
+      "pullback_period": 7,
+      "retracement_threshold": 0.46349386682029836,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.218137,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_NVDA": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "NVDA",
+    "best_params": {
+      "breakout_period": 19,
+      "pullback_period": 6,
+      "retracement_threshold": 0.6297613292445304,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.334791,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_TSLA": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "TSLA",
+    "best_params": {
+      "breakout_period": 17,
+      "pullback_period": 3,
+      "retracement_threshold": 0.649039733968349,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.88084,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_MSFT": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "MSFT",
+    "best_params": {
+      "breakout_period": 19,
+      "pullback_period": 5,
+      "retracement_threshold": 0.46972457065249784,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.22098,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_PLTR": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "PLTR",
+    "best_params": {
+      "breakout_period": 23,
+      "pullback_period": 5,
+      "retracement_threshold": 0.5681807326685661,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.880786,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_NVO": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "NVO",
+    "best_params": {
+      "breakout_period": 25,
+      "pullback_period": 10,
+      "retracement_threshold": 0.6525007041367862,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.215326,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_CONL": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "CONL",
+    "best_params": {
+      "breakout_period": 24,
+      "pullback_period": 9,
+      "retracement_threshold": 0.6584692598098613,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.766478,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_pullback_entry_ETHU": {
+    "strategy_name": "swing_pullback_entry",
+    "symbol": "ETHU",
+    "best_params": {
+      "breakout_period": 20,
+      "pullback_period": 7,
+      "retracement_threshold": 0.4599084084968086,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.761238,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_AAPL": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "AAPL",
+    "best_params": {
+      "body_threshold": 0.4094714898928341,
+      "shadow_threshold": 0.4683537629608449,
+      "confirmation_period": 5,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.623627,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_META": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "META",
+    "best_params": {
+      "body_threshold": 0.44237454062344816,
+      "shadow_threshold": 0.3210984291369275,
+      "confirmation_period": 4,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.63554,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_NFLX": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "NFLX",
+    "best_params": {
+      "body_threshold": 0.5379612985934699,
+      "shadow_threshold": 0.49548770549888344,
+      "confirmation_period": 2,
+      "volume_confirmation": false
+    },
+    "best_score": 86.67329419419177,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.803526,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_QQQ": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "QQQ",
+    "best_params": {
+      "body_threshold": 0.5892114911746658,
+      "shadow_threshold": 0.39626319821346145,
+      "confirmation_period": 5,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.476868,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_SPY": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "SPY",
+    "best_params": {
+      "body_threshold": 0.40322045490684627,
+      "shadow_threshold": 0.2667069993085462,
+      "confirmation_period": 5,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.5313,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_NVDA": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "NVDA",
+    "best_params": {
+      "body_threshold": 0.6799870487134172,
+      "shadow_threshold": 0.34922365388758747,
+      "confirmation_period": 3,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.583362,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_TSLA": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "TSLA",
+    "best_params": {
+      "body_threshold": 0.4915653046431031,
+      "shadow_threshold": 0.4377347662230765,
+      "confirmation_period": 3,
+      "volume_confirmation": false
+    },
+    "best_score": 74.153925935704,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.835987,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_MSFT": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "MSFT",
+    "best_params": {
+      "body_threshold": 0.5029261347718913,
+      "shadow_threshold": 0.36794579819331796,
+      "confirmation_period": 5,
+      "volume_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.733,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_PLTR": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "PLTR",
+    "best_params": {
+      "body_threshold": 0.5800944057516936,
+      "shadow_threshold": 0.4675084539194638,
+      "confirmation_period": 3,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.511314,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_NVO": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "NVO",
+    "best_params": {
+      "body_threshold": 0.6972660314218879,
+      "shadow_threshold": 0.24704295958616007,
+      "confirmation_period": 4,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.65532,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_CONL": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "CONL",
+    "best_params": {
+      "body_threshold": 0.5235380529323165,
+      "shadow_threshold": 0.48659127966408616,
+      "confirmation_period": 5,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.525611,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_candle_pattern_ETHU": {
+    "strategy_name": "swing_candle_pattern",
+    "symbol": "ETHU",
+    "best_params": {
+      "body_threshold": 0.402271439179308,
+      "shadow_threshold": 0.25982151386965563,
+      "confirmation_period": 2,
+      "volume_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.657887,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_AAPL": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "AAPL",
+    "best_params": {
+      "bb_period": 26,
+      "bb_std": 1.619327605268902,
+      "rsi_period": 12,
+      "rsi_oversold": 36,
+      "rsi_overbought": 65,
+      "confirmation_candles": 1
+    },
+    "best_score": 54.76234568721415,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.016946,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_META": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "META",
+    "best_params": {
+      "bb_period": 18,
+      "bb_std": 2.2663974971605008,
+      "rsi_period": 15,
+      "rsi_oversold": 36,
+      "rsi_overbought": 61,
+      "confirmation_candles": 2
+    },
+    "best_score": 71.8207382094599,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.01624,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_NFLX": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "NFLX",
+    "best_params": {
+      "bb_period": 19,
+      "bb_std": 1.5895545047289046,
+      "rsi_period": 16,
+      "rsi_oversold": 26,
+      "rsi_overbought": 70,
+      "confirmation_candles": 2
+    },
+    "best_score": 70.82090462668086,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.984006,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_QQQ": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "QQQ",
+    "best_params": {
+      "bb_period": 17,
+      "bb_std": 2.4209235882824993,
+      "rsi_period": 12,
+      "rsi_oversold": 35,
+      "rsi_overbought": 60,
+      "confirmation_candles": 1
+    },
+    "best_score": 63.69011567043607,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.912171,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_SPY": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "SPY",
+    "best_params": {
+      "bb_period": 19,
+      "bb_std": 1.9170837159987704,
+      "rsi_period": 11,
+      "rsi_oversold": 34,
+      "rsi_overbought": 66,
+      "confirmation_candles": 1
+    },
+    "best_score": 59.122728832158415,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.90439,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_NVDA": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "NVDA",
+    "best_params": {
+      "bb_period": 15,
+      "bb_std": 1.7383115565346225,
+      "rsi_period": 19,
+      "rsi_oversold": 34,
+      "rsi_overbought": 69,
+      "confirmation_candles": 3
+    },
+    "best_score": 79.15823152886779,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.012096,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_TSLA": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "TSLA",
+    "best_params": {
+      "bb_period": 15,
+      "bb_std": 2.358600819916443,
+      "rsi_period": 18,
+      "rsi_oversold": 27,
+      "rsi_overbought": 74,
+      "confirmation_candles": 2
+    },
+    "best_score": 39.04937363644825,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.000318,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_MSFT": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "MSFT",
+    "best_params": {
+      "bb_period": 17,
+      "bb_std": 1.9506440260769984,
+      "rsi_period": 10,
+      "rsi_oversold": 28,
+      "rsi_overbought": 72,
+      "confirmation_candles": 1
+    },
+    "best_score": 63.95306821679853,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.995445,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_PLTR": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "PLTR",
+    "best_params": {
+      "bb_period": 15,
+      "bb_std": 1.598311479841367,
+      "rsi_period": 20,
+      "rsi_oversold": 37,
+      "rsi_overbought": 73,
+      "confirmation_candles": 1
+    },
+    "best_score": 87.24604680574033,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.020144,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_NVO": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "NVO",
+    "best_params": {
+      "bb_period": 25,
+      "bb_std": 1.8118944523030394,
+      "rsi_period": 14,
+      "rsi_oversold": 33,
+      "rsi_overbought": 74,
+      "confirmation_candles": 2
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.071355,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_CONL": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "CONL",
+    "best_params": {
+      "bb_period": 25,
+      "bb_std": 2.480877289717974,
+      "rsi_period": 13,
+      "rsi_oversold": 31,
+      "rsi_overbought": 75,
+      "confirmation_candles": 3
+    },
+    "best_score": 86.18011266234467,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.880725,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_bollinger_band_ETHU": {
+    "strategy_name": "swing_bollinger_band",
+    "symbol": "ETHU",
+    "best_params": {
+      "bb_period": 20,
+      "bb_std": 2.5828952434781347,
+      "rsi_period": 18,
+      "rsi_oversold": 37,
+      "rsi_overbought": 66,
+      "confirmation_candles": 3
+    },
+    "best_score": 87.44696317512314,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.875339,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_AAPL": {
+    "strategy_name": "swing_macd",
+    "symbol": "AAPL",
+    "best_params": {
+      "macd_fast": 13,
+      "macd_slow": 30,
+      "macd_signal": 7,
+      "min_holding_days": 5,
+      "max_holding_days": 16,
+      "volume_threshold": 0.8800394884744992,
+      "trend_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.092044,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_META": {
+    "strategy_name": "swing_macd",
+    "symbol": "META",
+    "best_params": {
+      "macd_fast": 15,
+      "macd_slow": 35,
+      "macd_signal": 15,
+      "min_holding_days": 3,
+      "max_holding_days": 18,
+      "volume_threshold": 0.9990171586732871,
+      "trend_confirmation": true
+    },
+    "best_score": 86.45518106684358,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.079909,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_NFLX": {
+    "strategy_name": "swing_macd",
+    "symbol": "NFLX",
+    "best_params": {
+      "macd_fast": 10,
+      "macd_slow": 25,
+      "macd_signal": 7,
+      "min_holding_days": 5,
+      "max_holding_days": 25,
+      "volume_threshold": 1.30400722176862,
+      "trend_confirmation": true
+    },
+    "best_score": 87.63741265794556,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.044738,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_QQQ": {
+    "strategy_name": "swing_macd",
+    "symbol": "QQQ",
+    "best_params": {
+      "macd_fast": 10,
+      "macd_slow": 21,
+      "macd_signal": 7,
+      "min_holding_days": 8,
+      "max_holding_days": 16,
+      "volume_threshold": 1.3175370491863805,
+      "trend_confirmation": false
+    },
+    "best_score": 29.7997705613728,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.92624,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_SPY": {
+    "strategy_name": "swing_macd",
+    "symbol": "SPY",
+    "best_params": {
+      "macd_fast": 13,
+      "macd_slow": 33,
+      "macd_signal": 13,
+      "min_holding_days": 8,
+      "max_holding_days": 11,
+      "volume_threshold": 1.3864399044428253,
+      "trend_confirmation": true
+    },
+    "best_score": 30.87206807712604,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.947546,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_NVDA": {
+    "strategy_name": "swing_macd",
+    "symbol": "NVDA",
+    "best_params": {
+      "macd_fast": 15,
+      "macd_slow": 35,
+      "macd_signal": 11,
+      "min_holding_days": 8,
+      "max_holding_days": 20,
+      "volume_threshold": 1.246603885405881,
+      "trend_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.0648,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_TSLA": {
+    "strategy_name": "swing_macd",
+    "symbol": "TSLA",
+    "best_params": {
+      "macd_fast": 14,
+      "macd_slow": 26,
+      "macd_signal": 10,
+      "min_holding_days": 10,
+      "max_holding_days": 22,
+      "volume_threshold": 1.3848149477498188,
+      "trend_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.048138,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_MSFT": {
+    "strategy_name": "swing_macd",
+    "symbol": "MSFT",
+    "best_params": {
+      "macd_fast": 14,
+      "macd_slow": 28,
+      "macd_signal": 10,
+      "min_holding_days": 9,
+      "max_holding_days": 16,
+      "volume_threshold": 1.0840230584856154,
+      "trend_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.066513,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_PLTR": {
+    "strategy_name": "swing_macd",
+    "symbol": "PLTR",
+    "best_params": {
+      "macd_fast": 9,
+      "macd_slow": 28,
+      "macd_signal": 15,
+      "min_holding_days": 7,
+      "max_holding_days": 12,
+      "volume_threshold": 1.332659421156697,
+      "trend_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.041458,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_NVO": {
+    "strategy_name": "swing_macd",
+    "symbol": "NVO",
+    "best_params": {
+      "macd_fast": 14,
+      "macd_slow": 34,
+      "macd_signal": 8,
+      "min_holding_days": 6,
+      "max_holding_days": 17,
+      "volume_threshold": 1.2063070877969886,
+      "trend_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 1.066377,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_CONL": {
+    "strategy_name": "swing_macd",
+    "symbol": "CONL",
+    "best_params": {
+      "macd_fast": 12,
+      "macd_slow": 30,
+      "macd_signal": 11,
+      "min_holding_days": 3,
+      "max_holding_days": 23,
+      "volume_threshold": 1.053075365948021,
+      "trend_confirmation": true
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.925393,
+    "n_combinations_tested": 50,
+    "all_results": []
+  },
+  "swing_macd_ETHU": {
+    "strategy_name": "swing_macd",
+    "symbol": "ETHU",
+    "best_params": {
+      "macd_fast": 11,
+      "macd_slow": 27,
+      "macd_signal": 13,
+      "min_holding_days": 6,
+      "max_holding_days": 11,
+      "volume_threshold": 1.0560165728189408,
+      "trend_confirmation": false
+    },
+    "best_score": -999999.0,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 0.922264,
+    "n_combinations_tested": 50,
+    "all_results": []
+  }
+}

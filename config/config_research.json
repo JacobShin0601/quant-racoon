@@ -1,6 +1,6 @@
 {
   "research_config": {
-    "experiment_name": "individual_stock_optimization_20250720",
+    "experiment_name": "individual_stock_optimization_20250721",
     "description": "개별 종목별 전략 하이퍼파라미터 최적화 (베이지안 최적화)",
     "data_dir": "data",
     "log_dir": "log",

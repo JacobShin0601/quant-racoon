@@ -24,23 +24,42 @@ from actions.portfolio_optimization import (
 )
 from actions.portfolio_weight import PortfolioWeightCalculator
 from actions.calculate_index import StrategyParams
-from .helper import (
-    PortfolioConfig,
-    PortfolioWeights,
-    Logger,
-    load_config,
-    load_and_preprocess_data,
-    validate_portfolio_weights,
-    save_json_data,
-    load_json_data,
-    print_section_header,
-    print_subsection_header,
-    format_percentage,
-    format_number,
-    split_data_train_test,
-    DEFAULT_CONFIG_PATH,
-    DEFAULT_DATA_DIR,
-)
+try:
+    from .helper import (
+        PortfolioConfig,
+        PortfolioWeights,
+        Logger,
+        load_config,
+        load_and_preprocess_data,
+        validate_portfolio_weights,
+        save_json_data,
+        load_json_data,
+        print_section_header,
+        print_subsection_header,
+        format_percentage,
+        format_number,
+        split_data_train_test,
+        DEFAULT_CONFIG_PATH,
+        DEFAULT_DATA_DIR,
+    )
+except ImportError:
+    from src.agent.helper import (
+        PortfolioConfig,
+        PortfolioWeights,
+        Logger,
+        load_config,
+        load_and_preprocess_data,
+        validate_portfolio_weights,
+        save_json_data,
+        load_json_data,
+        print_section_header,
+        print_subsection_header,
+        format_percentage,
+        format_number,
+        split_data_train_test,
+        DEFAULT_CONFIG_PATH,
+        DEFAULT_DATA_DIR,
+    )
 
 
 class AdvancedPortfolioManager:
@@ -519,16 +538,20 @@ class AdvancedPortfolioManager:
             strategy = strategy_classes[strategy_name](StrategyParams())
             print(f"✅ 전략 인스턴스 생성 성공: {strategy}")
 
-            # 최적화된 파라미터 적용
+            # 최적화된 파라미터 적용 (전략별 유효한 파라미터만)
+            valid_params = {}
             for param_name, param_value in params.items():
                 print(f"  - 파라미터 적용: {param_name} = {param_value}")
                 if hasattr(strategy, param_name):
                     setattr(strategy, param_name, param_value)
+                    valid_params[param_name] = param_value
                     self.logger.log_info(
                         f"  - 파라미터 설정: {param_name} = {param_value}"
                     )
                 else:
-                    print(f"  ⚠️ 전략에 없는 파라미터: {param_name}")
+                    print(f"  ⚠️ 전략에 없는 파라미터: {param_name} (무시됨)")
+            
+            print(f"  - 적용된 유효 파라미터: {list(valid_params.keys())}")
 
             # 신호 생성
             print(f"  - 신호 생성 시작")
@@ -713,18 +736,20 @@ class AdvancedPortfolioManager:
                 self.logger.log_error("설정 파일에서 심볼을 찾을 수 없습니다")
                 return {}
 
-            # time_horizon에 맞는 하위 디렉토리 경로 구성
-            time_horizon = self.config.get("time_horizon", "swing")
-            data_path = Path(data_dir) / time_horizon
-            print(f"🔍 실제 검색 경로: {data_path}")
-            self.logger.log_info(f"🔍 실제 검색 경로: {data_path}")
-
+            # data_dir 인자를 직접 사용
+            data_path = Path(data_dir)
+            
+            # data_dir이 존재하는지 확인
             if not data_path.exists():
-                print(f"❌ 데이터 경로가 존재하지 않습니다: {data_path}")
-                self.logger.log_error(
-                    f"❌ 데이터 경로가 존재하지 않습니다: {data_path}"
-                )
+                print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
+                self.logger.log_error(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
                 return {}
+            
+            print(f"🔍 데이터 디렉토리 사용: {data_path}")
+            self.logger.log_info(f"🔍 데이터 디렉토리 사용: {data_path}")
+            
+            print(f"🔍 최종 검색 경로: {data_path}")
+            self.logger.log_info(f"🔍 최종 검색 경로: {data_path}")
 
             for symbol in symbols:
                 self.logger.log_info(f"🔍 {symbol} 데이터 파일 검색 중...")
@@ -790,10 +815,17 @@ class AdvancedPortfolioManager:
         portfolio_config = self.config.get("portfolio", {})
         trading_config = self.config.get("trading", {})
 
-        # 기본 제약조건
+        # 기본 제약조건 (설정 파일에서 읽기)
+        min_weight = portfolio_config.get("min_weight", 0.0)
+        max_weight = portfolio_config.get("max_weight", 1.0)
+        
+        print(f"🔍 포트폴리오 제약조건 설정:")
+        print(f"  - 최소 비중: {min_weight}")
+        print(f"  - 최대 비중: {max_weight}")
+
         constraints = OptimizationConstraints(
-            min_weight=portfolio_config.get("min_weight", 0.0),
-            max_weight=portfolio_config.get("max_weight", 1.0),
+            min_weight=min_weight,
+            max_weight=max_weight,
             cash_weight=portfolio_config.get("cash_weight", 0.0),
             leverage=portfolio_config.get("leverage", 1.0),
             enable_short_position=trading_config.get("enable_short_position", False),
@@ -868,6 +900,15 @@ class AdvancedPortfolioManager:
                     ),
                 }
 
+            # 수익률 데이터도 포함 (evaluator에서 사용)
+            if "returns_data" in self.portfolio_optimization_result:
+                returns_df = self.portfolio_optimization_result["returns_data"]
+                serializable_result["returns_data"] = {
+                    "columns": returns_df.columns.tolist(),
+                    "index": returns_df.index.tolist(),
+                    "values": returns_df.values.tolist()
+                }
+
             # 디렉토리 생성
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -879,6 +920,9 @@ class AdvancedPortfolioManager:
 
         except Exception as e:
             self.logger.log_error(f"포트폴리오 최적화 결과 저장 실패: {e}")
+            import traceback
+
+            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
             return None
 
     def generate_portfolio_report(self) -> str:

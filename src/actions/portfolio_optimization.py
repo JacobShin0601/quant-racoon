@@ -324,64 +324,207 @@ class PortfolioOptimizer:
     def risk_parity_optimization(
         self, constraints: OptimizationConstraints
     ) -> OptimizationResult:
-        """리스크 패리티 최적화"""
+        """리스크 패리티 최적화 (개선된 버전)"""
         self.logger.debug("리스크 패리티 최적화 실행 중...")
+        
+        # 데이터 품질 검증
+        print(f"🔍 수익률 데이터 형태: {self.returns.shape}")
+        if self.returns.shape[0] < 10:
+            print(f"⚠️ 수익률 데이터가 부족합니다: {self.returns.shape[0]}개 행")
+            print("⚠️ 동등 가중치로 대체합니다")
+            
+            # 동등 가중치 반환
+            equal_weights = np.ones(self.n_assets) / self.n_assets
+            portfolio_return = np.sum(equal_weights * self.expected_returns)
+            portfolio_risk = np.sqrt(equal_weights.T @ self.cov_matrix.values @ equal_weights)
+            sharpe_ratio = (portfolio_return - self.risk_free_rate) / portfolio_risk if portfolio_risk > 0 else 0
+            
+            return OptimizationResult(
+                weights=equal_weights,
+                expected_return=portfolio_return,
+                volatility=portfolio_risk,
+                sharpe_ratio=sharpe_ratio,
+                sortino_ratio=sharpe_ratio,
+                max_drawdown=-0.05,
+                var_95=-0.02,
+                cvar_95=-0.03,
+                diversification_ratio=1.0,
+                method="risk_parity",
+                constraints=constraints,
+                metadata={"fallback": "equal_weight_due_to_insufficient_data"}
+            )
+
+        # 공분산 행렬의 수치적 안정성 확인
+        cov_matrix = self.cov_matrix.values.copy()
+        
+        # 대각선 요소가 0인 경우 작은 값으로 대체
+        diag_elements = np.diag(cov_matrix)
+        min_variance = 1e-8
+        if np.any(diag_elements < min_variance):
+            print(f"⚠️ 공분산 행렬 대각선 요소 조정: 최소값 {min_variance}")
+            np.fill_diagonal(cov_matrix, np.maximum(diag_elements, min_variance))
+
+        # 조건수 확인
+        condition_number = np.linalg.cond(cov_matrix)
+        print(f"🔍 공분산 행렬 조건수: {condition_number:.2e}")
+        
+        if condition_number > 1e12:
+            print("⚠️ 공분산 행렬이 불안정합니다. 정규화를 적용합니다.")
+            # 정규화 적용
+            cov_matrix = cov_matrix / np.trace(cov_matrix)
 
         def risk_parity_objective(weights):
-            """리스크 패리티 목적함수: 각 자산의 리스크 기여도를 동일하게 만듦"""
-            portfolio_risk = np.sqrt(weights.T @ self.cov_matrix.values @ weights)
-            if portfolio_risk == 0:
-                return 0
+            """개선된 리스크 패리티 목적함수"""
+            try:
+                # 포트폴리오 리스크 계산
+                portfolio_risk = np.sqrt(weights.T @ cov_matrix @ weights)
+                if portfolio_risk < 1e-10:
+                    return 1e6  # 큰 페널티
 
-            # 각 자산의 리스크 기여도 계산
-            asset_contributions = (
-                weights * (self.cov_matrix.values @ weights) / portfolio_risk
-            )
+                # 각 자산의 리스크 기여도 계산
+                asset_contributions = (weights * (cov_matrix @ weights)) / portfolio_risk
+                
+                # 목표 리스크 기여도 (균등 분배)
+                target_contribution = portfolio_risk / self.n_assets
+                
+                # 리스크 기여도 차이의 제곱합 (분산 대신)
+                contribution_errors = asset_contributions - target_contribution
+                sum_squared_errors = np.sum(contribution_errors ** 2)
+                
+                return sum_squared_errors
+                
+            except Exception as e:
+                print(f"❌ 목적함수 계산 오류: {e}")
+                return 1e6
 
-            # 목표 리스크 기여도 (균등 분배)
-            target_contribution = portfolio_risk / self.n_assets
+        def risk_parity_constraint(weights):
+            """리스크 패리티 제약조건"""
+            try:
+                portfolio_risk = np.sqrt(weights.T @ cov_matrix @ weights)
+                if portfolio_risk < 1e-10:
+                    return np.zeros(self.n_assets)
+                
+                asset_contributions = (weights * (cov_matrix @ weights)) / portfolio_risk
+                target_contribution = portfolio_risk / self.n_assets
+                
+                return asset_contributions - target_contribution
+                
+            except Exception as e:
+                print(f"❌ 제약조건 계산 오류: {e}")
+                return np.ones(self.n_assets)
 
-            # 리스크 기여도의 분산을 최소화
-            variance_of_contributions = np.var(asset_contributions)
+        # 제약조건 검증 및 조정
+        total_min_weight = constraints.min_weight * self.n_assets
+        total_max_weight = constraints.max_weight * self.n_assets
+        
+        print(f"🔍 Risk Parity 제약조건 검증:")
+        print(f"  - 종목 수: {self.n_assets}")
+        print(f"  - 최소 비중: {constraints.min_weight} (총 {total_min_weight:.2f})")
+        print(f"  - 최대 비중: {constraints.max_weight} (총 {total_max_weight:.2f})")
+        print(f"  - 목표 총 비중: {1 - constraints.cash_weight:.2f}")
 
-            self.logger.debug(f"포트폴리오 리스크: {portfolio_risk:.6f}")
-            self.logger.debug(f"자산별 리스크 기여도: {asset_contributions}")
-            self.logger.debug(f"목표 기여도: {target_contribution:.6f}")
-            self.logger.debug(f"기여도 분산: {variance_of_contributions:.6f}")
+        # 제약조건이 너무 엄격한 경우 조정
+        adjusted_min_weight = constraints.min_weight
+        adjusted_max_weight = constraints.max_weight
+        
+        if total_min_weight > (1 - constraints.cash_weight):
+            adjusted_min_weight = (1 - constraints.cash_weight) / self.n_assets
+            print(f"⚠️ 최소 비중 조정: {constraints.min_weight} → {adjusted_min_weight:.4f}")
+        
+        if total_max_weight < (1 - constraints.cash_weight):
+            adjusted_max_weight = (1 - constraints.cash_weight) / self.n_assets
+            print(f"⚠️ 최대 비중 조정: {constraints.max_weight} → {adjusted_max_weight:.4f}")
 
-            return variance_of_contributions
-
-        # 초기 가중치 (동일 가중치)
-        initial_weights = np.ones(self.n_assets) / self.n_assets
-
-        # 제약조건
-        bounds = [(constraints.min_weight, constraints.max_weight)] * self.n_assets
-        constraints_list = [
-            {"type": "eq", "fun": lambda x: np.sum(x) - (1 - constraints.cash_weight)}
+        # 여러 초기값 시도
+        initial_guesses = [
+            np.ones(self.n_assets) / self.n_assets,  # 동일 가중치
+            np.random.dirichlet(np.ones(self.n_assets)),  # 랜덤 가중치
         ]
+        
+        # 개별 자산 변동성 기반 초기 가중치
+        asset_vols = np.sqrt(np.diag(cov_matrix))
+        if np.all(asset_vols > 0):
+            inverse_vol_weights = 1.0 / asset_vols
+            inverse_vol_weights = inverse_vol_weights / np.sum(inverse_vol_weights)
+            initial_guesses.append(inverse_vol_weights)
+            print(f"🔍 변동성 역수 기반 초기 가중치 추가")
 
-        if constraints.leverage != 1.0:
-            constraints_list.append(
-                {
-                    "type": "ineq",
-                    "fun": lambda x: constraints.leverage - np.sum(np.abs(x)),
-                }
-            )
+        best_result = None
+        best_objective = float('inf')
+        
+        # 여러 최적화 방법 시도
+        methods = ["SLSQP", "trust-constr", "L-BFGS-B"]
+        
+        for i, initial_weights in enumerate(initial_guesses):
+            print(f"🔍 초기값 {i+1}/{len(initial_guesses)} 시도")
+            
+            for method in methods:
+                try:
+                    print(f"  - {method} 최적화 시도")
+                    
+                    # 제약조건
+                    bounds = [(adjusted_min_weight, adjusted_max_weight)] * self.n_assets
+                    constraints_list = [
+                        {"type": "eq", "fun": lambda x: np.sum(x) - (1 - constraints.cash_weight)}
+                    ]
 
-        # 최적화
-        result = minimize(
-            risk_parity_objective,
-            initial_weights,
-            method="SLSQP",
-            bounds=bounds,
-            constraints=constraints_list,
-            options={"maxiter": 1000},
-        )
+                    if constraints.leverage != 1.0:
+                        constraints_list.append(
+                            {
+                                "type": "ineq",
+                                "fun": lambda x: constraints.leverage - np.sum(np.abs(x)),
+                            }
+                        )
 
-        if not result.success:
-            raise ValueError(f"최적화 실패: {result.message}")
+                    # 최적화 실행
+                    result = minimize(
+                        risk_parity_objective,
+                        initial_weights,
+                        method=method,
+                        bounds=bounds,
+                        constraints=constraints_list,
+                        options={
+                            "maxiter": 3000,
+                            "ftol": 1e-10,
+                            "xtol": 1e-10,
+                            "eps": 1e-8
+                        },
+                    )
+                    
+                    if result.success and result.fun < best_objective:
+                        best_result = result
+                        best_objective = result.fun
+                        print(f"  ✅ {method} 성공 (목적함수: {result.fun:.6f})")
+                        break
+                    elif result.success:
+                        print(f"  ⚠️ {method} 성공했지만 더 나은 해가 있음 (목적함수: {result.fun:.6f})")
+                    else:
+                        print(f"  ❌ {method} 실패: {result.message}")
+                        
+                except Exception as e:
+                    print(f"  ❌ {method} 예외: {e}")
+                    continue
 
-        weights = result.x
+        if best_result is None:
+            print(f"❌ 모든 Risk Parity 최적화 방법 실패")
+            print(f"🔍 Fallback: 동일 가중치 사용")
+            weights = np.ones(self.n_assets) / self.n_assets
+            weights = weights * (1 - constraints.cash_weight)
+        else:
+            weights = best_result.x
+            print(f"✅ Risk Parity 최적화 성공 (최종 목적함수: {best_objective:.6f})")
+
+        # 결과 검증
+        portfolio_risk = np.sqrt(weights.T @ cov_matrix @ weights)
+        asset_contributions = (weights * (cov_matrix @ weights)) / portfolio_risk
+        target_contribution = portfolio_risk / self.n_assets
+        
+        print(f"🔍 최종 결과 검증:")
+        print(f"  - 포트폴리오 리스크: {portfolio_risk:.6f}")
+        print(f"  - 목표 리스크 기여도: {target_contribution:.6f}")
+        print(f"  - 자산별 리스크 기여도: {asset_contributions}")
+        print(f"  - 기여도 표준편차: {np.std(asset_contributions):.6f}")
+
         metrics = self.calculate_performance_metrics(weights)
 
         return OptimizationResult(
@@ -389,7 +532,12 @@ class PortfolioOptimizer:
             method="Risk Parity",
             constraints=constraints,
             **metrics,
-            metadata={"optimization_status": result.success},
+            metadata={
+                "optimization_status": best_result is not None,
+                "objective_value": best_objective if best_result else None,
+                "risk_contributions": asset_contributions.tolist(),
+                "contribution_std": np.std(asset_contributions)
+            },
         )
 
     def minimum_variance_optimization(

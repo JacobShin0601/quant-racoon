@@ -1,0 +1,13 @@
+{
+  "train": {
+    "AAPL": {
+      "total_return": 0.20976822298484607,
+      "sharpe_ratio": 2.652180350892087,
+      "sortino_ratio": 2.0525094879216685,
+      "max_drawdown": 0.04661028251064013,
+      "volatility": 0.12525821739941312,
+      "beta": 1.0,
+      "total_trades": 3,
+      "trades": [
+        {
+          "entry_time": 

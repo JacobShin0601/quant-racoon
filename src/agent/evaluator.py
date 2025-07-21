@@ -115,20 +115,14 @@ class TrainTestEvaluator:
         self.strategy_manager = StrategyManager()
         self.params = StrategyParams()
         self.simulator = TradingSimulator(config_path)
-        # PortfolioWeightCalculator 제거 - portfolio_manager.py의 결과물만 사용
-
-        # 포트폴리오 매니저 초기화 (선택적)
-        if PORTFOLIO_MANAGER_AVAILABLE:
-            self.portfolio_manager = AdvancedPortfolioManager(config_path)
-        else:
-            self.portfolio_manager = None
+        # 포트폴리오 매니저 초기화 제거 - portfolio_results_path로 직접 로드
 
         self.optimization_results_path = optimization_results_path
         self.portfolio_results_path = portfolio_results_path
         self.results = {}
         self.logger = Logger()
         self.evaluation_start_time = datetime.now()
-        self.execution_uuid = None
+        self.execution_uuid = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Train/Test 분할 비율
         self.train_ratio = self.config.get("data", {}).get("train_ratio", 0.8)
@@ -176,10 +170,45 @@ class TrainTestEvaluator:
         if not symbols:
             symbols = self.config.get("data", {}).get("symbols", [])
 
-        data_dict = load_and_preprocess_data(self.data_dir, symbols)
-        if not data_dict:
-            self.logger.log_error(f"데이터를 로드할 수 없습니다: {self.data_dir}")
+        print(f"🔍 데이터 로드 시작 - data_dir: {self.data_dir}")
+        print(f"🔍 심볼: {symbols}")
+        
+        # data_dir 인자를 직접 사용
+        data_path = Path(self.data_dir)
+        
+        # data_dir이 존재하는지 확인
+        if not data_path.exists():
+            print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
             return {}, {}
+        
+        print(f"🔍 데이터 디렉토리 사용: {data_path}")
+        
+        print(f"🔍 최종 검색 경로: {data_path}")
+
+        data_dict = {}
+        for symbol in symbols:
+            print(f"🔍 {symbol} 데이터 파일 검색 중...")
+            # 파일명 패턴 찾기
+            pattern = f"{symbol}_*.csv"
+            files = list(data_path.glob(pattern))
+            
+            if files:
+                # 가장 최신 파일 선택
+                latest_file = max(files, key=lambda x: x.stat().st_mtime)
+                print(f"🔍 {symbol} 파일 로드: {latest_file}")
+                df = pd.read_csv(latest_file)
+                df["datetime"] = pd.to_datetime(df["datetime"])
+                df.set_index("datetime", inplace=True)
+                data_dict[symbol] = df
+                print(f"✅ {symbol} 데이터 로드: {latest_file.name} (행: {len(df)})")
+            else:
+                print(f"⚠️ {symbol} 데이터 파일을 찾을 수 없음")
+
+        if not data_dict:
+            self.logger.log_error(f"데이터를 로드할 수 없습니다: {data_path}")
+            return {}, {}
+
+        print(f"✅ 데이터 로드 완료: {len(data_dict)}개 종목")
 
         # Train/Test 분할
         train_data_dict, test_data_dict = split_data_train_test(
@@ -247,22 +276,28 @@ class TrainTestEvaluator:
 
     def load_portfolio_results(self) -> Dict[str, Any]:
         """포트폴리오 최적화 결과 로드"""
-        if not self.portfolio_results_path:
-            # 자동으로 최신 포트폴리오 결과 파일 찾기
-            self.portfolio_results_path = self._find_latest_portfolio_file()
-
-        if not self.portfolio_results_path:
-            self.logger.log_warning("포트폴리오 결과 파일을 찾을 수 없습니다")
-            return {}
-
         try:
-            with open(self.portfolio_results_path, "r", encoding="utf-8") as f:
+            portfolio_file = self._find_latest_portfolio_file()
+            if not portfolio_file:
+                self.logger.log_warning("포트폴리오 최적화 결과 파일을 찾을 수 없습니다")
+                return {}
+
+            with open(portfolio_file, "r", encoding="utf-8") as f:
                 results = json.load(f)
 
-            self.logger.log_success(
-                f"포트폴리오 결과 로드 완료: {self.portfolio_results_path}"
-            )
+            # 수익률 데이터 복원 (JSON에서 DataFrame으로)
+            if "returns_data" in results:
+                returns_data = results["returns_data"]
+                returns_df = pd.DataFrame(
+                    returns_data["values"],
+                    index=returns_data["index"],
+                    columns=returns_data["columns"]
+                )
+                results["returns_data"] = returns_df
+
+            self.logger.log_success(f"포트폴리오 결과 로드 완료: {portfolio_file}")
             return results
+
         except Exception as e:
             self.logger.log_error(f"포트폴리오 결과 로드 실패: {e}")
             return {}
@@ -304,34 +339,52 @@ class TrainTestEvaluator:
         results = {}
 
         try:
+            print(f"🔍 전략 평가 시작: {strategy_name}")
+            print(f"🔍 데이터 종목: {list(data_dict.keys())}")
+            print(f"🔍 파라미터: {optimized_params}")
+            
             # 전략 인스턴스 생성
             strategy = self.strategy_manager.strategies.get(strategy_name)
             if not strategy:
+                print(f"❌ 전략을 찾을 수 없습니다: {strategy_name}")
                 self.logger.log_error(f"전략을 찾을 수 없습니다: {strategy_name}")
                 return {}
+            
+            print(f"✅ 전략 인스턴스 생성 성공: {strategy}")
 
             # 최적화된 파라미터 적용
             for param_name, param_value in optimized_params.items():
                 if hasattr(strategy, param_name):
                     setattr(strategy, param_name, param_value)
+                    print(f"  - 파라미터 설정: {param_name} = {param_value}")
 
             # 각 종목에 대해 전략 실행
             for symbol, data in data_dict.items():
                 try:
+                    print(f"  🔍 {symbol} 신호 생성 시작")
                     signals = strategy.generate_signals(data)
+                    print(f"  🔍 {symbol} 신호 생성 결과: {type(signals)}, shape: {getattr(signals, 'shape', None) if signals is not None else None}")
 
                     if signals is not None and not signals.empty:
+                        print(f"  ✅ {symbol} 신호 생성 성공")
                         # 거래 시뮬레이션
+                        print(f"  🔍 {symbol} 거래 시뮬레이션 시작")
                         result = self.simulator.simulate_trading(
                             data, signals, strategy_name
                         )
+                        print(f"  🔍 {symbol} 시뮬레이션 결과: {type(result)}, keys: {list(result.keys()) if result else None}")
 
                         # 시뮬레이션 결과 요약만 출력
                         if result:
+                            print(f"  ✅ {symbol} 시뮬레이션 성공")
                             # 성과 지표 계산 - simulate_trading 결과 구조에 맞게 수정
                             results_data = result.get("results", {})
                             total_return = results_data.get("total_return", 0.0)
                             total_trades = results_data.get("total_trades", 0)
+                            
+                            print(f"  🔍 {symbol} 결과 데이터: {results_data}")
+                            print(f"  🔍 {symbol} 총 수익률: {total_return}")
+                            print(f"  🔍 {symbol} 총 거래 수: {total_trades}")
 
                             # 샤프 비율 계산
                             returns = result.get("returns", [])
@@ -349,21 +402,27 @@ class TrainTestEvaluator:
                                     returns_series = pd.Series(returns)
                                     mean_return = returns_series.mean()
                                     std_return = returns_series.std()
+                                    
+                                    # 무위험 수익률 고려한 샤프 비율 계산
+                                    risk_free_rate = 0.02 / 252  # 일간 무위험 수익률
+                                    excess_return = mean_return - risk_free_rate
+                                    # 연간화된 샤프 비율: (연간 초과수익률) / (연간 표준편차)
                                     sharpe_ratio = (
-                                        (mean_return * 252)
+                                        (excess_return * 252)
                                         / (std_return * np.sqrt(252))
                                         if std_return > 0
                                         else 0
                                     )
 
-                                    # 소르티노 비율 계산
+                                    # 소르티노 비율 계산 (무위험 수익률 고려)
                                     negative_returns = returns_series[
                                         returns_series < 0
                                     ]
                                     if len(negative_returns) > 0:
                                         downside_deviation = negative_returns.std()
+                                        # 연간화된 소르티노 비율: (연간 초과수익률) / (연간 하방표준편차)
                                         sortino_ratio = (
-                                            (mean_return * 252)
+                                            (excess_return * 252)
                                             / (downside_deviation * np.sqrt(252))
                                             if downside_deviation > 0
                                             else 0
@@ -386,14 +445,23 @@ class TrainTestEvaluator:
                             # 베타 계산 (간단히 1.0으로 설정)
                             beta = 1.0
 
+                            # 누적 수익률 계산 (복리 효과 고려)
+                            cumulative_return = self._calculate_cumulative_return(result.get("trades", []))
+                            
                             results[symbol] = {
-                                "total_return": total_return,
+                                "total_return": total_return,  # 기존 total_return 유지 (거래별 수익률 합계)
+                                "cumulative_return": cumulative_return,  # 누적 수익률 추가
                                 "sharpe_ratio": sharpe_ratio,
                                 "sortino_ratio": sortino_ratio,
                                 "max_drawdown": max_drawdown,
                                 "volatility": volatility,
                                 "beta": beta,
                                 "total_trades": total_trades,
+                                "trades": result.get("trades", []),  # 거래 내역 추가
+                                "strategy": strategy_name,  # 전략 이름 추가
+                                "current_position": result.get("current_position", 0),  # 현재 보유 상태 추가
+                                "final_price": result.get("final_price"),  # 최종 매수/매도 가격
+                                "final_date": result.get("final_date"),  # 최종 매수/매도 시점
                             }
                             pass
                         else:
@@ -427,6 +495,7 @@ class TrainTestEvaluator:
         train_data_dict: Dict[str, pd.DataFrame],
         test_data_dict: Dict[str, pd.DataFrame],
         optimization_results: Dict[str, Dict],
+        portfolio_results: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """모든 전략의 Train/Test 성과 평가"""
 
@@ -442,6 +511,14 @@ class TrainTestEvaluator:
         # Buy & Hold 성과 계산
         all_results["buy_hold_train"] = calculate_buy_hold_returns(train_data_dict)
         all_results["buy_hold_test"] = calculate_buy_hold_returns(test_data_dict)
+        
+        print(f"🔍 Buy & Hold 데이터 생성:")
+        print(f"  - TRAIN: {len(all_results['buy_hold_train'])}개 종목")
+        print(f"  - TEST: {len(all_results['buy_hold_test'])}개 종목")
+        if all_results["buy_hold_train"]:
+            sample_symbol = list(all_results["buy_hold_train"].keys())[0]
+            sample_data = all_results["buy_hold_train"][sample_symbol]
+            print(f"  - 샘플 ({sample_symbol}): {sample_data.get('total_return', 0)*100:.2f}%")
 
         # 최적화된 전략들 평가
         symbols = list(train_data_dict.keys())
@@ -452,14 +529,49 @@ class TrainTestEvaluator:
             best_strategy = None
             best_params = {}
 
-            # 키 패턴으로 찾기 (예: "dual_momentum_AAPL")
-            for key, result in optimization_results.items():
-                if key.endswith(f"_{symbol}"):
-                    best_strategy = result.get("strategy_name")
-                    best_params = result.get("best_params", {})
-                    break
+            # 1. 포트폴리오 결과에서 전략 정보 확인 (우선순위)
+            if portfolio_results and "symbol_strategies" in portfolio_results:
+                symbol_strategies = portfolio_results["symbol_strategies"]
+                if symbol in symbol_strategies:
+                    best_strategy = symbol_strategies[symbol].get("strategy")
+                    best_params = symbol_strategies[symbol].get("params", {})
+                    print(f"🔍 {symbol} 전략 발견 (포트폴리오): {best_strategy}")
+
+            # 2. 최적화 결과에서 해당 종목의 최적 전략 찾기 (fallback)
+            if not best_strategy:
+                found = False
+                
+                # 패턴 1: "strategy_symbol" 형태
+                for key, result in optimization_results.items():
+                    if key.endswith(f"_{symbol}"):
+                        best_strategy = result.get("strategy_name")
+                        best_params = result.get("best_params", {})
+                        found = True
+                        print(f"🔍 {symbol} 전략 발견 (패턴1): {best_strategy}")
+                        break
+                
+                # 패턴 2: "symbol" 키로 직접 검색
+                if not found:
+                    for key, result in optimization_results.items():
+                        if result.get("symbol") == symbol:
+                            best_strategy = result.get("strategy_name")
+                            best_params = result.get("best_params", {})
+                            found = True
+                            print(f"🔍 {symbol} 전략 발견 (패턴2): {best_strategy}")
+                            break
+                
+                # 패턴 3: 키에 symbol이 포함된 경우
+                if not found:
+                    for key, result in optimization_results.items():
+                        if symbol in key:
+                            best_strategy = result.get("strategy_name")
+                            best_params = result.get("best_params", {})
+                            found = True
+                            print(f"🔍 {symbol} 전략 발견 (패턴3): {best_strategy}")
+                            break
 
             if not best_strategy:
+                print(f"⚠️ {symbol}의 최적 전략을 찾을 수 없습니다")
                 continue
 
             # Train 데이터에서 평가
@@ -902,6 +1014,60 @@ class TrainTestEvaluator:
             self.logger.log_error(f"포트폴리오 점수 계산 중 오류: {e}")
             return 0.0
 
+    def _calculate_cumulative_return(self, trades: List[Dict]) -> float:
+        """거래 내역에서 누적 수익률 계산 (복리 효과 고려)"""
+        if not trades:
+            return 0.0
+        
+        cumulative_return = 1.0  # 1.0 = 100%
+        for trade in trades:
+            pnl = trade.get("pnl", 0)
+            cumulative_return *= (1 + pnl)  # 복리 효과 적용
+        
+        return cumulative_return - 1.0  # 백분율로 변환 (0.045 → 0.045 = 4.5%)
+
+    def _calculate_portfolio_cumulative_return(
+        self, individual_results: Dict[str, Dict], weights: Dict[str, float]
+    ) -> float:
+        """포트폴리오 누적 수익률 계산 (복리 효과 고려)"""
+        if not individual_results:
+            return 0.0
+        
+        # 각 종목의 누적 수익률 계산
+        symbol_cumulative_returns = {}
+        for symbol, data in individual_results.items():
+            trades = data.get("trades", [])
+            symbol_cumulative_returns[symbol] = self._calculate_cumulative_return(trades)
+        
+        # 포트폴리오 누적 수익률 계산 (가중 평균)
+        portfolio_cumulative_return = sum(
+            symbol_cumulative_returns[symbol] * weights.get(symbol, 0.0)
+            for symbol in individual_results.keys()
+        )
+        
+        return portfolio_cumulative_return
+
+    def _calculate_buy_hold_return(
+        self, individual_results: Dict[str, Dict], weights: Dict[str, float]
+    ) -> float:
+        """BUY&HOLD 수익률 계산 (가격 변화 기반)"""
+        if not individual_results:
+            return 0.0
+        
+        # 각 종목의 BUY&HOLD 수익률 계산
+        symbol_returns = {}
+        for symbol, data in individual_results.items():
+            # BUY&HOLD는 total_return을 사용 (거래 없이 가격 변화만)
+            symbol_returns[symbol] = data.get("total_return", 0.0)
+        
+        # 포트폴리오 BUY&HOLD 수익률 계산 (가중 평균)
+        buy_hold_return = sum(
+            symbol_returns[symbol] * weights.get(symbol, 0.0)
+            for symbol in individual_results.keys()
+        )
+        
+        return buy_hold_return
+
     def _calculate_beta(
         self,
         strategy_returns: pd.Series,
@@ -1018,8 +1184,10 @@ class TrainTestEvaluator:
                     train_result = result["train"]
                     strategy = train_result.get("strategy", "UNKNOWN")
                     composite_score = result.get("composite_score", 0)
+                    # 누적 수익률 사용
+                    cumulative_return = train_result.get("cumulative_return", train_result.get("total_return", 0)) * 100
                     f.write(
-                        f"{symbol:<15} {strategy:<20} {train_result['total_return']*100:>8.2f}% {train_result['sharpe_ratio']:>6.3f} {train_result['sortino_ratio']:>8.3f} {train_result['max_drawdown']*100:>8.2f}% {train_result['volatility']*100:>8.2f}% {train_result.get('beta', 1.0):>5.2f} {train_result['total_trades']:>6} [{composite_score:>6.1f}]\n"
+                        f"{symbol:<15} {strategy:<20} {cumulative_return:>8.2f}% {train_result['sharpe_ratio']:>6.3f} {train_result['sortino_ratio']:>8.3f} {train_result['max_drawdown']*100:>8.2f}% {train_result['volatility']*100:>8.2f}% {train_result.get('beta', 1.0):>5.2f} {train_result['total_trades']:>6} [{composite_score:>6.1f}]\n"
                     )
 
                 f.write("\n\n")
@@ -1058,8 +1226,10 @@ class TrainTestEvaluator:
                     test_result = result["test"]
                     strategy = test_result.get("strategy", "UNKNOWN")
                     composite_score = result.get("composite_score", 0)
+                    # 누적 수익률 사용
+                    cumulative_return = test_result.get("cumulative_return", test_result.get("total_return", 0)) * 100
                     f.write(
-                        f"{symbol:<15} {strategy:<20} {test_result['total_return']*100:>8.2f}% {test_result['sharpe_ratio']:>6.3f} {test_result['sortino_ratio']:>8.3f} {test_result['max_drawdown']*100:>8.2f}% {test_result['volatility']*100:>8.2f}% {test_result.get('beta', 1.0):>5.2f} {test_result['total_trades']:>6} [{composite_score:>6.1f}]\n"
+                        f"{symbol:<15} {strategy:<20} {cumulative_return:>8.2f}% {test_result['sharpe_ratio']:>6.3f} {test_result['sortino_ratio']:>8.3f} {test_result['max_drawdown']*100:>8.2f}% {test_result['volatility']*100:>8.2f}% {test_result.get('beta', 1.0):>5.2f} {test_result['total_trades']:>6} [{composite_score:>6.1f}]\n"
                     )
 
                 # 성과 요약
@@ -1123,19 +1293,27 @@ class TrainTestEvaluator:
 
         try:
             # 1. 데이터 로드 및 분할
+            print("🔍 1단계: 데이터 로드 및 분할 시작")
             train_data_dict, test_data_dict = self.load_data_and_split(symbols)
+            print(f"🔍 데이터 로드 결과: train={len(train_data_dict) if train_data_dict else 0}, test={len(test_data_dict) if test_data_dict else 0}")
             if not train_data_dict or not test_data_dict:
+                print("❌ 데이터 로드 실패")
                 return {}
 
                 # 2. 최적화 결과 로드
+            print("🔍 2단계: 최적화 결과 로드 시작")
             optimization_results = self.load_optimization_results()
+            print(f"🔍 최적화 결과 로드: {len(optimization_results) if optimization_results else 0}개")
             if not optimization_results:
                 print("❌ 최적화 결과를 찾을 수 없습니다.")
                 return {}
 
             # 3. 포트폴리오 결과 로드
+            print("🔍 3단계: 포트폴리오 결과 로드 시작")
             portfolio_results = self.load_portfolio_results()
+            print(f"🔍 포트폴리오 결과 로드: {len(portfolio_results) if portfolio_results else 0}개 키")
             if not portfolio_results:
+                print("⚠️ 포트폴리오 결과를 찾을 수 없어 기본값 사용")
                 portfolio_results = {
                     "portfolio_weights": {},
                     "portfolio_performance": {},
@@ -1143,7 +1321,7 @@ class TrainTestEvaluator:
 
             # 4. 전략별 Train/Test 성과 평가
             individual_results = self.evaluate_all_strategies(
-                train_data_dict, test_data_dict, optimization_results
+                train_data_dict, test_data_dict, optimization_results, portfolio_results
             )
 
             # 5. 포트폴리오 성과 계산
@@ -1161,9 +1339,15 @@ class TrainTestEvaluator:
                     individual_results, portfolio_performance, portfolio_weights
                 )
 
-            # 6. 성과 요약 테이블 출력
+            # 6. 거래 내역 로그 저장
+            self.save_transaction_logs(
+                individual_results, train_data_dict, test_data_dict
+            )
+
+            # 7. 성과 요약 테이블 출력
             self._print_performance_summary(
-                individual_results, portfolio_performance, portfolio_weights
+                individual_results, portfolio_performance, portfolio_weights,
+                train_data_dict, test_data_dict
             )
 
             # 결과 반환
@@ -1223,22 +1407,193 @@ class TrainTestEvaluator:
         individual_results: Dict[str, Any],
         portfolio_performance: Dict[str, Any],
         portfolio_weights: Dict[str, float],
+        train_data_dict: Dict[str, pd.DataFrame] = None,
+        test_data_dict: Dict[str, pd.DataFrame] = None,
     ):
         """성과 요약 테이블 출력"""
+        # 데이터 기간 정보 출력
+        self._print_data_period_info(train_data_dict, test_data_dict)
+        
         print("\n" + "=" * 100)
         print("📊 TRAIN 성과 요약")
         print("=" * 100)
         self._print_performance_table(
-            "TRAIN", individual_results, portfolio_performance, portfolio_weights
+            "TRAIN", individual_results, portfolio_performance, portfolio_weights,
+            train_data_dict, test_data_dict
         )
 
         print("\n" + "=" * 100)
         print("📊 TEST 성과 요약")
         print("=" * 100)
         self._print_performance_table(
-            "TEST", individual_results, portfolio_performance, portfolio_weights
+            "TEST", individual_results, portfolio_performance, portfolio_weights,
+            train_data_dict, test_data_dict
         )
 
+        print("=" * 100)
+
+    def save_transaction_logs(
+        self,
+        individual_results: Dict[str, Any],
+        train_data_dict: Dict[str, pd.DataFrame] = None,
+        test_data_dict: Dict[str, pd.DataFrame] = None,
+    ):
+        """개별 종목별 거래 내역을 로그 파일로 저장"""
+        try:
+            # 로그 디렉토리 생성
+            log_dir = Path("log")
+            log_dir.mkdir(exist_ok=True)
+            
+            today = datetime.now().strftime("%Y%m%d")
+            
+            # Train 거래 내역 저장
+            if train_data_dict:
+                train_log_path = log_dir / f"transaction_train_swing_{today}_{self.execution_uuid}.log"
+                self._save_period_transaction_log(
+                    individual_results.get("train", {}),
+                    train_data_dict,
+                    train_log_path,
+                    "TRAIN"
+                )
+            
+            # Test 거래 내역 저장
+            if test_data_dict:
+                test_log_path = log_dir / f"transaction_test_swing_{today}_{self.execution_uuid}.log"
+                self._save_period_transaction_log(
+                    individual_results.get("test", {}),
+                    test_data_dict,
+                    test_log_path,
+                    "TEST"
+                )
+                
+        except Exception as e:
+            self.logger.log_error(f"거래 내역 로그 저장 실패: {e}")
+
+    def _save_period_transaction_log(
+        self,
+        period_results: Dict[str, Any],
+        data_dict: Dict[str, pd.DataFrame],
+        log_path: Path,
+        period_name: str,
+    ):
+        """특정 기간의 거래 내역을 로그 파일로 저장"""
+        try:
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write(f"=== {period_name} 거래 내역 로그 ===\n")
+                f.write(f"생성 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"실행 UUID: {self.execution_uuid}\n")
+                f.write("=" * 80 + "\n\n")
+                
+                for symbol, data in data_dict.items():
+                    if symbol in period_results:
+                        result = period_results[symbol]
+                        strategy = result.get("strategy", "UNKNOWN")
+                        trades = result.get("trades", [])
+                        
+                        f.write(f"📊 {symbol} ({strategy})\n")
+                        f.write("-" * 50 + "\n")
+                        
+                        if trades:
+                            f.write(f"총 거래 수: {len(trades)}\n")
+                            f.write(f"수익률: {result.get('total_return', 0)*100:.2f}%\n")
+                            f.write(f"샤프 비율: {result.get('sharpe_ratio', 0):.3f}\n")
+                            f.write(f"소르티노 비율: {result.get('sortino_ratio', 0):.3f}\n\n")
+                            
+                            f.write("거래 내역:\n")
+                            f.write(f"{'날짜':<20} {'시간':<10} {'타입':<6} {'가격':<10} {'수량':<8} {'수익률':<10} {'누적수익률':<12}\n")
+                            f.write("-" * 80 + "\n")
+                            
+                            cumulative_return = 0
+                            for trade in trades:
+                                entry_time = trade.get("entry_time", "")
+                                exit_time = trade.get("exit_time", "")
+                                entry_price = trade.get("entry_price", 0)
+                                exit_price = trade.get("exit_price", 0)
+                                shares = trade.get("shares", 0)
+                                pnl = trade.get("pnl", 0)  # pnl 키 사용
+                                cumulative_return += pnl
+                                
+                                # 시간 정보 처리
+                                entry_time_str = str(entry_time) if entry_time else ""
+                                exit_time_str = str(exit_time) if exit_time else ""
+                                
+                                # 매수 거래
+                                if entry_time:
+                                    f.write(f"{entry_time_str:<20} {'매수':<10} {entry_price:<10.2f} {shares:<8.2f} {'':<10} {'':<12}\n")
+                                
+                                # 매도 거래
+                                if exit_time:
+                                    f.write(f"{exit_time_str:<20} {'매도':<10} {exit_price:<10.2f} {shares:<8.2f} {pnl*100:<10.2f}% {cumulative_return*100:<12.2f}%\n")
+                        else:
+                            f.write("거래 내역 없음\n")
+                        
+                        f.write("\n" + "=" * 80 + "\n\n")
+                        
+        except Exception as e:
+            self.logger.log_error(f"{period_name} 거래 내역 로그 저장 실패: {e}")
+
+    def _print_data_period_info(
+        self,
+        train_data_dict: Dict[str, pd.DataFrame] = None,
+        test_data_dict: Dict[str, pd.DataFrame] = None,
+    ):
+        """데이터 기간 정보 출력"""
+        print("\n" + "=" * 100)
+        print("📅 데이터 기간 정보")
+        print("=" * 100)
+        
+        if train_data_dict:
+            train_start = None
+            train_end = None
+            train_symbols = []
+            
+            for symbol, data in train_data_dict.items():
+                if not data.empty:
+                    symbol_start = data.index[0]
+                    symbol_end = data.index[-1]
+                    
+                    # 인덱스가 datetime인지 확인
+                    if hasattr(symbol_start, 'strftime'):
+                        if train_start is None or symbol_start < train_start:
+                            train_start = symbol_start
+                        if train_end is None or symbol_end > train_end:
+                            train_end = symbol_end
+                        train_symbols.append(symbol)
+            
+            if train_start and train_end and hasattr(train_start, 'strftime'):
+                print(f"📊 TRAIN 기간: {train_start.strftime('%Y-%m-%d %H:%M')} ~ {train_end.strftime('%Y-%m-%d %H:%M')}")
+                print(f"📊 TRAIN 종목 수: {len(train_symbols)}개")
+                print(f"📊 TRAIN 종목: {', '.join(train_symbols)}")
+            else:
+                print(f"📊 TRAIN 종목 수: {len(train_data_dict)}개")
+                print(f"📊 TRAIN 종목: {', '.join(list(train_data_dict.keys()))}")
+        
+        if test_data_dict:
+            test_start = None
+            test_end = None
+            test_symbols = []
+            
+            for symbol, data in test_data_dict.items():
+                if not data.empty:
+                    symbol_start = data.index[0]
+                    symbol_end = data.index[-1]
+                    
+                    # 인덱스가 datetime인지 확인
+                    if hasattr(symbol_start, 'strftime'):
+                        if test_start is None or symbol_start < test_start:
+                            test_start = symbol_start
+                        if test_end is None or symbol_end > test_end:
+                            test_end = symbol_end
+                        test_symbols.append(symbol)
+            
+            if test_start and test_end and hasattr(test_start, 'strftime'):
+                print(f"📊 TEST 기간: {test_start.strftime('%Y-%m-%d %H:%M')} ~ {test_end.strftime('%Y-%m-%d %H:%M')}")
+                print(f"📊 TEST 종목 수: {len(test_symbols)}개")
+                print(f"📊 TEST 종목: {', '.join(test_symbols)}")
+            else:
+                print(f"📊 TEST 종목 수: {len(test_data_dict)}개")
+                print(f"📊 TEST 종목: {', '.join(list(test_data_dict.keys()))}")
+        
         print("=" * 100)
 
     def _print_performance_table(
@@ -1247,18 +1602,24 @@ class TrainTestEvaluator:
         individual_results: Dict[str, Any],
         portfolio_performance: Dict[str, Any],
         portfolio_weights: Dict[str, float],
+        train_data_dict: Dict[str, pd.DataFrame] = None,
+        test_data_dict: Dict[str, pd.DataFrame] = None,
     ):
         """성과 테이블 출력"""
         # 헤더 출력
         print(
-            f"{'종목':<8} {'비중':<6} {'수익률':<8} {'샤프':<6} {'소르티노':<8} {'거래수':<6} {'보유':<4} {'전략':<20}"
+            f"{'종목':<8} {'비중':<6} {'수익률':<8} {'샤프':<6} {'소르티노':<8} {'거래수':<6} {'보유':<4} {'매수/매도가격':<12} {'최종시점':<12} {'전략':<20}"
         )
-        print("-" * 100)
+        print("-" * 132)
 
         # Buy & Hold 성과 (포트폴리오 비중 기준)
         buy_hold_data = individual_results.get(f"buy_hold_{period.lower()}", {})
         if buy_hold_data:
-            total_return = 0
+            # Buy & Hold 수익률 계산 (가격 변화 기반)
+            buy_hold_return = self._calculate_buy_hold_return(
+                buy_hold_data, portfolio_weights
+            )
+            
             total_sharpe = 0
             total_sortino = 0
             total_trades = 0
@@ -1267,7 +1628,6 @@ class TrainTestEvaluator:
             for symbol, weight in portfolio_weights.items():
                 if symbol in buy_hold_data:
                     data = buy_hold_data[symbol]
-                    total_return += data.get("total_return", 0) * weight
                     total_sharpe += data.get("sharpe_ratio", 0) * weight
                     total_sortino += data.get("sortino_ratio", 0) * weight
                     total_trades += data.get("total_trades", 0)
@@ -1275,18 +1635,24 @@ class TrainTestEvaluator:
 
             if symbol_count > 0:
                 print(
-                    f"{'BUY&HOLD':<8} {'100%':<6} {total_return*100:>7.2f}% {total_sharpe:>5.3f} {total_sortino:>7.3f} {total_trades:>5} {'Y':<4} {'PASSIVE':<20}"
+                    f"{'BUY&HOLD':<8} {'100%':<6} {buy_hold_return*100:>7.2f}% {total_sharpe:>5.3f} {total_sortino:>7.3f} {total_trades:>5} {'Y':<4} {'':<12} {'':<12} {'PASSIVE':<20}"
                 )
 
         # 포트폴리오 성과
         portfolio_data = portfolio_performance.get(period.lower(), {})
         if portfolio_data:
+            # 포트폴리오 누적 수익률 계산
+            individual_data = individual_results.get(period.lower(), {})
+            portfolio_cumulative_return = self._calculate_portfolio_cumulative_return(
+                individual_data, portfolio_weights
+            )
+            
             portfolio_score = self._calculate_portfolio_score(portfolio_data)
             print(
-                f"{'PORTFOLIO':<8} {'100%':<6} {portfolio_data.get('total_return', 0)*100:>7.2f}% {portfolio_data.get('sharpe_ratio', 0):>5.3f} {portfolio_data.get('sortino_ratio', 0):>7.3f} {portfolio_data.get('total_trades', 0):>5} {'Y':<4} {'OPTIMIZED':<20} [{portfolio_score:>6.1f}]"
+                f"{'PORTFOLIO':<8} {'100%':<6} {portfolio_cumulative_return*100:>7.2f}% {portfolio_data.get('sharpe_ratio', 0):>5.3f} {portfolio_data.get('sortino_ratio', 0):>7.3f} {portfolio_data.get('total_trades', 0):>5} {'Y':<4} {'':<12} {'':<12} {'OPTIMIZED':<20} [{portfolio_score:>6.1f}]"
             )
 
-        print("-" * 100)
+        print("-" * 132)
 
         # 개별 종목 성과 (포트폴리오 비중 순으로 정렬)
         individual_data = individual_results.get(period.lower(), {})
@@ -1300,16 +1666,131 @@ class TrainTestEvaluator:
                 if symbol in individual_data:
                     data = individual_data[symbol]
                     strategy = data.get("strategy", "UNKNOWN")
-                    total_return = data.get("total_return", 0) * 100
+                    trades_list = data.get("trades", [])
+                    
+                    # 누적 수익률 사용 (새로 추가된 필드)
+                    cumulative_return = data.get("cumulative_return", 0) * 100
+                    
                     sharpe = data.get("sharpe_ratio", 0)
                     sortino = data.get("sortino_ratio", 0)
                     trades = data.get("total_trades", 0)
 
-                    # 보유 여부 판단 (거래가 있으면 보유)
-                    holding = "Y" if trades > 0 else "N"
-
+                    # 현재 보유 상태 판단 (거래 시뮬레이터 결과에서 가져오기)
+                    current_position = data.get("current_position", 0)
+                    holding = "Y" if current_position > 0 else "N"
+                    
+                    # 최종 매수/매도 가격 및 시점
+                    final_price = data.get("final_price")
+                    final_date = data.get("final_date")
+                    
+                    price_info = ""
+                    date_info = ""
+                    
+                    if final_price is not None:
+                        if holding == "Y":
+                            price_info = f"매수:{final_price:.2f}"
+                        else:
+                            price_info = f"매도:{final_price:.2f}"
+                    
+                    # 날짜 정보 처리 - 거래 내역에서 마지막 거래 날짜 확인
+                    trades_list = data.get("trades", [])
+                    if trades_list:
+                        last_trade = trades_list[-1]
+                        
+                        # 매도 완료된 경우 exit_time 사용
+                        if last_trade.get("exit_time") is not None:
+                            exit_time = last_trade.get("exit_time")
+                            if hasattr(exit_time, 'strftime'):
+                                date_info = exit_time.strftime('%Y-%m-%d')
+                            elif isinstance(exit_time, pd.Timestamp):
+                                date_info = exit_time.strftime('%Y-%m-%d')
+                            elif isinstance(exit_time, (int, float)):
+                                # 인덱스 번호를 실제 날짜로 변환
+                                try:
+                                    data_dict = train_data_dict if period.upper() == "TRAIN" else test_data_dict
+                                    if symbol in data_dict:
+                                        df = data_dict[symbol]
+                                        if 0 <= exit_time < len(df):
+                                            actual_date = df.iloc[exit_time]["date"]
+                                            if hasattr(actual_date, 'strftime'):
+                                                date_info = actual_date.strftime('%Y-%m-%d')
+                                            elif isinstance(actual_date, pd.Timestamp):
+                                                date_info = actual_date.strftime('%Y-%m-%d')
+                                            else:
+                                                date_info = str(actual_date)[:10]
+                                except Exception as e:
+                                    # 디버깅을 위한 로그 (필요시 주석 해제)
+                                    # print(f"날짜 변환 오류 ({symbol}): {e}")
+                                    date_info = ""
+                            else:
+                                date_info = str(exit_time)[:10]
+                        
+                        # 매수만 하고 매도하지 않은 경우 entry_time 사용
+                        elif last_trade.get("entry_time") is not None:
+                            entry_time = last_trade.get("entry_time")
+                            if hasattr(entry_time, 'strftime'):
+                                date_info = entry_time.strftime('%Y-%m-%d')
+                            elif isinstance(entry_time, pd.Timestamp):
+                                date_info = entry_time.strftime('%Y-%m-%d')
+                            elif isinstance(entry_time, (int, float)):
+                                # 인덱스 번호를 실제 날짜로 변환
+                                try:
+                                    data_dict = train_data_dict if period.upper() == "TRAIN" else test_data_dict
+                                    if symbol in data_dict:
+                                        df = data_dict[symbol]
+                                        if 0 <= entry_time < len(df):
+                                            actual_date = df.iloc[entry_time]["date"]
+                                            if hasattr(actual_date, 'strftime'):
+                                                date_info = actual_date.strftime('%Y-%m-%d')
+                                            elif isinstance(actual_date, pd.Timestamp):
+                                                date_info = actual_date.strftime('%Y-%m-%d')
+                                            else:
+                                                date_info = str(actual_date)[:10]
+                                except Exception as e:
+                                    # 디버깅을 위한 로그 (필요시 주석 해제)
+                                    # print(f"날짜 변환 오류 ({symbol}): {e}")
+                                    date_info = ""
+                            else:
+                                date_info = str(entry_time)[:10]
+                    
+                    # final_date가 있고 위에서 날짜를 찾지 못한 경우
+                    elif final_date is not None:
+                        if hasattr(final_date, 'strftime'):
+                            date_info = final_date.strftime('%Y-%m-%d')
+                        elif isinstance(final_date, pd.Timestamp):
+                            date_info = final_date.strftime('%Y-%m-%d')
+                        else:
+                            date_info = str(final_date)[:10]
+                    
+                    # 날짜 정보가 여전히 비어있는 경우, 시뮬레이션 종료 날짜 사용
+                    if not date_info:
+                        try:
+                            data_dict = train_data_dict if period.upper() == "TRAIN" else test_data_dict
+                            if symbol in data_dict:
+                                df = data_dict[symbol]
+                                if len(df) > 0:
+                                    # 시뮬레이션 마지막 날짜 (시뮬레이션 종료 시점)
+                                    # datetime 또는 date 컬럼 찾기
+                                    date_column = None
+                                    for col in ['datetime', 'date', 'Date', 'DateTime']:
+                                        if col in df.columns:
+                                            date_column = col
+                                            break
+                                    
+                                    if date_column:
+                                        last_date = df.iloc[-1][date_column]
+                                        if hasattr(last_date, 'strftime'):
+                                            date_info = last_date.strftime('%Y-%m-%d')
+                                        elif isinstance(last_date, pd.Timestamp):
+                                            date_info = last_date.strftime('%Y-%m-%d')
+                                        else:
+                                            date_info = str(last_date)[:10]
+                        except Exception as e:
+                            # 조용히 처리 (오류 로그 제거)
+                            date_info = ""
+                    
                     print(
-                        f"{symbol:<8} {weight*100:>5.1f}% {total_return:>7.2f}% {sharpe:>5.3f} {sortino:>7.3f} {trades:>5} {holding:<4} {strategy:<20}"
+                        f"{symbol:<8} {weight*100:>5.1f}% {cumulative_return:>7.2f}% {sharpe:>5.3f} {sortino:>7.3f} {trades:>5} {holding:<4} {price_info:<12} {date_info:<12} {strategy:<20}"
                     )
 
 

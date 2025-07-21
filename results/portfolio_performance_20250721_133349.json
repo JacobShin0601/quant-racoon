@@ -1,0 +1,18 @@
+{
+  "train": {
+    "total_return": 0.0007473110178984968,
+    "sharpe_ratio": 14.269148201093927,
+    "sortino_ratio": 46.375806312436595,
+    "max_drawdown": 0.04551118862627591,
+    "volatility": NaN,
+    "total_trades": 36
+  },
+  "test": {
+    "total_return": 0.0006242254832479631,
+    "sharpe_ratio": 3.0481966018562714,
+    "sortino_ratio": 1.918922695396708,
+    "max_drawdown": 0.09726835444347329,
+    "volatility": NaN,
+    "total_trades": 21
+  }
+}

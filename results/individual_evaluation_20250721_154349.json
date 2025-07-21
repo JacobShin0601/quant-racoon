@@ -1,0 +1,2134 @@
+{
+  "train": {
+    "AAPL": {
+      "total_return": 0.0004839102172851562,
+      "sharpe_ratio": 0.8049689355581268,
+      "sortino_ratio": 0.9972963263431364,
+      "max_drawdown": 0.14045246908579084,
+      "volatility": 0.22044392801359283,
+      "beta": 1.0,
+      "total_trades": 3,
+      "trades": [
+        {
+          "entry_time": "2024-09-17",
+          "exit_time": 49,
+          "entry_price": 216.03060913085935,
+          "exit_price": 232.183837890625,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0747728704962403,
+          "pnl_amount": 16.153228759765653,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-11-11",
+          "exit_time": 95,
+          "entry_price": 223.69039916992188,
+          "exit_price": 242.4252014160156,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.08375326932052282,
+          "pnl_amount": 18.73480224609372,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-16",
+          "exit_time": 142,
+          "entry_price": 227.710693359375,
+          "exit_price": 241.21368408203125,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.059298887212756904,
+          "pnl_amount": 13.50299072265625,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "dual_momentum",
+      "current_position": 0,
+      "final_price": 241.21368408203125,
+      "final_date": 142
+    },
+    "META": {
+      "total_return": 0.0008851678466796875,
+      "sharpe_ratio": 2.0233536615511727,
+      "sortino_ratio": 3.1382639103343517,
+      "max_drawdown": 0.09304033444424142,
+      "volatility": 0.27597524139356433,
+      "beta": 1.0,
+      "total_trades": 5,
+      "trades": [
+        {
+          "entry_time": "2024-07-23",
+          "exit_time": 2,
+          "entry_price": 487.0223693847656,
+          "exit_price": 459.6959533691406,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.05610915993477935,
+          "pnl_amount": -27.326416015625,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-07-31",
+          "exit_time": 28,
+          "entry_price": 473.2096557617188,
+          "exit_price": 516.4515991210938,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.09138009512880503,
+          "pnl_amount": 43.24194335937494,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-09-17",
+          "exit_time": 62,
+          "entry_price": 534.999755859375,
+          "exit_price": 575.509765625,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.07571967897546682,
+          "pnl_amount": 40.510009765625,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-12-03",
+          "exit_time": 107,
+          "entry_price": 612.139404296875,
+          "exit_price": 584.2802124023438,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.045511188626275914,
+          "pnl_amount": -27.85919189453125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-22",
+          "exit_time": 147,
+          "entry_price": 622.4668579101562,
+          "exit_price": 682.4172973632812,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.09631105446224086,
+          "pnl_amount": 59.950439453125,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_macd",
+      "current_position": 0,
+      "final_price": 682.4172973632812,
+      "final_date": 147
+    },
+    "NFLX": {
+      "total_return": 0.002787099609375,
+      "sharpe_ratio": 2.4895344742022556,
+      "sortino_ratio": 4.858833051789851,
+      "max_drawdown": 0.11548643271811794,
+      "volatility": 0.29914564488275575,
+      "beta": 1.0,
+      "total_trades": 7,
+      "trades": [
+        {
+          "entry_time": "2024-09-24",
+          "exit_time": 65,
+          "entry_price": 722.260009765625,
+          "exit_price": 764.239990234375,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.05812308573248102,
+          "pnl_amount": 41.97998046875,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-11-06",
+          "exit_time": 88,
+          "entry_price": 780.2100219726562,
+          "exit_price": 897.7899780273438,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.15070295528555552,
+          "pnl_amount": 117.5799560546875,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-12-04",
+          "exit_time": 98,
+          "entry_price": 911.0599975585938,
+          "exit_price": 913.6900024414062,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0028867526725575,
+          "pnl_amount": 2.6300048828125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-12-11",
+          "exit_time": 101,
+          "entry_price": 936.5599975585938,
+          "exit_price": 925.5499877929688,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.011755797593667974,
+          "pnl_amount": -11.010009765625,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-13",
+          "exit_time": 121,
+          "entry_price": 840.2899780273438,
+          "exit_price": 828.4000244140625,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.014149821995014132,
+          "pnl_amount": -11.88995361328125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-15",
+          "exit_time": 127,
+          "entry_price": 848.260009765625,
+          "exit_price": 984.8599853515624,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.16103550092344926,
+          "pnl_amount": 136.5999755859374,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-02-05",
+          "exit_time": 138,
+          "entry_price": 1011.1099853515624,
+          "exit_price": 1013.9299926757812,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0027890213380083956,
+          "pnl_amount": 2.8200073242188637,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_donchian",
+      "current_position": 0,
+      "final_price": 1013.9299926757812,
+      "final_date": 138
+    },
+    "QQQ": {
+      "total_return": 0.0006520355224609375,
+      "sharpe_ratio": 0.6643319610230833,
+      "sortino_ratio": 0.8783838689507866,
+      "max_drawdown": 0.09539768318762883,
+      "volatility": 0.1997602828656634,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2024-09-06",
+          "exit_time": 77,
+          "entry_price": 446.1718444824219,
+          "exit_price": 511.3753967285156,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.1461399975198628,
+          "pnl_amount": 65.20355224609375,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 511.3753967285156,
+      "final_date": 77
+    },
+    "SPY": {
+      "total_return": 0.000254639892578125,
+      "sharpe_ratio": 0.8991228476145314,
+      "sortino_ratio": 1.1413019953588421,
+      "max_drawdown": 0.06573001328458414,
+      "volatility": 0.14097694163548213,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2024-12-19",
+          "exit_time": 127,
+          "entry_price": 580.6654052734375,
+          "exit_price": 606.12939453125,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.04385311924312318,
+          "pnl_amount": 25.4639892578125,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 606.12939453125,
+      "final_date": 127
+    },
+    "NVDA": {
+      "total_return": 0.0006458562469482422,
+      "sharpe_ratio": 0.41064239348395193,
+      "sortino_ratio": 0.5545910536551838,
+      "max_drawdown": 0.21929991462971363,
+      "volatility": 0.5666284871931381,
+      "beta": 1.0,
+      "total_trades": 3,
+      "trades": [
+        {
+          "entry_time": "2024-09-06",
+          "exit_time": 55,
+          "entry_price": 102.79752349853516,
+          "exit_price": 132.85939025878906,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.2924376554721406,
+          "pnl_amount": 30.061866760253906,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-11-27",
+          "exit_time": 116,
+          "entry_price": 135.30882263183594,
+          "exit_price": 149.40586853027344,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.1041842329586622,
+          "pnl_amount": 14.0970458984375,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-27",
+          "exit_time": 143,
+          "entry_price": 118.40087890625,
+          "exit_price": 138.8275909423828,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.1725216250489721,
+          "pnl_amount": 20.426712036132812,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 138.8275909423828,
+      "final_date": 143
+    },
+    "TSLA": {
+      "total_return": 0.0010164999389648437,
+      "sharpe_ratio": 0.9826440373274467,
+      "sortino_ratio": 1.8046774308672304,
+      "max_drawdown": 0.3154253114909568,
+      "volatility": 0.6848263352792654,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2024-10-15",
+          "exit_time": 78,
+          "entry_price": 219.57000732421875,
+          "exit_price": 321.2200012207031,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.46295026873313905,
+          "pnl_amount": 101.64999389648438,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "donchian_rsi_whipsaw",
+      "current_position": 0,
+      "final_price": 321.2200012207031,
+      "final_date": 78
+    },
+    "MSFT": {
+      "total_return": 0.00040522674560546876,
+      "sharpe_ratio": -0.6351693704920485,
+      "sortino_ratio": -0.737631243923826,
+      "max_drawdown": 0.11172302377965887,
+      "volatility": 0.2231516950271571,
+      "beta": 1.0,
+      "total_trades": 3,
+      "trades": [
+        {
+          "entry_time": "2024-09-17",
+          "exit_time": 41,
+          "entry_price": 432.6174621582031,
+          "exit_price": 428.302734375,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.009973540507769147,
+          "pnl_amount": -4.314727783203125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-11-01",
+          "exit_time": 94,
+          "entry_price": 407.9816589355469,
+          "exit_price": 429.5485534667969,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0528624119709684,
+          "pnl_amount": 21.56689453125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-03",
+          "exit_time": 127,
+          "entry_price": 421.7286071777344,
+          "exit_price": 444.9991149902344,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.05517886957735551,
+          "pnl_amount": 23.2705078125,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_donchian",
+      "current_position": 0,
+      "final_price": 444.9991149902344,
+      "final_date": 127
+    },
+    "PLTR": {
+      "total_return": 0.0003984000015258789,
+      "sharpe_ratio": 3.0124952443741573,
+      "sortino_ratio": 5.956194999885916,
+      "max_drawdown": 0.272347951319052,
+      "volatility": 0.7354320218384969,
+      "beta": 1.0,
+      "total_trades": 7,
+      "trades": [
+        {
+          "entry_time": "2024-09-27",
+          "exit_time": 49,
+          "entry_price": 36.84000015258789,
+          "exit_price": 37.20000076293945,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.009772003497841289,
+          "pnl_amount": 0.3600006103515625,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-10-01",
+          "exit_time": 52,
+          "entry_price": 36.459999084472656,
+          "exit_price": 39.2400016784668,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.07624801601210324,
+          "pnl_amount": 2.7800025939941406,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-10-28",
+          "exit_time": 70,
+          "entry_price": 44.970001220703125,
+          "exit_price": 44.93000030517578,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.0008895022112858711,
+          "pnl_amount": -0.04000091552734375,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-11-18",
+          "exit_time": 85,
+          "entry_price": 61.2599983215332,
+          "exit_price": 62.97999954223633,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.028077069340998264,
+          "pnl_amount": 1.720001220703125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-02",
+          "exit_time": 116,
+          "entry_price": 75.19000244140625,
+          "exit_price": 75.91999816894531,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.009708680726642223,
+          "pnl_amount": 0.7299957275390625,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-17",
+          "exit_time": 129,
+          "entry_price": 71.7699966430664,
+          "exit_price": 75.44000244140625,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.051135655148374565,
+          "pnl_amount": 3.6700057983398438,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-01-28",
+          "exit_time": 138,
+          "entry_price": 80.2300033569336,
+          "exit_price": 110.8499984741211,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.38165267151944193,
+          "pnl_amount": 30.6199951171875,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_rsi",
+      "current_position": 0,
+      "final_price": 110.8499984741211,
+      "final_date": 138
+    },
+    "NVO": {
+      "total_return": -0.0009077720642089844,
+      "sharpe_ratio": -1.3170259824368575,
+      "sortino_ratio": -1.5606854631231966,
+      "max_drawdown": 0.4404282947982031,
+      "volatility": 0.4342611998073984,
+      "beta": 1.0,
+      "total_trades": 2,
+      "trades": [
+        {
+          "entry_time": "2024-10-01",
+          "exit_time": 97,
+          "entry_price": 116.1385269165039,
+          "exit_price": 109.01334381103516,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.06135072739979986,
+          "pnl_amount": -7.12518310546875,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2024-12-20",
+          "exit_time": null,
+          "entry_price": 83.65202331542969,
+          "exit_price": null,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0,
+          "pnl_amount": 0.0,
+          "hold_duration": 0.0
+        }
+      ],
+      "strategy": "dual_momentum",
+      "current_position": 1,
+      "final_price": 83.65202331542969,
+      "final_date": "2024-12-20"
+    },
+    "CONL": {
+      "total_return": 0.0001917000389099121,
+      "sharpe_ratio": -0.0087580785561391,
+      "sortino_ratio": -0.01646433616815516,
+      "max_drawdown": 0.701637664793526,
+      "volatility": 1.7451154453719318,
+      "beta": 1.0,
+      "total_trades": 2,
+      "trades": [
+        {
+          "entry_time": "2024-09-06",
+          "exit_time": 80,
+          "entry_price": 17.489999771118164,
+          "exit_price": 65.62000274658203,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 2.7518584108241435,
+          "pnl_amount": 48.13000297546387,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-02-21",
+          "exit_time": null,
+          "entry_price": 28.959999084472656,
+          "exit_price": null,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0,
+          "pnl_amount": 0.0,
+          "hold_duration": 0.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 1,
+      "final_price": 28.959999084472656,
+      "final_date": "2025-02-21"
+    },
+    "ETHU": {
+      "total_return": 0.0009320401763916016,
+      "sharpe_ratio": -0.4741861426177277,
+      "sortino_ratio": -0.6588967629560144,
+      "max_drawdown": 0.6666502483720256,
+      "volatility": 1.4721806722912485,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2024-09-06",
+          "exit_time": 79,
+          "entry_price": 85.59870147705078,
+          "exit_price": 178.80271911621094,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 1.0888484992280913,
+          "pnl_amount": 93.20401763916016,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 178.80271911621094,
+      "final_date": 79
+    }
+  },
+  "test": {
+    "AAPL": {
+      "total_return": 0.00041355804443359375,
+      "sharpe_ratio": -0.763280764691837,
+      "sortino_ratio": -1.0628857861357524,
+      "max_drawdown": 0.28704924020131073,
+      "volatility": 0.42785162344648986,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2025-04-08",
+          "exit_time": 89,
+          "entry_price": 172.19419860839844,
+          "exit_price": 213.5500030517578,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.24016955726487713,
+          "pnl_amount": 41.355804443359375,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "dual_momentum",
+      "current_position": 0,
+      "final_price": 213.5500030517578,
+      "final_date": 89
+    },
+    "META": {
+      "total_return": 0.0009159814453125,
+      "sharpe_ratio": 0.5700107788710325,
+      "sortino_ratio": 0.8908514670814001,
+      "max_drawdown": 0.2799596555631588,
+      "volatility": 0.46055742562248325,
+      "beta": 1.0,
+      "total_trades": 4,
+      "trades": [
+        {
+          "entry_time": "2025-02-26",
+          "exit_time": 2,
+          "entry_price": 672.5836791992188,
+          "exit_price": 657.1492919921875,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.022947906237343586,
+          "pnl_amount": -15.43438720703125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-02-28",
+          "exit_time": 4,
+          "entry_price": 667.0927734375,
+          "exit_price": 653.9645385742188,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.019679773767645584,
+          "pnl_amount": -13.12823486328125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-03-25",
+          "exit_time": 23,
+          "entry_price": 625.8284912109375,
+          "exit_price": 576.2965698242188,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.07914615918312971,
+          "pnl_amount": -49.53192138671875,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-04-28",
+          "exit_time": 89,
+          "entry_price": 549.3173217773438,
+          "exit_price": 719.010009765625,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.308915596251784,
+          "pnl_amount": 169.69268798828125,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_macd",
+      "current_position": 0,
+      "final_price": 719.010009765625,
+      "final_date": 89
+    },
+    "NFLX": {
+      "total_return": 0.001745599365234375,
+      "sharpe_ratio": 1.5830550358942161,
+      "sortino_ratio": 2.0533776044041363,
+      "max_drawdown": 0.14180575143474947,
+      "volatility": 0.37423957586388884,
+      "beta": 1.0,
+      "total_trades": 3,
+      "trades": [
+        {
+          "entry_time": "2025-04-22",
+          "exit_time": 40,
+          "entry_price": 1040.3399658203125,
+          "exit_price": 1049.5899658203125,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.008891324282352583,
+          "pnl_amount": 9.25,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-04-24",
+          "exit_time": 83,
+          "entry_price": 1096.8699951171875,
+          "exit_price": 1275.25,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.16262638751801642,
+          "pnl_amount": 178.3800048828125,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-06-26",
+          "exit_time": 87,
+          "entry_price": 1306.6700439453125,
+          "exit_price": 1293.5999755859375,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.010002577483074232,
+          "pnl_amount": -13.070068359375,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_donchian",
+      "current_position": 0,
+      "final_price": 1293.5999755859375,
+      "final_date": 87
+    },
+    "QQQ": {
+      "total_return": 0.0009606552124023438,
+      "sharpe_ratio": 0.8256089008453751,
+      "sortino_ratio": 1.0971163668431216,
+      "max_drawdown": 0.1902199605045104,
+      "volatility": 0.31930800996077185,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2025-04-03",
+          "exit_time": 84,
+          "entry_price": 450.1544494628906,
+          "exit_price": 546.219970703125,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.21340569076870522,
+          "pnl_amount": 96.06552124023438,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 546.219970703125,
+      "final_date": 84
+    },
+    "SPY": {
+      "total_return": 0.00108079345703125,
+      "sharpe_ratio": 0.6206216018549737,
+      "sortino_ratio": 0.8118414523077964,
+      "max_drawdown": 0.1624221246455939,
+      "volatility": 0.27605408790052127,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2025-04-04",
+          "exit_time": 84,
+          "entry_price": 503.7906494140625,
+          "exit_price": 611.8699951171875,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.21453225824819794,
+          "pnl_amount": 108.079345703125,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 611.8699951171875,
+      "final_date": 84
+    },
+    "NVDA": {
+      "total_return": 0.00021198532104492189,
+      "sharpe_ratio": 1.6213958162070041,
+      "sortino_ratio": 2.261545963364932,
+      "max_drawdown": 0.2815457899150657,
+      "volatility": 0.5711353530237774,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2025-04-03",
+          "exit_time": 53,
+          "entry_price": 101.79293060302734,
+          "exit_price": 122.99146270751952,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.20825151588534505,
+          "pnl_amount": 21.198532104492173,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 122.99146270751952,
+      "final_date": 53
+    },
+    "TSLA": {
+      "total_return": 0.0,
+      "sharpe_ratio": 0.6383325880042883,
+      "sortino_ratio": 1.0016670987170437,
+      "max_drawdown": 0.24274697149661614,
+      "volatility": 0.8056132441572182,
+      "beta": 1.0,
+      "total_trades": 0,
+      "trades": [],
+      "strategy": "donchian_rsi_whipsaw",
+      "current_position": 0,
+      "final_price": null,
+      "final_date": null
+    },
+    "MSFT": {
+      "total_return": 0.0013999972534179687,
+      "sharpe_ratio": 2.2642104634258664,
+      "sortino_ratio": 4.088260169656056,
+      "max_drawdown": 0.11585453575686888,
+      "volatility": 0.2907620577197477,
+      "beta": 1.0,
+      "total_trades": 2,
+      "trades": [
+        {
+          "entry_time": "2025-04-08",
+          "exit_time": 85,
+          "entry_price": 353.9102783203125,
+          "exit_price": 495.9400024414063,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.40131562382188685,
+          "pnl_amount": 142.0297241210938,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-07-09",
+          "exit_time": 93,
+          "entry_price": 503.510009765625,
+          "exit_price": 501.4800109863281,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.004031694981082508,
+          "pnl_amount": -2.029998779296875,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_donchian",
+      "current_position": 0,
+      "final_price": 501.4800109863281,
+      "final_date": 93
+    },
+    "PLTR": {
+      "total_return": 0.0003119000244140625,
+      "sharpe_ratio": 2.261663171636856,
+      "sortino_ratio": 3.128394254479151,
+      "max_drawdown": 0.235038737610021,
+      "volatility": 0.7411862562112354,
+      "beta": 1.0,
+      "total_trades": 5,
+      "trades": [
+        {
+          "entry_time": "2025-04-09",
+          "exit_time": 34,
+          "entry_price": 92.01000213623048,
+          "exit_price": 92.62000274658205,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0066297206411145655,
+          "pnl_amount": 0.6100006103515625,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-04-15",
+          "exit_time": 45,
+          "entry_price": 98.4000015258789,
+          "exit_price": 118.44000244140624,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.20365854273139283,
+          "pnl_amount": 20.04000091552733,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-05-22",
+          "exit_time": 62,
+          "entry_price": 122.29000091552734,
+          "exit_price": 123.30999755859376,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.008340801663506325,
+          "pnl_amount": 1.0199966430664205,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-06-09",
+          "exit_time": 78,
+          "entry_price": 132.05999755859375,
+          "exit_price": 138.1999969482422,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.046494014108429606,
+          "pnl_amount": 6.1399993896484375,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-07-07",
+          "exit_time": 93,
+          "entry_price": 139.1199951171875,
+          "exit_price": 142.5,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.024295608118483317,
+          "pnl_amount": 3.3800048828125,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_rsi",
+      "current_position": 0,
+      "final_price": 142.5,
+      "final_date": 93
+    },
+    "NVO": {
+      "total_return": -0.0007111651611328125,
+      "sharpe_ratio": -1.648577867731557,
+      "sortino_ratio": -2.443485810410915,
+      "max_drawdown": 0.35047424822780326,
+      "volatility": 0.4580918083185556,
+      "beta": 1.0,
+      "total_trades": 2,
+      "trades": [
+        {
+          "entry_time": "2025-03-14",
+          "exit_time": 71,
+          "entry_price": 75.926513671875,
+          "exit_price": 74.62999725341797,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": -0.017075937716040452,
+          "pnl_amount": -1.2965164184570312,
+          "hold_duration": 1.0
+        },
+        {
+          "entry_time": "2025-07-01",
+          "exit_time": null,
+          "entry_price": 69.81999969482422,
+          "exit_price": null,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.0,
+          "pnl_amount": 0.0,
+          "hold_duration": 0.0
+        }
+      ],
+      "strategy": "dual_momentum",
+      "current_position": 1,
+      "final_price": 69.81999969482422,
+      "final_date": "2025-07-01"
+    },
+    "CONL": {
+      "total_return": 0.0,
+      "sharpe_ratio": 2.319487814631569,
+      "sortino_ratio": 4.11963912134018,
+      "max_drawdown": 0.5853658564036601,
+      "volatility": 1.69027440665161,
+      "beta": 1.0,
+      "total_trades": 0,
+      "trades": [],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": null,
+      "final_date": null
+    },
+    "ETHU": {
+      "total_return": 0.00018672849655151368,
+      "sharpe_ratio": 1.3865773835936517,
+      "sortino_ratio": 2.3881294304857703,
+      "max_drawdown": 0.6563644630939007,
+      "volatility": 1.5825199121836293,
+      "beta": 1.0,
+      "total_trades": 1,
+      "trades": [
+        {
+          "entry_time": "2025-04-07",
+          "exit_time": 51,
+          "entry_price": 25.158105850219727,
+          "exit_price": 43.83095550537109,
+          "shares": 1,
+          "position_type": "long",
+          "pnl": 0.742220013156844,
+          "pnl_amount": 18.67284965515136,
+          "hold_duration": 1.0
+        }
+      ],
+      "strategy": "swing_bollinger_band",
+      "current_position": 0,
+      "final_price": 43.83095550537109,
+      "final_date": 51
+    }
+  },
+  "buy_hold_train": {
+    "AAPL": {
+      "total_return": 0.10703019024895463,
+      "sharpe_ratio": 0.8956949545517982,
+      "sortino_ratio": 1.1096990805977351,
+      "max_drawdown": 0.14045246908579084,
+      "volatility": 0.2204439280135929,
+      "total_trades": 1
+    },
+    "META": {
+      "total_return": 0.3732188040138916,
+      "sharpe_ratio": 2.095823930619542,
+      "sortino_ratio": 3.250666815625327,
+      "max_drawdown": 0.09304033444424142,
+      "volatility": 0.2759752413935643,
+      "total_trades": 1
+    },
+    "NFLX": {
+      "total_return": 0.5265945493484556,
+      "sharpe_ratio": 2.5563915397892853,
+      "sortino_ratio": 4.989318218147728,
+      "max_drawdown": 0.11548643271811806,
+      "volatility": 0.29914564488275597,
+      "total_trades": 1
+    },
+    "QQQ": {
+      "total_return": 0.08110798435374163,
+      "sharpe_ratio": 0.7644519634234207,
+      "sortino_ratio": 1.0107631615748176,
+      "max_drawdown": 0.09539768318762883,
+      "volatility": 0.19976028286566352,
+      "total_trades": 1
+    },
+    "SPY": {
+      "total_return": 0.08367067405232456,
+      "sharpe_ratio": 1.0409900194227688,
+      "sortino_ratio": 1.3213811543861433,
+      "max_drawdown": 0.06573001328458414,
+      "volatility": 0.14097694163548222,
+      "total_trades": 1
+    },
+    "NVDA": {
+      "total_return": 0.05472011433992901,
+      "sharpe_ratio": 0.44593888925152647,
+      "sortino_ratio": 0.6022605614524588,
+      "max_drawdown": 0.21929991462971363,
+      "volatility": 0.566628487193138,
+      "total_trades": 1
+    },
+    "TSLA": {
+      "total_return": 0.31418236252362197,
+      "sharpe_ratio": 1.0118485216903983,
+      "sortino_ratio": 1.8583130016414426,
+      "max_drawdown": 0.31542531149095676,
+      "volatility": 0.6848263352792654,
+      "total_trades": 1
+    },
+    "MSFT": {
+      "total_return": -0.08260389167460727,
+      "sharpe_ratio": -0.5455442390424832,
+      "sortino_ratio": -0.6335483012171186,
+      "max_drawdown": 0.11172302377965887,
+      "volatility": 0.22315169502715712,
+      "total_trades": 1
+    },
+    "PLTR": {
+      "total_return": 2.1862263957221773,
+      "sharpe_ratio": 3.0396901439788855,
+      "sortino_ratio": 6.009963756982073,
+      "max_drawdown": 0.27234795131905193,
+      "volatility": 0.7354320218384967,
+      "total_trades": 1
+    },
+    "NVO": {
+      "total_return": -0.317246768325559,
+      "sharpe_ratio": -1.2709707511408752,
+      "sortino_ratio": -1.5061096757485066,
+      "max_drawdown": 0.4404282947982031,
+      "volatility": 0.43426119980739836,
+      "total_trades": 1
+    },
+    "CONL": {
+      "total_return": -0.5672674661447149,
+      "sharpe_ratio": 0.0027024812899401505,
+      "sortino_ratio": 0.005080402072271335,
+      "max_drawdown": 0.701637664793526,
+      "volatility": 1.7451154453719318,
+      "total_trades": 1
+    },
+    "ETHU": {
+      "total_return": -0.6585040566384278,
+      "sharpe_ratio": -0.4606008535452438,
+      "sortino_ratio": -0.6400195706697407,
+      "max_drawdown": 0.6666502483720256,
+      "volatility": 1.4721806722912487,
+      "total_trades": 1
+    }
+  },
+  "buy_hold_test": {
+    "AAPL": {
+      "total_return": -0.144037687374643,
+      "sharpe_ratio": -0.7165355873827214,
+      "sortino_ratio": -0.9977920659339677,
+      "max_drawdown": 0.28704924020131073,
+      "volatility": 0.42785162344648975,
+      "total_trades": 1
+    },
+    "META": {
+      "total_return": 0.0729261722625511,
+      "sharpe_ratio": 0.613436416777034,
+      "sortino_ratio": 0.9587199963645278,
+      "max_drawdown": 0.2799596555631588,
+      "volatility": 0.46055742562248336,
+      "total_trades": 1
+    },
+    "NFLX": {
+      "total_return": 0.2374033014596124,
+      "sharpe_ratio": 1.636496738188341,
+      "sortino_ratio": 2.1226967323837926,
+      "max_drawdown": 0.14180575143474947,
+      "volatility": 0.37423957586388884,
+      "total_trades": 1
+    },
+    "QQQ": {
+      "total_return": 0.09625231788857123,
+      "sharpe_ratio": 0.8882443480502727,
+      "sortino_ratio": 1.1803499344592987,
+      "max_drawdown": 0.1902199605045104,
+      "volatility": 0.3193080099607719,
+      "total_trades": 1
+    },
+    "SPY": {
+      "total_return": 0.06241387875616746,
+      "sharpe_ratio": 0.693071171981271,
+      "sortino_ratio": 0.9066134745103903,
+      "max_drawdown": 0.1624221246455939,
+      "volatility": 0.2760540879005213,
+      "total_trades": 1
+    },
+    "NVDA": {
+      "total_return": 0.36174547840372584,
+      "sharpe_ratio": 1.6564137850546907,
+      "sortino_ratio": 2.310389524758834,
+      "max_drawdown": 0.2815457899150657,
+      "volatility": 0.5711353530237774,
+      "total_trades": 1
+    },
+    "TSLA": {
+      "total_return": 0.08867241474881957,
+      "sharpe_ratio": 0.6631583963497371,
+      "sortino_ratio": 1.040623586112489,
+      "max_drawdown": 0.24274697149661614,
+      "volatility": 0.8056132441572182,
+      "total_trades": 1
+    },
+    "MSFT": {
+      "total_return": 0.2842080529600307,
+      "sharpe_ratio": 2.332995229075295,
+      "sortino_ratio": 4.212457995885599,
+      "max_drawdown": 0.11585453575686888,
+      "volatility": 0.29076205771974767,
+      "total_trades": 1
+    },
+    "PLTR": {
+      "total_return": 0.7477232544719337,
+      "sharpe_ratio": 2.288646942358988,
+      "sortino_ratio": 3.165718942942908,
+      "max_drawdown": 0.235038737610021,
+      "volatility": 0.7411862562112352,
+      "total_trades": 1
+    },
+    "NVO": {
+      "total_return": -0.28151403330461405,
+      "sharpe_ratio": -1.6049184971931303,
+      "sortino_ratio": -2.3787748528697277,
+      "max_drawdown": 0.35047424822780326,
+      "volatility": 0.4580918083185556,
+      "total_trades": 1
+    },
+    "CONL": {
+      "total_return": 1.7535180210685153,
+      "sharpe_ratio": 2.331320212922223,
+      "sortino_ratio": 4.140654627690316,
+      "max_drawdown": 0.5853658564036602,
+      "volatility": 1.6902744066516098,
+      "total_trades": 1
+    },
+    "ETHU": {
+      "total_return": 0.47299386478224686,
+      "sharpe_ratio": 1.3992154552198122,
+      "sortino_ratio": 2.4098962291889188,
+      "max_drawdown": 0.6563644630939007,
+      "volatility": 1.5825199121836293,
+      "total_trades": 1
+    }
+  },
+  "filtered_results": {
+    "AAPL": {
+      "train": {
+        "total_return": 0.0004839102172851562,
+        "sharpe_ratio": 0.8049689355581268,
+        "sortino_ratio": 0.9972963263431364,
+        "max_drawdown": 0.14045246908579084,
+        "volatility": 0.22044392801359283,
+        "beta": 1.0,
+        "total_trades": 3,
+        "trades": [
+          {
+            "entry_time": "2024-09-17",
+            "exit_time": 49,
+            "entry_price": 216.03060913085935,
+            "exit_price": 232.183837890625,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.0747728704962403,
+            "pnl_amount": 16.153228759765653,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-11-11",
+            "exit_time": 95,
+            "entry_price": 223.69039916992188,
+            "exit_price": 242.4252014160156,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.08375326932052282,
+            "pnl_amount": 18.73480224609372,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-16",
+            "exit_time": 142,
+            "entry_price": 227.710693359375,
+            "exit_price": 241.21368408203125,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.059298887212756904,
+            "pnl_amount": 13.50299072265625,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "dual_momentum",
+        "current_position": 0,
+        "final_price": 241.21368408203125,
+        "final_date": 142
+      },
+      "test": {
+        "total_return": 0.00041355804443359375,
+        "sharpe_ratio": -0.763280764691837,
+        "sortino_ratio": -1.0628857861357524,
+        "max_drawdown": 0.28704924020131073,
+        "volatility": 0.42785162344648986,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2025-04-08",
+            "exit_time": 89,
+            "entry_price": 172.19419860839844,
+            "exit_price": 213.5500030517578,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.24016955726487713,
+            "pnl_amount": 41.355804443359375,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "dual_momentum",
+        "current_position": 0,
+        "final_price": 213.5500030517578,
+        "final_date": 89
+      },
+      "composite_score": 14.64707704976564,
+      "avg_sharpe": 0.020844085433144866,
+      "max_drawdown": 0.28704924020131073,
+      "strategy": "dual_momentum"
+    },
+    "META": {
+      "train": {
+        "total_return": 0.0008851678466796875,
+        "sharpe_ratio": 2.0233536615511727,
+        "sortino_ratio": 3.1382639103343517,
+        "max_drawdown": 0.09304033444424142,
+        "volatility": 0.27597524139356433,
+        "beta": 1.0,
+        "total_trades": 5,
+        "trades": [
+          {
+            "entry_time": "2024-07-23",
+            "exit_time": 2,
+            "entry_price": 487.0223693847656,
+            "exit_price": 459.6959533691406,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.05610915993477935,
+            "pnl_amount": -27.326416015625,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-07-31",
+            "exit_time": 28,
+            "entry_price": 473.2096557617188,
+            "exit_price": 516.4515991210938,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.09138009512880503,
+            "pnl_amount": 43.24194335937494,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-09-17",
+            "exit_time": 62,
+            "entry_price": 534.999755859375,
+            "exit_price": 575.509765625,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.07571967897546682,
+            "pnl_amount": 40.510009765625,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-12-03",
+            "exit_time": 107,
+            "entry_price": 612.139404296875,
+            "exit_price": 584.2802124023438,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.045511188626275914,
+            "pnl_amount": -27.85919189453125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-22",
+            "exit_time": 147,
+            "entry_price": 622.4668579101562,
+            "exit_price": 682.4172973632812,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.09631105446224086,
+            "pnl_amount": 59.950439453125,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_macd",
+        "current_position": 0,
+        "final_price": 682.4172973632812,
+        "final_date": 147
+      },
+      "test": {
+        "total_return": 0.0009159814453125,
+        "sharpe_ratio": 0.5700107788710325,
+        "sortino_ratio": 0.8908514670814001,
+        "max_drawdown": 0.2799596555631588,
+        "volatility": 0.46055742562248325,
+        "beta": 1.0,
+        "total_trades": 4,
+        "trades": [
+          {
+            "entry_time": "2025-02-26",
+            "exit_time": 2,
+            "entry_price": 672.5836791992188,
+            "exit_price": 657.1492919921875,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.022947906237343586,
+            "pnl_amount": -15.43438720703125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-02-28",
+            "exit_time": 4,
+            "entry_price": 667.0927734375,
+            "exit_price": 653.9645385742188,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.019679773767645584,
+            "pnl_amount": -13.12823486328125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-03-25",
+            "exit_time": 23,
+            "entry_price": 625.8284912109375,
+            "exit_price": 576.2965698242188,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.07914615918312971,
+            "pnl_amount": -49.53192138671875,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-04-28",
+            "exit_time": 89,
+            "entry_price": 549.3173217773438,
+            "exit_price": 719.010009765625,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.308915596251784,
+            "pnl_amount": 169.69268798828125,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_macd",
+        "current_position": 0,
+        "final_price": 719.010009765625,
+        "final_date": 89
+      },
+      "composite_score": 23.47770690476967,
+      "avg_sharpe": 1.2966822202111026,
+      "max_drawdown": 0.2799596555631588,
+      "strategy": "swing_macd"
+    },
+    "NFLX": {
+      "train": {
+        "total_return": 0.002787099609375,
+        "sharpe_ratio": 2.4895344742022556,
+        "sortino_ratio": 4.858833051789851,
+        "max_drawdown": 0.11548643271811794,
+        "volatility": 0.29914564488275575,
+        "beta": 1.0,
+        "total_trades": 7,
+        "trades": [
+          {
+            "entry_time": "2024-09-24",
+            "exit_time": 65,
+            "entry_price": 722.260009765625,
+            "exit_price": 764.239990234375,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.05812308573248102,
+            "pnl_amount": 41.97998046875,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-11-06",
+            "exit_time": 88,
+            "entry_price": 780.2100219726562,
+            "exit_price": 897.7899780273438,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.15070295528555552,
+            "pnl_amount": 117.5799560546875,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-12-04",
+            "exit_time": 98,
+            "entry_price": 911.0599975585938,
+            "exit_price": 913.6900024414062,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.0028867526725575,
+            "pnl_amount": 2.6300048828125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-12-11",
+            "exit_time": 101,
+            "entry_price": 936.5599975585938,
+            "exit_price": 925.5499877929688,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.011755797593667974,
+            "pnl_amount": -11.010009765625,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-13",
+            "exit_time": 121,
+            "entry_price": 840.2899780273438,
+            "exit_price": 828.4000244140625,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.014149821995014132,
+            "pnl_amount": -11.88995361328125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-15",
+            "exit_time": 127,
+            "entry_price": 848.260009765625,
+            "exit_price": 984.8599853515624,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.16103550092344926,
+            "pnl_amount": 136.5999755859374,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-02-05",
+            "exit_time": 138,
+            "entry_price": 1011.1099853515624,
+            "exit_price": 1013.9299926757812,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.0027890213380083956,
+            "pnl_amount": 2.8200073242188637,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_donchian",
+        "current_position": 0,
+        "final_price": 1013.9299926757812,
+        "final_date": 138
+      },
+      "test": {
+        "total_return": 0.001745599365234375,
+        "sharpe_ratio": 1.5830550358942161,
+        "sortino_ratio": 2.0533776044041363,
+        "max_drawdown": 0.14180575143474947,
+        "volatility": 0.37423957586388884,
+        "beta": 1.0,
+        "total_trades": 3,
+        "trades": [
+          {
+            "entry_time": "2025-04-22",
+            "exit_time": 40,
+            "entry_price": 1040.3399658203125,
+            "exit_price": 1049.5899658203125,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.008891324282352583,
+            "pnl_amount": 9.25,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-04-24",
+            "exit_time": 83,
+            "entry_price": 1096.8699951171875,
+            "exit_price": 1275.25,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.16262638751801642,
+            "pnl_amount": 178.3800048828125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-06-26",
+            "exit_time": 87,
+            "entry_price": 1306.6700439453125,
+            "exit_price": 1293.5999755859375,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.010002577483074232,
+            "pnl_amount": -13.070068359375,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_donchian",
+        "current_position": 0,
+        "final_price": 1293.5999755859375,
+        "final_date": 87
+      },
+      "composite_score": 44.83745189520594,
+      "avg_sharpe": 2.0362947550482358,
+      "max_drawdown": 0.14180575143474947,
+      "strategy": "swing_donchian"
+    },
+    "QQQ": {
+      "train": {
+        "total_return": 0.0006520355224609375,
+        "sharpe_ratio": 0.6643319610230833,
+        "sortino_ratio": 0.8783838689507866,
+        "max_drawdown": 0.09539768318762883,
+        "volatility": 0.1997602828656634,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2024-09-06",
+            "exit_time": 77,
+            "entry_price": 446.1718444824219,
+            "exit_price": 511.3753967285156,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.1461399975198628,
+            "pnl_amount": 65.20355224609375,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_bollinger_band",
+        "current_position": 0,
+        "final_price": 511.3753967285156,
+        "final_date": 77
+      },
+      "test": {
+        "total_return": 0.0009606552124023438,
+        "sharpe_ratio": 0.8256089008453751,
+        "sortino_ratio": 1.0971163668431216,
+        "max_drawdown": 0.1902199605045104,
+        "volatility": 0.31930800996077185,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2025-04-03",
+            "exit_time": 84,
+            "entry_price": 450.1544494628906,
+            "exit_price": 546.219970703125,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.21340569076870522,
+            "pnl_amount": 96.06552124023438,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_bollinger_band",
+        "current_position": 0,
+        "final_price": 546.219970703125,
+        "final_date": 84
+      },
+      "composite_score": 30.200697498907445,
+      "avg_sharpe": 0.7449704309342292,
+      "max_drawdown": 0.1902199605045104,
+      "strategy": "swing_bollinger_band"
+    },
+    "SPY": {
+      "train": {
+        "total_return": 0.000254639892578125,
+        "sharpe_ratio": 0.8991228476145314,
+        "sortino_ratio": 1.1413019953588421,
+        "max_drawdown": 0.06573001328458414,
+        "volatility": 0.14097694163548213,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2024-12-19",
+            "exit_time": 127,
+            "entry_price": 580.6654052734375,
+            "exit_price": 606.12939453125,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.04385311924312318,
+            "pnl_amount": 25.4639892578125,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_bollinger_band",
+        "current_position": 0,
+        "final_price": 606.12939453125,
+        "final_date": 127
+      },
+      "test": {
+        "total_return": 0.00108079345703125,
+        "sharpe_ratio": 0.6206216018549737,
+        "sortino_ratio": 0.8118414523077964,
+        "max_drawdown": 0.1624221246455939,
+        "volatility": 0.27605408790052127,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2025-04-04",
+            "exit_time": 84,
+            "entry_price": 503.7906494140625,
+            "exit_price": 611.8699951171875,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.21453225824819794,
+            "pnl_amount": 108.079345703125,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_bollinger_band",
+        "current_position": 0,
+        "final_price": 611.8699951171875,
+        "final_date": 84
+      },
+      "composite_score": 31.39506553656445,
+      "avg_sharpe": 0.7598722247347526,
+      "max_drawdown": 0.1624221246455939,
+      "strategy": "swing_bollinger_band"
+    },
+    "NVDA": {
+      "train": {
+        "total_return": 0.0006458562469482422,
+        "sharpe_ratio": 0.41064239348395193,
+        "sortino_ratio": 0.5545910536551838,
+        "max_drawdown": 0.21929991462971363,
+        "volatility": 0.5666284871931381,
+        "beta": 1.0,
+        "total_trades": 3,
+        "trades": [
+          {
+            "entry_time": "2024-09-06",
+            "exit_time": 55,
+            "entry_price": 102.79752349853516,
+            "exit_price": 132.85939025878906,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.2924376554721406,
+            "pnl_amount": 30.061866760253906,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-11-27",
+            "exit_time": 116,
+            "entry_price": 135.30882263183594,
+            "exit_price": 149.40586853027344,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.1041842329586622,
+            "pnl_amount": 14.0970458984375,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-27",
+            "exit_time": 143,
+            "entry_price": 118.40087890625,
+            "exit_price": 138.8275909423828,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.1725216250489721,
+            "pnl_amount": 20.426712036132812,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_bollinger_band",
+        "current_position": 0,
+        "final_price": 138.8275909423828,
+        "final_date": 143
+      },
+      "test": {
+        "total_return": 0.00021198532104492189,
+        "sharpe_ratio": 1.6213958162070041,
+        "sortino_ratio": 2.261545963364932,
+        "max_drawdown": 0.2815457899150657,
+        "volatility": 0.5711353530237774,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2025-04-03",
+            "exit_time": 53,
+            "entry_price": 101.79293060302734,
+            "exit_price": 122.99146270751952,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.20825151588534505,
+            "pnl_amount": 21.198532104492173,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_bollinger_band",
+        "current_position": 0,
+        "final_price": 122.99146270751952,
+        "final_date": 53
+      },
+      "composite_score": 18.863959253124456,
+      "avg_sharpe": 1.016019104845478,
+      "max_drawdown": 0.2815457899150657,
+      "strategy": "swing_bollinger_band"
+    },
+    "TSLA": {
+      "train": {
+        "total_return": 0.0010164999389648437,
+        "sharpe_ratio": 0.9826440373274467,
+        "sortino_ratio": 1.8046774308672304,
+        "max_drawdown": 0.3154253114909568,
+        "volatility": 0.6848263352792654,
+        "beta": 1.0,
+        "total_trades": 1,
+        "trades": [
+          {
+            "entry_time": "2024-10-15",
+            "exit_time": 78,
+            "entry_price": 219.57000732421875,
+            "exit_price": 321.2200012207031,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.46295026873313905,
+            "pnl_amount": 101.64999389648438,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "donchian_rsi_whipsaw",
+        "current_position": 0,
+        "final_price": 321.2200012207031,
+        "final_date": 78
+      },
+      "test": {
+        "total_return": 0.0,
+        "sharpe_ratio": 0.6383325880042883,
+        "sortino_ratio": 1.0016670987170437,
+        "max_drawdown": 0.24274697149661614,
+        "volatility": 0.8056132441572182,
+        "beta": 1.0,
+        "total_trades": 0,
+        "trades": [],
+        "strategy": "donchian_rsi_whipsaw",
+        "current_position": 0,
+        "final_price": null,
+        "final_date": null
+      },
+      "composite_score": 16.06859155375858,
+      "avg_sharpe": 0.8104883126658675,
+      "max_drawdown": 0.3154253114909568,
+      "strategy": "donchian_rsi_whipsaw"
+    },
+    "MSFT": {
+      "train": {
+        "total_return": 0.00040522674560546876,
+        "sharpe_ratio": -0.6351693704920485,
+        "sortino_ratio": -0.737631243923826,
+        "max_drawdown": 0.11172302377965887,
+        "volatility": 0.2231516950271571,
+        "beta": 1.0,
+        "total_trades": 3,
+        "trades": [
+          {
+            "entry_time": "2024-09-17",
+            "exit_time": 41,
+            "entry_price": 432.6174621582031,
+            "exit_price": 428.302734375,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.009973540507769147,
+            "pnl_amount": -4.314727783203125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-11-01",
+            "exit_time": 94,
+            "entry_price": 407.9816589355469,
+            "exit_price": 429.5485534667969,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.0528624119709684,
+            "pnl_amount": 21.56689453125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-03",
+            "exit_time": 127,
+            "entry_price": 421.7286071777344,
+            "exit_price": 444.9991149902344,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.05517886957735551,
+            "pnl_amount": 23.2705078125,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_donchian",
+        "current_position": 0,
+        "final_price": 444.9991149902344,
+        "final_date": 127
+      },
+      "test": {
+        "total_return": 0.0013999972534179687,
+        "sharpe_ratio": 2.2642104634258664,
+        "sortino_ratio": 4.088260169656056,
+        "max_drawdown": 0.11585453575686888,
+        "volatility": 0.2907620577197477,
+        "beta": 1.0,
+        "total_trades": 2,
+        "trades": [
+          {
+            "entry_time": "2025-04-08",
+            "exit_time": 85,
+            "entry_price": 353.9102783203125,
+            "exit_price": 495.9400024414063,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.40131562382188685,
+            "pnl_amount": 142.0297241210938,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-07-09",
+            "exit_time": 93,
+            "entry_price": 503.510009765625,
+            "exit_price": 501.4800109863281,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.004031694981082508,
+            "pnl_amount": -2.029998779296875,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_donchian",
+        "current_position": 0,
+        "final_price": 501.4800109863281,
+        "final_date": 93
+      },
+      "composite_score": 34.38522109536751,
+      "avg_sharpe": 0.814520546466909,
+      "max_drawdown": 0.11585453575686888,
+      "strategy": "swing_donchian"
+    },
+    "PLTR": {
+      "train": {
+        "total_return": 0.0003984000015258789,
+        "sharpe_ratio": 3.0124952443741573,
+        "sortino_ratio": 5.956194999885916,
+        "max_drawdown": 0.272347951319052,
+        "volatility": 0.7354320218384969,
+        "beta": 1.0,
+        "total_trades": 7,
+        "trades": [
+          {
+            "entry_time": "2024-09-27",
+            "exit_time": 49,
+            "entry_price": 36.84000015258789,
+            "exit_price": 37.20000076293945,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.009772003497841289,
+            "pnl_amount": 0.3600006103515625,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-10-01",
+            "exit_time": 52,
+            "entry_price": 36.459999084472656,
+            "exit_price": 39.2400016784668,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.07624801601210324,
+            "pnl_amount": 2.7800025939941406,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-10-28",
+            "exit_time": 70,
+            "entry_price": 44.970001220703125,
+            "exit_price": 44.93000030517578,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": -0.0008895022112858711,
+            "pnl_amount": -0.04000091552734375,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2024-11-18",
+            "exit_time": 85,
+            "entry_price": 61.2599983215332,
+            "exit_price": 62.97999954223633,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.028077069340998264,
+            "pnl_amount": 1.720001220703125,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-02",
+            "exit_time": 116,
+            "entry_price": 75.19000244140625,
+            "exit_price": 75.91999816894531,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.009708680726642223,
+            "pnl_amount": 0.7299957275390625,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-17",
+            "exit_time": 129,
+            "entry_price": 71.7699966430664,
+            "exit_price": 75.44000244140625,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.051135655148374565,
+            "pnl_amount": 3.6700057983398438,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-01-28",
+            "exit_time": 138,
+            "entry_price": 80.2300033569336,
+            "exit_price": 110.8499984741211,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.38165267151944193,
+            "pnl_amount": 30.6199951171875,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_rsi",
+        "current_position": 0,
+        "final_price": 110.8499984741211,
+        "final_date": 138
+      },
+      "test": {
+        "total_return": 0.0003119000244140625,
+        "sharpe_ratio": 2.261663171636856,
+        "sortino_ratio": 3.128394254479151,
+        "max_drawdown": 0.235038737610021,
+        "volatility": 0.7411862562112354,
+        "beta": 1.0,
+        "total_trades": 5,
+        "trades": [
+          {
+            "entry_time": "2025-04-09",
+            "exit_time": 34,
+            "entry_price": 92.01000213623048,
+            "exit_price": 92.62000274658205,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.0066297206411145655,
+            "pnl_amount": 0.6100006103515625,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-04-15",
+            "exit_time": 45,
+            "entry_price": 98.4000015258789,
+            "exit_price": 118.44000244140624,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.20365854273139283,
+            "pnl_amount": 20.04000091552733,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-05-22",
+            "exit_time": 62,
+            "entry_price": 122.29000091552734,
+            "exit_price": 123.30999755859376,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.008340801663506325,
+            "pnl_amount": 1.0199966430664205,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-06-09",
+            "exit_time": 78,
+            "entry_price": 132.05999755859375,
+            "exit_price": 138.1999969482422,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.046494014108429606,
+            "pnl_amount": 6.1399993896484375,
+            "hold_duration": 1.0
+          },
+          {
+            "entry_time": "2025-07-07",
+            "exit_time": 93,
+            "entry_price": 139.1199951171875,
+            "exit_price": 142.5,
+            "shares": 1,
+            "position_type": "long",
+            "pnl": 0.024295608118483317,
+            "pnl_amount": 3.3800048828125,
+            "hold_duration": 1.0
+          }
+        ],
+        "strategy": "swing_rsi",
+        "current_position": 0,
+        "final_price": 142.5,
+        "final_date": 93
+      },
+      "composite_score": 30.495319390096952,
+      "avg_sharpe": 2.6370792080055065,
+      "max_drawdown": 0.272347951319052,
+      "strategy": "swing_rsi"
+    }
+  },
+  "ranking": [
+    {
+      "symbol": "NFLX",
+      "strategy": "swing_donchian",
+      "composite_score": 44.83745189520594,
+      "avg_sharpe": 2.0362947550482358,
+      "max_drawdown": 0.14180575143474947,
+      "train_return": 0.002787099609375,
+      "test_return": 0.001745599365234375
+    },
+    {
+      "symbol": "MSFT",
+      "strategy": "swing_donchian",
+      "composite_score": 34.38522109536751,
+      "avg_sharpe": 0.814520546466909,
+      "max_drawdown": 0.11585453575686888,
+      "train_return": 0.00040522674560546876,
+      "test_return": 0.0013999972534179687
+    },
+    {
+      "symbol": "SPY",
+      "strategy": "swing_bollinger_band",
+      "composite_score": 31.39506553656445,
+      "avg_sharpe": 0.7598722247347526,
+      "max_drawdown": 0.1624221246455939,
+      "train_return": 0.000254639892578125,
+      "test_return": 0.00108079345703125
+    },
+    {
+      "symbol": "PLTR",
+      "strategy": "swing_rsi",
+      "composite_score": 30.495319390096952,
+      "avg_sharpe": 2.6370792080055065,
+      "max_drawdown": 0.272347951319052,
+      "train_return": 0.0003984000015258789,
+      "test_return": 0.0003119000244140625
+    },
+    {
+      "symbol": "QQQ",
+      "strategy": "swing_bollinger_band",
+      "composite_score": 30.200697498907445,
+      "avg_sharpe": 0.7449704309342292,
+      "max_drawdown": 0.1902199605045104,
+      "train_return": 0.0006520355224609375,
+      "test_return": 0.0009606552124023438
+    },
+    {
+      "symbol": "META",
+      "strategy": "swing_macd",
+      "composite_score": 23.47770690476967,
+      "avg_sharpe": 1.2966822202111026,
+      "max_drawdown": 0.2799596555631588,
+      "train_return": 0.0008851678466796875,
+      "test_return": 0.0009159814453125
+    },
+    {
+      "symbol": "NVDA",
+      "strategy": "swing_bollinger_band",
+      "composite_score": 18.863959253124456,
+      "avg_sharpe": 1.016019104845478,
+      "max_drawdown": 0.2815457899150657,
+      "train_return": 0.0006458562469482422,
+      "test_return": 0.00021198532104492189
+    },
+    {
+      "symbol": "TSLA",
+      "strategy": "donchian_rsi_whipsaw",
+      "composite_score": 16.06859155375858,
+      "avg_sharpe": 0.8104883126658675,
+      "max_drawdown": 0.3154253114909568,
+      "train_return": 0.0010164999389648437,
+      "test_return": 0.0
+    },
+    {
+      "symbol": "AAPL",
+      "strategy": "dual_momentum",
+      "composite_score": 14.64707704976564,
+      "avg_sharpe": 0.020844085433144866,
+      "max_drawdown": 0.28704924020131073,
+      "train_return": 0.0004839102172851562,
+      "test_return": 0.00041355804443359375
+    }
+  ]
+}
