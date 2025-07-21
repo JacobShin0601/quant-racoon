@@ -1068,6 +1068,25 @@ class TrainTestEvaluator:
         
         return buy_hold_return
 
+    def _calculate_individual_buy_hold_return(
+        self, symbol: str, data_dict: Dict[str, pd.DataFrame]
+    ) -> float:
+        """개별 종목의 Buy & Hold 수익률 계산"""
+        if symbol not in data_dict:
+            return 0
+        
+        df = data_dict[symbol]
+        if len(df) < 2:
+            return 0
+        
+        # 시작가격과 종가
+        start_price = df.iloc[0]["close"]
+        end_price = df.iloc[-1]["close"]
+        
+        # Buy & Hold 수익률 계산
+        buy_hold_return = (end_price - start_price) / start_price
+        return buy_hold_return
+
     def _calculate_beta(
         self,
         strategy_returns: pd.Series,
@@ -1608,9 +1627,9 @@ class TrainTestEvaluator:
         """성과 테이블 출력"""
         # 헤더 출력
         print(
-            f"{'종목':<8} {'비중':<6} {'수익률':<8} {'샤프':<6} {'소르티노':<8} {'거래수':<6} {'보유':<4} {'매수/매도가격':<12} {'최종시점':<12} {'전략':<20}"
+            f"{'종목':<8} {'비중':<6} {'수익률':<8} {'B&H':<6} {'샤프':<6} {'소르티노':<8} {'거래수':<6} {'보유':<4} {'매수/매도가격':<12} {'최종시점':<12} {'전략':<20}"
         )
-        print("-" * 132)
+        print("-" * 138)
 
         # Buy & Hold 성과 (포트폴리오 비중 기준)
         buy_hold_data = individual_results.get(f"buy_hold_{period.lower()}", {})
@@ -1635,7 +1654,7 @@ class TrainTestEvaluator:
 
             if symbol_count > 0:
                 print(
-                    f"{'BUY&HOLD':<8} {'100%':<6} {buy_hold_return*100:>7.2f}% {total_sharpe:>5.3f} {total_sortino:>7.3f} {total_trades:>5} {'Y':<4} {'':<12} {'':<12} {'PASSIVE':<20}"
+                    f"{'BUY&HOLD':<8} {'100%':<6} {buy_hold_return*100:>7.2f}% {'':<6} {total_sharpe:>5.3f} {total_sortino:>7.3f} {total_trades:>5} {'Y':<4} {'':<12} {'':<12} {'PASSIVE':<20}"
                 )
 
         # 포트폴리오 성과
@@ -1649,10 +1668,10 @@ class TrainTestEvaluator:
             
             portfolio_score = self._calculate_portfolio_score(portfolio_data)
             print(
-                f"{'PORTFOLIO':<8} {'100%':<6} {portfolio_cumulative_return*100:>7.2f}% {portfolio_data.get('sharpe_ratio', 0):>5.3f} {portfolio_data.get('sortino_ratio', 0):>7.3f} {portfolio_data.get('total_trades', 0):>5} {'Y':<4} {'':<12} {'':<12} {'OPTIMIZED':<20} [{portfolio_score:>6.1f}]"
+                f"{'PORTFOLIO':<8} {'100%':<6} {portfolio_cumulative_return*100:>7.2f}% {'':<6} {portfolio_data.get('sharpe_ratio', 0):>5.3f} {portfolio_data.get('sortino_ratio', 0):>7.3f} {portfolio_data.get('total_trades', 0):>5} {'Y':<4} {'':<12} {'':<12} {'OPTIMIZED':<20} [{portfolio_score:>6.1f}]"
             )
 
-        print("-" * 132)
+        print("-" * 138)
 
         # 개별 종목 성과 (포트폴리오 비중 순으로 정렬)
         individual_data = individual_results.get(period.lower(), {})
@@ -1789,8 +1808,12 @@ class TrainTestEvaluator:
                             # 조용히 처리 (오류 로그 제거)
                             date_info = ""
                     
+                    # Buy & Hold 수익률 계산
+                    data_dict = train_data_dict if period.upper() == "TRAIN" else test_data_dict
+                    buy_hold_return = self._calculate_individual_buy_hold_return(symbol, data_dict) * 100
+                    
                     print(
-                        f"{symbol:<8} {weight*100:>5.1f}% {cumulative_return:>7.2f}% {sharpe:>5.3f} {sortino:>7.3f} {trades:>5} {holding:<4} {price_info:<12} {date_info:<12} {strategy:<20}"
+                        f"{symbol:<8} {weight*100:>5.1f}% {cumulative_return:>7.2f}% {buy_hold_return:>5.2f}% {sharpe:>5.3f} {sortino:>7.3f} {trades:>5} {holding:<4} {price_info:<12} {date_info:<12} {strategy:<20}"
                     )
 
 
