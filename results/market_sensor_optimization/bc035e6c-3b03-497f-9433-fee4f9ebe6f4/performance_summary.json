@@ -1,0 +1,22 @@
+{
+  "session_uuid": "bc035e6c-3b03-497f-9433-fee4f9ebe6f4",
+  "train_performance": 0.03206295307309737,
+  "test_performance": {
+    "total_return": 0.00908723238605269,
+    "log_return": 0.009046191931890823,
+    "buy_hold_return": 0.04254298754203134,
+    "buy_hold_log_return": 0.0416629088929863,
+    "excess_return": -0.03345575515597865,
+    "sharpe_ratio": 5.050916736870106,
+    "sortino_ratio": 7.522560755218057,
+    "calmar_ratio": 4.111930065218122,
+    "max_drawdown": -0.00220996764096732,
+    "win_rate": 0.6,
+    "avg_win": 0.0011158826138650858,
+    "avg_loss": -0.0008526821666697398,
+    "profit_factor": 2.1811226141922444,
+    "max_consecutive_wins": 6,
+    "max_consecutive_losses": 3,
+    "win_rate_weighted_return": 0.0003284567016511556,
+    "trade_frequency": 0.96,
+    "total_trades": 

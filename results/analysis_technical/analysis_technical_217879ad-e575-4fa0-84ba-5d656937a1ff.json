@@ -1,0 +1,51 @@
+{
+  "analysis_type": "technical",
+  "analysis_method": "ML (Random Forest)",
+  "current_regime": "TRENDING_DOWN",
+  "regime_probabilities": {
+    "trending_up": 0.037333333333333336,
+    "trending_down": 0.4738219461697723,
+    "volatile": 0.3020623941276115,
+    "sideways": 0.18678232636928288
+  },
+  "primary_regime": "trending_down",
+  "secondary_regime": "volatile",
+  "secondary_probability": 0.3020623941276115,
+  "performance_metrics": {
+    "total_return": -0.05617668145511978,
+    "log_return": -0.05781629291212333,
+    "buy_hold_return": 0.03735279167166894,
+    "buy_hold_log_return": 0.036672075510346944,
+    "excess_return": -0.09352947312678872,
+    "sharpe_ratio": -0.42301360924830134,
+    "sortino_ratio": -0.5030179511441235,
+    "calmar_ratio": -0.2768453638532213,
+    "max_drawdown": -0.20291718334464762,
+    "win_rate": 0.43089430894308944,
+    "avg_win": 0.009154850305351066,
+    "avg_loss": -0.007693847767268996,
+    "profit_factor": 0.9139752538832921,
+    "max_consecutive_wins": 4,
+    "max_consecutive_losses": 9,
+    "win_rate_weighted_return": -0.00043383965467661077,
+    "trade_frequency": 0.991869918699187,
+    "total_trades": "122"
+  },
+  "recommendation": {
+    "primary_strategy": "cash_heavy",
+    "secondary_strategy": "inverse_momentum",
+    "position_size": 0.3,
+    "stop_loss": 0.03,
+    "take_profit": 0.08,
+    "description": "하락 추세 - 현금 비중 확대 권장"
+  },
+  "technical_indicators": {
+    "rsi": 70.81852993192791,
+    "macd": 6.8274146676401415,
+    "sma_short": 623.8228628976004,
+    "sma_long": 599.1783228460348,
+    "atr": 4.620819091796875
+  },
+  "last_update": "2025-07-22T16:30:04.262877",
+  "data_period": "2025-01-23 ~ 2025-07-21"
+}

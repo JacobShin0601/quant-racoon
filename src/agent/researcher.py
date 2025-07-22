@@ -65,23 +65,35 @@ class IndividualStrategyResearcher:
         research_config_path: str = "config/config_research.json",
         source_config_path: str = "config/config_swing.json",  # swing config를 기본값으로 설정
         data_dir: str = "data",
-        results_dir: str = "results",
-        log_dir: str = "log",
+        results_dir: str = None,  # None이면 config에서 가져옴
+        log_dir: str = None,      # None이면 config에서 가져옴
         analysis_dir: Optional[str] = None,
         auto_detect_source_config: bool = False,  # 자동 감지 비활성화
         uuid: Optional[str] = None,
+        verbose: bool = False,  # verbose 모드 추가
     ):
         self.research_config_path = research_config_path
         self.source_config_path = source_config_path
         self.data_dir = data_dir
-        self.results_dir = results_dir
-        self.log_dir = log_dir
-        self.analysis_dir = analysis_dir
         self.uuid = uuid
+        self.verbose = verbose  # verbose 모드 저장
 
         # 설정 로드
         self.research_config = self._load_research_config(research_config_path)
         self.source_config = load_config(source_config_path)
+
+        # config에서 output 경로 가져오기
+        output_config = self.source_config.get("output", {})
+        self.results_dir = results_dir or output_config.get("results_folder", "results")
+        self.log_dir = log_dir or output_config.get("logs_folder", "log")
+        
+        # analysis_dir이 None이면 config에서 가져오거나 기본값 사용
+        if analysis_dir is None:
+            results_folder = output_config.get("results_folder", "results")
+            # results/swing -> analysis/swing로 변경
+            self.analysis_dir = results_folder.replace("results", "analysis")
+        else:
+            self.analysis_dir = analysis_dir
 
         # 자동 감지 및 설정 (orchestrator에서 호출할 때는 비활성화)
         if auto_detect_source_config:
@@ -89,8 +101,19 @@ class IndividualStrategyResearcher:
 
         # 로거 설정
         self.logger = Logger()
-        if log_dir:
-            self.logger.set_log_dir(log_dir)
+        if self.log_dir:
+            self.logger.set_log_dir(self.log_dir)
+
+        # UUID 설정 - logger를 통해 설정
+        if self.uuid:
+            self.logger.setup_logger(
+                strategy="individual_research", mode="research", uuid=self.uuid
+            )
+        else:
+            # UUID가 없어도 기본 로거 설정
+            self.logger.setup_logger(
+                strategy="individual_research", mode="research"
+            )
 
         # 평가기 초기화 (단일 종목 모드)
         self.evaluator = TrainTestEvaluator(
@@ -100,8 +123,8 @@ class IndividualStrategyResearcher:
         )
 
         # 로거 설정
-        if log_dir:
-            self.evaluator.logger.set_log_dir(log_dir)
+        if self.log_dir:
+            self.evaluator.logger.set_log_dir(self.log_dir)
 
         self.strategy_manager = StrategyManager()
 
@@ -126,7 +149,8 @@ class IndividualStrategyResearcher:
 
     def _auto_detect_and_set_source_config(self):
         """자동으로 최적의 source config 감지 및 설정"""
-        logger.info("🔍 자동 source config 감지 중...")
+        if self.verbose:
+            logger.info("🔍 자동 source config 감지 중...")
 
         # 사용 가능한 config 파일들 찾기
         config_dir = Path("config")
@@ -152,10 +176,12 @@ class IndividualStrategyResearcher:
                     available_configs.append(config_info)
 
                 except Exception as e:
-                    logger.warning(f"Config 파일 로드 실패: {config_file} - {e}")
+                    if self.verbose:
+                        logger.warning(f"Config 파일 로드 실패: {config_file} - {e}")
 
         if not available_configs:
-            logger.warning("사용 가능한 config 파일이 없습니다. 기본 설정 사용")
+            if self.verbose:
+                logger.warning("사용 가능한 config 파일이 없습니다. 기본 설정 사용")
             return
 
         # 최적의 config 선택
@@ -163,9 +189,11 @@ class IndividualStrategyResearcher:
         if best_config:
             self.source_config_path = best_config["path"]
             self.source_config = load_config(self.source_config_path)
-            logger.info(f"✅ 선택된 source config: {best_config['name']}")
+            if self.verbose:
+                logger.info(f"✅ 선택된 source config: {best_config['name']}")
         else:
-            logger.warning("적절한 config를 찾을 수 없습니다. 기본 설정 사용")
+            if self.verbose:
+                logger.warning("적절한 config를 찾을 수 없습니다. 기본 설정 사용")
 
     def _select_best_source_config(
         self, available_configs: List[Dict]
@@ -201,20 +229,22 @@ class IndividualStrategyResearcher:
         # 점수로 정렬
         sorted_configs = sorted(available_configs, key=config_score, reverse=True)
 
-        logger.info("📊 Config 파일 우선순위:")
-        for i, config in enumerate(sorted_configs[:3], 1):
-            logger.info(
-                f"  {i}. {config['name']} (심볼: {config['symbol_count']}, "
-                f"전략: {config['strategy_count']}, 시간대: {config['time_horizon']})"
-            )
+        if self.verbose:
+            logger.info("📊 Config 파일 우선순위:")
+            for i, config in enumerate(sorted_configs[:3], 1):
+                logger.info(
+                    f"  {i}. {config['name']} (심볼: {config['symbol_count']}, "
+                    f"전략: {config['strategy_count']}, 시간대: {config['time_horizon']})"
+                )
 
         return sorted_configs[0] if sorted_configs else None
 
     def _load_source_config_symbols(self) -> List[str]:
         """source config에서 심볼 목록 로드"""
         symbols = self.source_config.get("data", {}).get("symbols", [])
-        logger.info(f"🔍 로드된 심볼들: {symbols}")
-        logger.info(f"🔍 source_config_path: {self.source_config_path}")
+        if self.verbose:
+            logger.info(f"🔍 로드된 심볼들: {symbols}")
+            logger.info(f"🔍 source_config_path: {self.source_config_path}")
         return symbols
 
     def _load_source_config_settings(self) -> Dict[str, Any]:
@@ -248,7 +278,8 @@ class IndividualStrategyResearcher:
         for name, strategy_class in strategies_to_register.items():
             self.strategy_manager.add_strategy(name, strategy_class(StrategyParams()))
 
-        logger.info(f"✅ {len(strategies_to_register)}개 전략 등록 완료")
+        if self.verbose:
+            logger.info(f"✅ {len(strategies_to_register)}개 전략 등록 완료")
 
     def create_evaluation_function(
         self,
@@ -505,7 +536,8 @@ class IndividualStrategyResearcher:
         optimization_method: str = None,  # None이면 config에서 로드
     ) -> Optional[OptimizationResult]:
         """단일 전략을 단일 종목에 대해 최적화"""
-        logger.info(f"🔬 {symbol} - {strategy_name} 최적화 시작")
+        if self.verbose:
+            logger.info(f"🔬 {symbol} - {strategy_name} 최적화 시작")
 
         start_time = datetime.now()
 
@@ -574,9 +606,10 @@ class IndividualStrategyResearcher:
                 all_results=best_result.get("all_results", []),
             )
 
-            logger.info(
-                f"✅ {symbol} - {strategy_name} 완료 (점수: {best_result['score']:.2f}, 시간: {execution_time:.1f}초)"
-            )
+            if self.verbose:
+                logger.info(
+                    f"✅ {symbol} - {strategy_name} 완료 (점수: {best_result['score']:.2f}, 시간: {execution_time:.1f}초)"
+                )
 
             return result
 
@@ -599,10 +632,11 @@ class IndividualStrategyResearcher:
             max_combinations = settings.get("max_combinations", 1000)
 
             if len(all_combinations) > max_combinations:
-                logger.warning(
-                    f"조합 수가 너무 많습니다 ({len(all_combinations)}). "
-                    f"처음 {max_combinations}개만 테스트합니다."
-                )
+                if self.verbose:
+                    logger.warning(
+                        f"조합 수가 너무 많습니다 ({len(all_combinations)}). "
+                        f"처음 {max_combinations}개만 테스트합니다."
+                    )
                 all_combinations = all_combinations[:max_combinations]
 
             best_score = -999999.0
@@ -610,7 +644,8 @@ class IndividualStrategyResearcher:
             # all_results는 상위 10개만 저장 (메모리 절약)
             top_results = []
 
-            logger.info(f"🚀 그리드 서치 최적화 시작: {len(all_combinations)}개 조합")
+            if self.verbose:
+                logger.info(f"🚀 그리드 서치 최적화 시작: {len(all_combinations)}개 조합")
 
             for i, combination in enumerate(all_combinations):
                 params = dict(zip(param_names, combination))
@@ -629,16 +664,19 @@ class IndividualStrategyResearcher:
                 if score > best_score and score > -999999.0:
                     best_score = score
                     best_params = params
-                    progress = (i + 1) / len(all_combinations) * 100
-                    logger.info(
-                        f"🎯 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
-                    )
+                    if self.verbose:
+                        progress = (i + 1) / len(all_combinations) * 100
+                        logger.info(
+                            f"🎯 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
+                        )
 
             # 최적화 결과 요약
             if best_score > -999999.0:
-                logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
+                if self.verbose:
+                    logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
             else:
-                logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
+                if self.verbose:
+                    logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
 
             return {
                 "params": best_params,
@@ -698,9 +736,10 @@ class IndividualStrategyResearcher:
                     # n_trials는 총 trial 수이므로 올바른 진행률 계산
                     progress = (current_trial / n_trials * 100)
 
-                    logger.info(
-                        f"🎯 Trial {current_trial}: 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
-                    )
+                    if self.verbose:
+                        logger.info(
+                            f"🎯 Trial {current_trial}: 새로운 최고 점수 {score:.2f} (진행률: {progress:.1f}%)"
+                        )
 
                 return score
 
@@ -712,7 +751,8 @@ class IndividualStrategyResearcher:
                 "early_stopping_patience", 10
             )
 
-            logger.info(f"🚀 베이지안 최적화 시작: {n_trials} trials")
+            if self.verbose:
+                logger.info(f"🚀 베이지안 최적화 시작: {n_trials} trials")
 
             study = optuna.create_study(direction="maximize")
             study.optimize(objective, n_trials=n_trials)
@@ -720,17 +760,38 @@ class IndividualStrategyResearcher:
             best_params = study.best_params
             best_score = study.best_value
 
+            # all_results 수집 (Optuna trials에서)
+            all_results = []
+            for trial in study.trials:
+                if trial.value is not None and trial.value >= -999999.0:
+                    # trial.duration이 None이거나 유효하지 않을 경우 기본값 사용
+                    evaluation_time = trial.duration if trial.duration is not None else 0.0
+                    result = {
+                        "params": trial.params,
+                        "score": trial.value,
+                        "evaluation_time": evaluation_time,
+                        "combination_index": trial.number,
+                    }
+                    all_results.append(result)
+            
+            # 점수별로 정렬 (상위 10개만 유지)
+            all_results.sort(key=lambda x: x["score"], reverse=True)
+            all_results = all_results[:10]
+
             # 최적화 결과 요약
             if best_score > -999999.0:
-                logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
+                if self.verbose:
+                    logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
+                    logger.info(f"  - 성공한 조합 수: {len(all_results)}")
             else:
-                logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
+                if self.verbose:
+                    logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
 
             return {
                 "params": best_params,
                 "score": best_score,
                 "n_combinations": n_trials,
-                "all_results": [],  # 베이지안 최적화는 all_results 없음
+                "all_results": all_results,  # 베이지안 최적화 결과도 수집
             }
 
         except ImportError:
@@ -755,9 +816,10 @@ class IndividualStrategyResearcher:
             mutation_rate = settings.get("mutation_rate", 0.1)
             crossover_rate = settings.get("crossover_rate", 0.8)
 
-            logger.info(
-                f"🚀 유전 알고리즘 최적화 시작: {generations}세대, {population_size}개체"
-            )
+            if self.verbose:
+                logger.info(
+                    f"🚀 유전 알고리즘 최적화 시작: {generations}세대, {population_size}개체"
+                )
 
             def create_individual():
                 """개체 생성"""
@@ -827,10 +889,11 @@ class IndividualStrategyResearcher:
                     best_score = current_best_score
                     best_individual = fitness_scores[0][1]
 
-                    progress = (generation + 1) / generations * 100
-                    logger.info(
-                        f"🎯 세대 {generation+1}/{generations}: 새로운 최고 점수 {best_score:.2f} (진행률: {progress:.1f}%)"
-                    )
+                    if self.verbose:
+                        progress = (generation + 1) / generations * 100
+                        logger.info(
+                            f"🎯 세대 {generation+1}/{generations}: 새로운 최고 점수 {best_score:.2f} (진행률: {progress:.1f}%)"
+                        )
 
                 # 새로운 개체군 생성
                 new_population = fitness_scores[: population_size // 2]  # 상위 50% 유지
@@ -850,17 +913,37 @@ class IndividualStrategyResearcher:
                     individual for _, individual in new_population[:population_size]
                 ]
 
+            # all_results 수집 (유전 알고리즘 세대별 최고 점수들)
+            all_results = []
+            for generation in range(generations):
+                if generation_best_scores[generation] > -999999.0:
+                    result = {
+                        "params": generation_best_params[generation],
+                        "score": generation_best_scores[generation],
+                        "evaluation_time": 0.0,  # 유전 알고리즘에서는 시간 추적 어려움
+                        "combination_index": generation,
+                        "generation": generation,
+                    }
+                    all_results.append(result)
+            
+            # 점수별로 정렬 (상위 10개만 유지)
+            all_results.sort(key=lambda x: x["score"], reverse=True)
+            all_results = all_results[:10]
+
             # 최적화 결과 요약
             if best_score > -999999.0:
-                logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
+                if self.verbose:
+                    logger.info(f"✅ 최적화 완료: 점수 {best_score:.2f}")
+                    logger.info(f"  - 성공한 세대 수: {len(all_results)}")
             else:
-                logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
+                if self.verbose:
+                    logger.warning("⚠️ 유효한 최적화 결과를 찾지 못했습니다")
 
             return {
                 "params": best_individual,
                 "score": best_score,
                 "n_combinations": population_size * generations,
-                "all_results": [],
+                "all_results": all_results,  # 유전 알고리즘 결과도 수집
             }
 
         except Exception as e:
@@ -883,7 +966,8 @@ class IndividualStrategyResearcher:
         if not symbols:
             symbols = self._load_source_config_symbols()
 
-        logger.info(f"📊 대상: {len(strategies)}개 전략, {len(symbols)}개 심볼")
+        if self.verbose:
+            logger.info(f"📊 대상: {len(strategies)}개 전략, {len(symbols)}개 심볼")
 
         # 최적화 방법 설정 (config에서 로드)
         if optimization_method is None:
@@ -913,9 +997,15 @@ class IndividualStrategyResearcher:
             for symbol in symbols:
                 current_combination += 1
                 overall_progress = (current_combination / total_combinations) * 100
-                logger.info(
-                    f"🔬 [{overall_progress:.1f}%] {current_combination}/{total_combinations}: {strategy_name} - {symbol}"
-                )
+                
+                # 간소화된 진행률 표시 (verbose가 아닐 때)
+                if not self.verbose:
+                    if current_combination % 10 == 0 or current_combination == total_combinations:
+                        logger.info(f"🔬 진행률: {overall_progress:.1f}% ({current_combination}/{total_combinations})")
+                else:
+                    logger.info(
+                        f"🔬 [{overall_progress:.1f}%] {current_combination}/{total_combinations}: {strategy_name} - {symbol}"
+                    )
 
                 result = self.optimize_single_strategy_for_symbol(
                     strategy_name, symbol, optimization_method
@@ -925,7 +1015,8 @@ class IndividualStrategyResearcher:
                     key = f"{strategy_name}_{symbol}"
                     results[key] = result
                 else:
-                    logger.warning(f"❌ {strategy_name} - {symbol}: 최적화 실패")
+                    if self.verbose:
+                        logger.warning(f"❌ {strategy_name} - {symbol}: 최적화 실패")
 
         logger.info(f"✅ 종합 연구 완료: {len(results)}개 조합 최적화됨")
         return results
@@ -944,15 +1035,43 @@ class IndividualStrategyResearcher:
             # 결과를 JSON 직렬화 가능한 형태로 변환
             serializable_results = {}
             for key, result in results.items():
+                # execution_time을 안전하게 float로 변환
+                try:
+                    if hasattr(result.execution_time, 'total_seconds'):
+                        execution_time_seconds = result.execution_time.total_seconds()
+                    elif isinstance(result.execution_time, (int, float)):
+                        execution_time_seconds = float(result.execution_time)
+                    else:
+                        execution_time_seconds = 0.0
+                except (TypeError, ValueError, AttributeError):
+                    execution_time_seconds = 0.0
+                
+                # all_results 내부의 evaluation_time도 안전하게 변환
+                serializable_all_results = []
+                for all_result in result.all_results:
+                    serializable_all_result = all_result.copy()
+                    if "evaluation_time" in serializable_all_result:
+                        try:
+                            eval_time = serializable_all_result["evaluation_time"]
+                            if hasattr(eval_time, 'total_seconds'):
+                                serializable_all_result["evaluation_time"] = eval_time.total_seconds()
+                            elif isinstance(eval_time, (int, float)):
+                                serializable_all_result["evaluation_time"] = float(eval_time)
+                            else:
+                                serializable_all_result["evaluation_time"] = 0.0
+                        except (TypeError, ValueError, AttributeError):
+                            serializable_all_result["evaluation_time"] = 0.0
+                    serializable_all_results.append(serializable_all_result)
+                
                 serializable_results[key] = {
                     "strategy_name": result.strategy_name,
                     "symbol": result.symbol,
                     "best_params": result.best_params,
                     "best_score": result.best_score,
                     "optimization_method": result.optimization_method,
-                    "execution_time": result.execution_time,
+                    "execution_time": execution_time_seconds,
                     "n_combinations_tested": result.n_combinations_tested,
-                    "all_results": result.all_results,
+                    "all_results": serializable_all_results,
                 }
 
             # 파일 저장
@@ -962,7 +1081,8 @@ class IndividualStrategyResearcher:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(serializable_results, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"💾 연구 결과 저장 완료: {output_path}")
+            if self.verbose:
+                logger.info(f"💾 연구 결과 저장 완료: {output_path}")
 
             # 최신 파일 경로 반환
             return output_path
@@ -1021,7 +1141,8 @@ class IndividualStrategyResearcher:
                         f"점수 {result.best_score:.2f}\n"
                     )
 
-            logger.info(f"📄 연구 보고서 생성 완료: {output_path}")
+            if self.verbose:
+                logger.info(f"📄 연구 보고서 생성 완료: {output_path}")
 
         except Exception as e:
             logger.error(f"연구 보고서 생성 중 오류: {e}")
@@ -1030,20 +1151,23 @@ class IndividualStrategyResearcher:
         self, strategy_name: str = "dual_momentum", symbol: str = "AAPL"
     ):
         """빠른 테스트 실행"""
-        logger.info(f"🧪 빠른 테스트: {strategy_name} - {symbol}")
+        if self.verbose:
+            logger.info(f"🧪 빠른 테스트: {strategy_name} - {symbol}")
 
         # config에서 최적화 방법 로드
         optimization_method = self.source_config.get("researcher", {}).get(
             "optimization_method", "bayesian_optimization"
         )
-        logger.info(f"🔧 사용할 최적화 방법: {optimization_method}")
+        if self.verbose:
+            logger.info(f"🔧 사용할 최적화 방법: {optimization_method}")
 
         result = self.optimize_single_strategy_for_symbol(
             strategy_name, symbol, optimization_method
         )
 
         if result:
-            logger.info(f"✅ 테스트 성공: 점수 {result.best_score:.2f}")
+            if self.verbose:
+                logger.info(f"✅ 테스트 성공: 점수 {result.best_score:.2f}")
         else:
             logger.error("❌ 테스트 실패")
 
@@ -1058,14 +1182,15 @@ def main():
         "--source-config", default="config/config_swing.json", help="소스 설정 파일"
     )
     parser.add_argument("--data-dir", default="data", help="데이터 디렉토리")
-    parser.add_argument("--results-dir", default="results", help="결과 디렉토리")
-    parser.add_argument("--log-dir", default="log", help="로그 디렉토리")
+    parser.add_argument("--results-dir", default=None, help="결과 디렉토리 (None이면 config에서 가져옴)")
+    parser.add_argument("--log-dir", default=None, help="로그 디렉토리 (None이면 config에서 가져옴)")
     parser.add_argument(
         "--optimization-method",
         choices=["grid_search", "bayesian_optimization", "genetic_algorithm"],
         help="최적화 방법 (기본값: config에서 로드)",
     )
     parser.add_argument("--quick-test", action="store_true", help="빠른 테스트 실행")
+    parser.add_argument("--verbose", action="store_true", help="상세한 로그 출력")
 
     args = parser.parse_args()
 
@@ -1076,6 +1201,7 @@ def main():
         data_dir=args.data_dir,
         results_dir=args.results_dir,
         log_dir=args.log_dir,
+        verbose=args.verbose,  # verbose 옵션 추가
     )
 
     if args.quick_test:

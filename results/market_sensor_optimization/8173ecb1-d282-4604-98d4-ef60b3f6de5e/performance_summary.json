@@ -1,0 +1,16 @@
+{
+  "session_uuid": "8173ecb1-d282-4604-98d4-ef60b3f6de5e",
+  "train_performance": 0.5962276931458261,
+  "test_performance": {
+    "total_return": 0.0882456558270801,
+    "log_return": 0.08456690955356355,
+    "buy_hold_return": 0.06389130260116982,
+    "buy_hold_log_return": 0.061933226491418324,
+    "excess_return": 0.024354353225910286,
+    "sharpe_ratio": 0.7536918947994358,
+    "max_drawdown": -0.20335870612991308,
+    "win_rate": 0.58
+  },
+  "optimization_objective": "total_return",
+  "created_at": "2025-07-22T14:44:26.071331"
+}

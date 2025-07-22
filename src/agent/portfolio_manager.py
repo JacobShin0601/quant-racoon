@@ -99,6 +99,38 @@ class AdvancedPortfolioManager:
         self.logger = Logger()
         print("🔍 Logger 초기화 완료")
 
+        # 로거 설정 (설정 로드 후에)
+        try:
+            # 직접 파일 읽기로 변경
+            import json
+
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                self.config = json.load(f)
+            self.logger.log_success(f"✅ 설정 파일 로드 완료")
+            
+            # config에서 output 경로 가져오기
+            output_config = self.config.get("output", {})
+            logs_folder = output_config.get("logs_folder", "log")
+            self.logger.set_log_dir(logs_folder)
+            
+            # UUID 설정 - logger를 통해 설정
+            if self.uuid:
+                self.logger.setup_logger(
+                    strategy="portfolio_optimization", mode="portfolio", uuid=self.uuid
+                )
+            else:
+                # UUID가 없어도 기본 로거 설정
+                self.logger.setup_logger(
+                    strategy="portfolio_optimization", mode="portfolio"
+                )
+                
+        except Exception as e:
+            print(f"❌ 설정 파일 로드 실패: {e}")
+            # 기본 로거 설정
+            self.logger.setup_logger(
+                strategy="portfolio_optimization", mode="portfolio"
+            )
+
         # 직접 print로도 로깅
         print(f"🔍 PortfolioManager 초기화 시작")
         print(f"🔍 설정 파일 경로: {self.config_path}")
@@ -110,19 +142,7 @@ class AdvancedPortfolioManager:
         self.logger.log_info(f"🔍 시간대: {self.time_horizon}")
         self.logger.log_info(f"🔍 UUID: {self.uuid}")
 
-        try:
-            # 직접 파일 읽기로 변경
-            import json
-
-            with open(self.config_path, "r", encoding="utf-8") as f:
-                self.config = json.load(f)
-            self.logger.log_success(f"✅ 설정 파일 로드 완료")
-        except Exception as e:
-            self.logger.log_error(f"❌ 설정 파일 로드 실패: {e}")
-            import traceback
-
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
-            raise
+        # 설정 파일은 이미 위에서 로드됨
 
         try:
             # PortfolioWeightCalculator에 동일한 설정 파일 경로 전달
@@ -736,24 +756,28 @@ class AdvancedPortfolioManager:
                 self.logger.log_error("설정 파일에서 심볼을 찾을 수 없습니다")
                 return {}
 
-            # data_dir 인자를 직접 사용
-            data_path = Path(data_dir)
+            # time_horizon을 고려한 데이터 경로 구성
+            # data_dir이 이미 time_horizon을 포함하고 있는지 확인
+            if self.time_horizon and not str(data_dir).endswith(f"/{self.time_horizon}"):
+                data_path = Path(data_dir) / self.time_horizon
+            else:
+                data_path = Path(data_dir)
             
-            # data_dir이 존재하는지 확인
+            print(f"🔍 time_horizon 기반 데이터 경로: {data_path}")
+            self.logger.log_info(f"🔍 time_horizon 기반 데이터 경로: {data_path}")
+            
+            # data_path가 존재하는지 확인
             if not data_path.exists():
                 print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
                 self.logger.log_error(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
                 return {}
-            
-            print(f"🔍 데이터 디렉토리 사용: {data_path}")
-            self.logger.log_info(f"🔍 데이터 디렉토리 사용: {data_path}")
             
             print(f"🔍 최종 검색 경로: {data_path}")
             self.logger.log_info(f"🔍 최종 검색 경로: {data_path}")
 
             for symbol in symbols:
                 self.logger.log_info(f"🔍 {symbol} 데이터 파일 검색 중...")
-                # 파일명 패턴 찾기 - 실제 파일명 형식에 맞게 수정
+                # 파일명 패턴 수정 - 실제 파일명 형식에 맞게
                 pattern = f"{symbol}_*.csv"
                 self.logger.log_info(f"🔍 검색 패턴: {pattern}")
                 self.logger.log_info(f"🔍 검색 경로: {data_path}")
@@ -768,8 +792,18 @@ class AdvancedPortfolioManager:
                     latest_file = max(files, key=lambda x: x.stat().st_mtime)
                     self.logger.log_info(f"🔍 {symbol} 파일 로드: {latest_file}")
                     df = pd.read_csv(latest_file)
-                    df["datetime"] = pd.to_datetime(df["datetime"])
-                    df.set_index("datetime", inplace=True)
+                    
+                    # datetime 컬럼 처리
+                    if "datetime" in df.columns:
+                        df["datetime"] = pd.to_datetime(df["datetime"])
+                        df.set_index("datetime", inplace=True)
+                    elif "date" in df.columns:
+                        df["datetime"] = pd.to_datetime(df["date"])
+                        df.set_index("datetime", inplace=True)
+                    else:
+                        # 인덱스가 이미 datetime인 경우
+                        df.index = pd.to_datetime(df.index)
+                    
                     data_dict[symbol] = df
                     self.logger.log_info(
                         f"✅ {symbol} 데이터 로드: {latest_file.name} (행: {len(df)})"
@@ -861,12 +895,19 @@ class AdvancedPortfolioManager:
             return
 
         if not output_path:
+            # config에서 output 경로 가져오기
+            output_config = self.config.get("output", {})
+            results_folder = output_config.get("results_folder", "results")
+            
+            # results 폴더 생성
+            os.makedirs(results_folder, exist_ok=True)
+            
             # UUID가 있으면 사용, 없으면 현재 시간 사용
             if self.uuid:
-                output_path = f"results/portfolio_optimization_{self.uuid}.json"
+                output_path = os.path.join(results_folder, f"portfolio_optimization_{self.uuid}.json")
             else:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = f"results/portfolio_optimization_{timestamp}.json"
+                output_path = os.path.join(results_folder, f"portfolio_optimization_{timestamp}.json")
 
         try:
             # 결과를 JSON 직렬화 가능한 형태로 변환
@@ -1187,11 +1228,15 @@ class AdvancedPortfolioManager:
         """최신 개별 최적화 결과 파일 찾기"""
         try:
             self.logger.log_info("🔍 최신 최적화 결과 파일 검색 시작")
-            results_dir = Path("results")
+            
+            # config에서 output 경로 가져오기
+            output_config = self.config.get("output", {})
+            results_folder = output_config.get("results_folder", "results")
+            results_dir = Path(results_folder)
             self.logger.log_info(f"🔍 결과 디렉토리: {results_dir}")
 
             if not results_dir.exists():
-                self.logger.log_error("결과 디렉토리가 존재하지 않습니다")
+                self.logger.log_error(f"{results_folder} 디렉토리가 존재하지 않습니다")
                 return {}
 
             # hyperparam_optimization_*.json 파일들 찾기

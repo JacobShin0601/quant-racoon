@@ -1,0 +1,51 @@
+{
+  "analysis_type": "technical",
+  "analysis_method": "ML (Random Forest)",
+  "current_regime": "SIDEWAYS",
+  "regime_probabilities": {
+    "trending_up": 0.0,
+    "trending_down": 0.0,
+    "volatile": 0.0,
+    "sideways": 1.0
+  },
+  "primary_regime": "sideways",
+  "secondary_regime": "trending_up",
+  "secondary_probability": 0.0,
+  "performance_metrics": {
+    "total_return": -0.17485463307839733,
+    "log_return": -0.19219570584004783,
+    "buy_hold_return": 0.03735279167166894,
+    "buy_hold_log_return": 0.036672075510346944,
+    "excess_return": -0.21220742475006626,
+    "sharpe_ratio": -3.193016438563652,
+    "sortino_ratio": -2.988002724556807,
+    "calmar_ratio": -0.9803640291342904,
+    "max_drawdown": -0.1783568428482658,
+    "win_rate": 0.4796747967479675,
+    "avg_win": 0.002714047887153332,
+    "avg_loss": -0.005532570267332103,
+    "profit_factor": 0.4594116773156421,
+    "max_consecutive_wins": 7,
+    "max_consecutive_losses": 9,
+    "win_rate_weighted_return": -0.0015768753802212032,
+    "trade_frequency": 0.991869918699187,
+    "total_trades": "122"
+  },
+  "recommendation": {
+    "primary_strategy": "swing_trading",
+    "secondary_strategy": "mean_reversion",
+    "position_size": 0.7,
+    "stop_loss": 0.04,
+    "take_profit": 0.1,
+    "description": "횡보장 - 스윙 트레이딩 전략 권장"
+  },
+  "technical_indicators": {
+    "rsi": 70.81852993192791,
+    "macd": 6.8274146676401415,
+    "sma_short": 623.8228628976004,
+    "sma_long": 599.1783228460348,
+    "atr": 4.620819091796875
+  },
+  "last_update": "2025-07-22T16:25:26.080996",
+  "data_period": "2025-01-23 ~ 2025-07-21"
+}

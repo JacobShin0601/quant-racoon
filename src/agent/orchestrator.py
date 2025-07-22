@@ -187,9 +187,9 @@ class Orchestrator:
                 research_config_path="config/config_research.json",
                 source_config_path=horizon_config_path,
                 data_dir=data_dir,
-                results_dir="results",
-                log_dir="log",
-                analysis_dir="analysis",
+                results_dir=None,  # config에서 가져옴
+                log_dir=None,      # config에서 가져옴
+                analysis_dir=None, # config에서 가져옴
                 auto_detect_source_config=False,  # 명시적으로 설정된 config 사용
                 uuid=self.uuid,  # UUID 전달
             )
@@ -316,6 +316,9 @@ class Orchestrator:
         try:
             horizon_config = self._get_config_for_horizon()
 
+            # 데이터 디렉토리 설정
+            data_dir = f"data/{self.time_horizon}"
+
             # 포트폴리오 매니저 초기화
             portfolio_manager = AdvancedPortfolioManager(
                 config_path=self.config_path,
@@ -323,8 +326,8 @@ class Orchestrator:
                 uuid=self.uuid,
             )
 
-            # 포트폴리오 최적화 실행
-            success = portfolio_manager.run_portfolio_optimization()
+            # 포트폴리오 최적화 실행 (올바른 데이터 디렉토리 전달)
+            success = portfolio_manager.run_portfolio_optimization(data_dir=data_dir)
 
             if success:
                 print("✅ 포트폴리오 최적화 완료")
@@ -353,9 +356,14 @@ class Orchestrator:
     def _find_latest_optimization_file(self) -> Optional[str]:
         """최신 최적화 결과 파일 찾기"""
         try:
-            # results 디렉토리에서 최적화 결과 파일 찾기
-            results_dir = Path("results")
+            # time_horizon별 설정에서 output 경로 가져오기
+            horizon_config = self._get_config_for_horizon()
+            output_config = horizon_config.get("output", {})
+            results_folder = output_config.get("results_folder", "results")
+            results_dir = Path(results_folder)
+            
             if not results_dir.exists():
+                print(f"⚠️ {results_folder} 디렉토리가 존재하지 않습니다")
                 return None
 
             # hyperparam_optimization_*.json 파일들 찾기 (researcher가 생성하는 파일명)
@@ -365,7 +373,7 @@ class Orchestrator:
 
             if not optimization_files:
                 print("⚠️ hyperparam_optimization_*.json 파일을 찾을 수 없습니다")
-                print(f"🔍 results 디렉토리 내용:")
+                print(f"🔍 {results_folder} 디렉토리 내용:")
                 for file in results_dir.glob("*.json"):
                     print(f"  - {file.name}")
                 return None
@@ -483,7 +491,16 @@ class Orchestrator:
             else:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pipeline_results_{timestamp}.json"
-            output_path = os.path.join("results", filename)
+            
+            # time_horizon별 설정에서 output 경로 가져오기
+            horizon_config = self._get_config_for_horizon()
+            output_config = horizon_config.get("output", {})
+            results_folder = output_config.get("results_folder", "results")
+            
+            # results 폴더 생성
+            os.makedirs(results_folder, exist_ok=True)
+            
+            output_path = os.path.join(results_folder, filename)
 
             # 결과를 JSON 직렬화 가능한 형태로 변환
             serializable_results = {}
@@ -510,8 +527,7 @@ class Orchestrator:
                 "results": serializable_results,
             }
 
-            # 디렉토리 생성
-            os.makedirs("results", exist_ok=True)
+            # 디렉토리 생성 (이미 위에서 생성됨)
 
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(pipeline_summary, f, indent=2, ensure_ascii=False)

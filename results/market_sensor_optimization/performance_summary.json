@@ -1,0 +1,5 @@
+{
+  "train_performance": -999.0,
+  "test_performance": {},
+  "optimization_objective": "sharpe_ratio"
+}

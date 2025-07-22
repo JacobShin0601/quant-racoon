@@ -45,6 +45,11 @@ class DataScrapper:
             self.logger.setup_logger(
                 strategy="data_collection", mode="scrapper", uuid=self.uuid
             )
+        else:
+            # UUID가 없어도 기본 로거 설정
+            self.logger.setup_logger(
+                strategy="data_collection", mode="scrapper"
+            )
 
     def run_scrapper(self) -> bool:
         """데이터 수집 실행"""

@@ -1,0 +1,130 @@
+{
+  "market_regime_classification": {
+    "regimes": {
+      "TRENDING_UP": "Buy & Hold 우선, 스윙 전략 보조",
+      "TRENDING_DOWN": "현금 보유 또는 역방향 전략", 
+      "SIDEWAYS": "스윙 전략 적극 활용",
+      "VOLATILE": "포지션 크기 축소 + 단기 전략"
+    },
+    "indicators": {
+      "trend_indicators": {
+        "sma_short": {"min": 5, "max": 30, "type": "int"},
+        "sma_medium": {"min": 20, "max": 60, "type": "int"},
+        "sma_long": {"min": 50, "max": 200, "type": "int"},
+        "ema_short": {"min": 5, "max": 20, "type": "int"},
+        "ema_long": {"min": 20, "max": 50, "type": "int"},
+        "adx_period": {"min": 10, "max": 30, "type": "int"},
+        "adx_threshold": {"min": 20, "max": 40, "type": "int"},
+        "supertrend_period": {"min": 7, "max": 21, "type": "int"},
+        "supertrend_multiplier": {"min": 2.0, "max": 4.0, "type": "float"}
+      },
+      "momentum_indicators": {
+        "rsi_period": {"min": 10, "max": 30, "type": "int"},
+        "rsi_overbought": {"min": 65, "max": 85, "type": "int"},
+        "rsi_oversold": {"min": 15, "max": 35, "type": "int"},
+        "macd_fast": {"min": 8, "max": 15, "type": "int"},
+        "macd_slow": {"min": 20, "max": 30, "type": "int"},
+        "macd_signal": {"min": 5, "max": 15, "type": "int"},
+        "stoch_k_period": {"min": 10, "max": 20, "type": "int"},
+        "stoch_d_period": {"min": 3, "max": 10, "type": "int"},
+        "cci_period": {"min": 10, "max": 30, "type": "int"},
+        "williams_r_period": {"min": 10, "max": 30, "type": "int"}
+      },
+      "volatility_indicators": {
+        "bb_period": {"min": 10, "max": 30, "type": "int"},
+        "bb_std": {"min": 1.5, "max": 3.0, "type": "float"},
+        "atr_period": {"min": 10, "max": 30, "type": "int"},
+        "keltner_period": {"min": 10, "max": 30, "type": "int"},
+        "keltner_multiplier": {"min": 1.5, "max": 3.0, "type": "float"},
+        "donchian_period": {"min": 10, "max": 30, "type": "int"}
+      },
+      "volume_indicators": {
+        "volume_ma_period": {"min": 10, "max": 30, "type": "int"},
+        "obv_ma_period": {"min": 10, "max": 30, "type": "int"},
+        "vwap_period": {"min": 10, "max": 30, "type": "int"},
+        "money_flow_period": {"min": 10, "max": 30, "type": "int"}
+      },
+      "support_resistance": {
+        "pivot_period": {"min": 5, "max": 20, "type": "int"},
+        "fibonacci_levels": {"min": 3, "max": 8, "type": "int"},
+        "support_tolerance": {"min": 0.005, "max": 0.02, "type": "float"},
+        "resistance_tolerance": {"min": 0.005, "max": 0.02, "type": "float"}
+      }
+    },
+    "macro_indicators": {
+      "vix_threshold": {"min": 15, "max": 35, "type": "float"},
+      "yield_spread_threshold": {"min": 0.5, "max": 2.0, "type": "float"},
+      "dollar_strength_threshold": {"min": 0.8, "max": 1.2, "type": "float"},
+      "gold_momentum_period": {"min": 10, "max": 30, "type": "int"},
+      "bond_momentum_period": {"min": 10, "max": 30, "type": "int"},
+      "sector_rotation_period": {"min": 10, "max": 30, "type": "int"},
+      "correlation_threshold": {"min": 0.3, "max": 0.8, "type": "float"}
+    },
+    "classification_weights": {
+      "trend_weight": {"min": 0.2, "max": 0.6, "type": "float"},
+      "momentum_weight": {"min": 0.1, "max": 0.4, "type": "float"},
+      "volatility_weight": {"min": 0.1, "max": 0.4, "type": "float"},
+      "macro_weight": {"min": 0.1, "max": 0.3, "type": "float"},
+      "volume_weight": {"min": 0.05, "max": 0.2, "type": "float"},
+      "support_resistance_weight": {"min": 0.05, "max": 0.2, "type": "float"}
+    },
+    "classification_thresholds": {
+      "trending_up_threshold": {"min": 0.1, "max": 0.4, "type": "float"},
+      "trending_down_threshold": {"min": -0.4, "max": -0.1, "type": "float"},
+      "volatile_threshold": {"min": 0.05, "max": 0.2, "type": "float"},
+      "confidence_threshold": {"min": 0.6, "max": 0.9, "type": "float"}
+    }
+  },
+  "trading_strategy": {
+    "position_sizing": {
+      "base_position": {"min": 0.5, "max": 1.0, "type": "float"},
+      "volatile_reduction": {"min": 0.3, "max": 0.7, "type": "float"},
+      "trending_boost": {"min": 1.0, "max": 1.5, "type": "float"},
+      "momentum_boost": {"min": 1.0, "max": 1.3, "type": "float"},
+      "volume_boost": {"min": 1.0, "max": 1.2, "type": "float"}
+    },
+    "risk_management": {
+      "stop_atr_multiplier": {"min": 1.5, "max": 3.0, "type": "float"},
+      "stop_fixed_percentage": {"min": 0.02, "max": 0.08, "type": "float"},
+      "profit_atr_multiplier": {"min": 2.0, "max": 5.0, "type": "float"},
+      "profit_fixed_percentage": {"min": 0.05, "max": 0.15, "type": "float"},
+      "trailing_stop_percentage": {"min": 0.01, "max": 0.05, "type": "float"},
+      "max_position_size": {"min": 0.8, "max": 1.5, "type": "float"},
+      "max_drawdown_limit": {"min": 0.05, "max": 0.15, "type": "float"}
+    },
+    "entry_exit_rules": {
+      "entry_confirmation_periods": {"min": 1, "max": 5, "type": "int"},
+      "exit_confirmation_periods": {"min": 1, "max": 3, "type": "int"},
+      "trend_confirmation_periods": {"min": 2, "max": 7, "type": "int"},
+      "volume_confirmation_threshold": {"min": 1.2, "max": 2.0, "type": "float"},
+      "momentum_confirmation_threshold": {"min": 0.6, "max": 0.9, "type": "float"}
+    }
+  },
+  "optimization": {
+    "objective": "total_return",
+    "constraints": {
+      "min_sharpe_ratio": 0.5,
+      "max_drawdown": 0.2,
+      "min_win_rate": 0.5
+    },
+    "multi_objective": {
+      "enabled": true,
+      "objectives": ["total_return", "sharpe_ratio", "max_drawdown"],
+      "weights": [0.5, 0.3, 0.2]
+    }
+  },
+  "data_processing": {
+    "feature_engineering": {
+      "lag_features": {"min": 1, "max": 10, "type": "int"},
+      "rolling_features": {"min": 5, "max": 30, "type": "int"},
+      "interaction_features": true,
+      "polynomial_features": {"degree": {"min": 2, "max": 3, "type": "int"}}
+    },
+    "data_quality": {
+      "outlier_removal": true,
+      "missing_data_strategy": "interpolate",
+      "normalization": "standard",
+      "feature_selection": true
+    }
+  }
+} 
