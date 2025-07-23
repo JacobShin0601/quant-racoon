@@ -1,0 +1,52 @@
+{
+  "uuid": "20250723_151136_fca41bbc",
+  "start_time": "2025-07-23 15:11:37",
+  "regime_periods": [
+    {
+      "start_date": "2024-07-23",
+      "end_date": "2024-10-21",
+      "regime": "VOLATILE",
+      "confidence": 0.2,
+      "probabilities": {
+        "trending_up": 0.19983465608465611,
+        "trending_down": 0.008690476190476191,
+        "volatile": 0.4424264670514671,
+        "sideways": 0.3490484006734006
+      },
+      "strategies": [
+        "volatility_filtered_breakout",
+        "multi_timeframe_whipsaw",
+        "adaptive_whipsaw",
+        "swing_candle_pattern",
+        "swing_bollinger_band",
+        "whipsaw_prevention",
+        "donchian_rsi_whipsaw"
+      ],
+      "analysis": {
+        "current_regime": "VOLATILE",
+        "confidence": 0.2,
+        "probabilities": {
+          "trending_up": 0.19983465608465611,
+          "trending_down": 0.008690476190476191,
+          "volatile": 0.4424264670514671,
+          "sideways": 0.3490484006734006
+        },
+        "performance_metrics": {
+          "total_return": 0.15845237320662675,
+          "log_return": 0.14708495330428914,
+          "buy_hold_return": 0.4213961098421035,
+          "buy_hold_log_return": 0.3516395645574005,
+          "excess_return": -0.26294373663547677,
+          "sharpe_ratio": 1.1563755933158255,
+          "sortino_ratio": 1.5044488999369712,
+          "calmar_ratio": 2.018018528508095,
+          "max_drawdown": -0.07851879007462301,
+          "win_rate": 0.5788423153692615,
+          "avg_win": 0.0026009943579578154,
+          "avg_loss": -0.002870878907496601,
+          "profit_factor": 1.251132307282733,
+          "max_consecutive_wins": 10,
+          "max_consecutive_losses": 6,
+          "win_rate_weighted_return": 0.0002964728828861946,
+          "trade_frequency": 0.998003992015968,
+          "total_trades": 

@@ -74,18 +74,25 @@ class MacroAnalysis:
 class GlobalMacroDataCollector:
     """글로벌 매크로 데이터 수집 클래스"""
     
-    def __init__(self, session_uuid: str = None):
+    def __init__(self, session_uuid: str = None, config_path: str = "config/config_macro.json"):
         self.logger = logging.getLogger(__name__)
         
         # 세션 UUID 설정
         self.session_uuid = session_uuid or str(uuid.uuid4())
         self.logger.info(f"GlobalMacroDataCollector 초기화 - Session UUID: {self.session_uuid}")
         
+        # 설정 파일 로드
+        self.config = self._load_config(config_path)
+        
         # YahooFinanceDataCollector 초기화
         self.collector = YahooFinanceDataCollector()
         self.params = StrategyParams()
         
-        # 매크로 지표 심볼 정의
+        # 설정에서 매크로 지표 심볼 정의
+        self.macro_symbols = self._get_macro_symbols_from_config()
+        self.sector_etfs = self._get_sector_etfs_from_config()
+        
+        # 기존 매크로 지표 심볼 정의 (하위 호환성)
         self.macro_symbols = {
             'SPY': 'S&P 500 ETF',
             '^VIX': 'CBOE Volatility Index',
@@ -116,16 +123,65 @@ class GlobalMacroDataCollector:
             'XLRE': 'Real Estate'
         }
     
+    def _load_config(self, config_path: str) -> Dict[str, Any]:
+        """설정 파일 로드"""
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            self.logger.info(f"설정 파일 로드 완료: {config_path}")
+            return config
+        except Exception as e:
+            self.logger.error(f"설정 파일 로드 실패: {e}")
+            return {}
+    
+    def _get_macro_symbols_from_config(self) -> Dict[str, str]:
+        """설정에서 매크로 심볼 가져오기"""
+        try:
+            data_sources = self.config.get('data_collection', {}).get('data_sources', {})
+            macro_symbols = {}
+            for key, value in data_sources.items():
+                macro_symbols[value['symbol']] = value['description']
+            return macro_symbols
+        except Exception as e:
+            self.logger.error(f"설정에서 매크로 심볼 로드 실패: {e}")
+            return {}
+    
+    def _get_sector_etfs_from_config(self) -> Dict[str, str]:
+        """설정에서 섹터 ETF 심볼 가져오기"""
+        try:
+            sector_etfs = self.config.get('data_collection', {}).get('sector_etfs', {})
+            sector_symbols = {}
+            for key, value in sector_etfs.items():
+                sector_symbols[value['symbol']] = value['description']
+            return sector_symbols
+        except Exception as e:
+            self.logger.error(f"설정에서 섹터 ETF 심볼 로드 실패: {e}")
+            return {}
+    
+    def _get_days_back(self, collection_type: str = "default") -> int:
+        """설정에서 데이터 수집 기간 가져오기"""
+        try:
+            data_collection = self.config.get('data_collection', {})
+            days_back = data_collection.get(f'{collection_type}_days_back', 
+                                          data_collection.get('default_days_back', 730))
+            return days_back
+        except Exception as e:
+            self.logger.error(f"설정에서 데이터 수집 기간 로드 실패: {e}")
+            return 730  # 기본값 2년
+    
     def collect_spy_data(self, start_date: str, end_date: str) -> pd.DataFrame:
         """SPY 데이터 수집"""
         try:
+            # 설정에서 데이터 수집 기간 가져오기
+            days_back = self._get_days_back("macro_analysis")
+            
             # YahooFinanceDataCollector를 사용하여 데이터 수집
             df = self.collector.get_candle_data(
                 symbol='SPY',
                 interval='1d',  # 일봉 데이터
                 start_date=start_date,
                 end_date=end_date,
-                days_back=365
+                days_back=days_back
             )
             
             if df is None or df.empty:
@@ -152,13 +208,16 @@ class GlobalMacroDataCollector:
         
         for symbol, description in self.macro_symbols.items():
             try:
+                # 설정에서 데이터 수집 기간 가져오기
+                days_back = self._get_days_back("macro_analysis")
+                
                 # YahooFinanceDataCollector를 사용하여 데이터 수집
                 df = self.collector.get_candle_data(
                     symbol=symbol,
                     interval='1d',  # 일봉 데이터
                     start_date=start_date,
                     end_date=end_date,
-                    days_back=365
+                    days_back=days_back
                 )
                 
                 if df is not None and not df.empty:
@@ -185,13 +244,16 @@ class GlobalMacroDataCollector:
         
         for symbol, sector_name in self.sector_etfs.items():
             try:
+                # 설정에서 데이터 수집 기간 가져오기
+                days_back = self._get_days_back("sector_analysis")
+                
                 # YahooFinanceDataCollector를 사용하여 데이터 수집
                 df = self.collector.get_candle_data(
                     symbol=symbol,
                     interval='1d',  # 일봉 데이터
                     start_date=start_date,
                     end_date=end_date,
-                    days_back=365
+                    days_back=days_back
                 )
                 
                 if df is not None and not df.empty:
@@ -577,7 +639,7 @@ class MacroSectorAnalyzer:
             return analysis
     
     def classify_market_condition(self, macro_analysis: Dict[str, Any]) -> MarketCondition:
-        """매크로 분석을 기반으로 시장 조건 분류"""
+        """매크로 분석을 기반으로 시장 조건 분류 (고도화된 버전)"""
         scores = {
             MarketCondition.BULL_MARKET: 0,
             MarketCondition.BEAR_MARKET: 0,
@@ -587,54 +649,175 @@ class MacroSectorAnalyzer:
             MarketCondition.INFLATION_FEAR: 0
         }
         
-        # VIX 기반 변동성 점수
+        # 1. VIX 기반 변동성 점수 (가중치: 25%)
         if 'volatility_regime' in macro_analysis:
             if macro_analysis['volatility_regime'] == 'high':
-                scores[MarketCondition.VOLATILE_MARKET] += 3
-                scores[MarketCondition.BEAR_MARKET] += 1
+                scores[MarketCondition.VOLATILE_MARKET] += 8
+                scores[MarketCondition.BEAR_MARKET] += 3
+            elif macro_analysis['volatility_regime'] == 'medium':
+                scores[MarketCondition.VOLATILE_MARKET] += 4
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
+            elif macro_analysis['volatility_regime'] == 'low':
+                scores[MarketCondition.BULL_MARKET] += 2
+                scores[MarketCondition.SIDEWAYS_MARKET] += 1
         
-        # 국채 스프레드 기반 경기침체 점수
+        # VIX 변화율 기반 추가 점수
+        if 'vix_change' in macro_analysis:
+            vix_change = macro_analysis['vix_change']
+            if vix_change > 0.2:  # 20% 이상 상승
+                scores[MarketCondition.VOLATILE_MARKET] += 5
+                scores[MarketCondition.BEAR_MARKET] += 2
+            elif vix_change > 0.1:  # 10% 이상 상승
+                scores[MarketCondition.VOLATILE_MARKET] += 3
+            elif vix_change < -0.2:  # 20% 이상 하락
+                scores[MarketCondition.BULL_MARKET] += 3
+            elif vix_change < -0.1:  # 10% 이상 하락
+                scores[MarketCondition.BULL_MARKET] += 1
+        
+        # 2. 국채 스프레드 기반 경기침체 점수 (가중치: 20%)
         if 'recession_risk' in macro_analysis:
             if macro_analysis['recession_risk'] == 'high':
-                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.RECESSION_FEAR] += 10
+                scores[MarketCondition.BEAR_MARKET] += 5
+                scores[MarketCondition.VOLATILE_MARKET] += 3
+            elif macro_analysis['recession_risk'] == 'medium':
+                scores[MarketCondition.RECESSION_FEAR] += 5
                 scores[MarketCondition.BEAR_MARKET] += 2
+            elif macro_analysis['recession_risk'] == 'low':
+                scores[MarketCondition.BULL_MARKET] += 2
         
-        # TIPS Spread 기반 인플레이션 점수 (새로 추가)
+        # 2-1. 2년-10년 국채 스프레드 기반 추가 점수
+        if 'yield_curve_spread' in macro_analysis:
+            spread = macro_analysis['yield_curve_spread']
+            if spread < 0:  # 역수익률 곡선
+                scores[MarketCondition.RECESSION_FEAR] += 8
+                scores[MarketCondition.BEAR_MARKET] += 4
+            elif spread < 0.5:  # 평평한 수익률 곡선
+                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
+            elif spread > 1.5:  # 가파른 수익률 곡선
+                scores[MarketCondition.BULL_MARKET] += 3
+        
+        # 3. TIPS Spread 기반 인플레이션 점수 (가중치: 20%)
         if 'inflation_expectation' in macro_analysis:
             if macro_analysis['inflation_expectation'] == 'high':
-                scores[MarketCondition.INFLATION_FEAR] += 4
+                scores[MarketCondition.INFLATION_FEAR] += 10
+                scores[MarketCondition.VOLATILE_MARKET] += 5
+                scores[MarketCondition.BEAR_MARKET] += 3
+            elif macro_analysis['inflation_expectation'] == 'medium':
+                scores[MarketCondition.INFLATION_FEAR] += 5
                 scores[MarketCondition.VOLATILE_MARKET] += 2
-                scores[MarketCondition.BEAR_MARKET] += 1
             elif macro_analysis['inflation_expectation'] == 'low':
-                scores[MarketCondition.RECESSION_FEAR] += 2
-                scores[MarketCondition.BULL_MARKET] += 1
+                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.BULL_MARKET] += 2
         
-        # 인플레이션 추세 기반 점수
+        # 3-1. 인플레이션 추세 기반 추가 점수
         if 'inflation_trend' in macro_analysis:
             if macro_analysis['inflation_trend'] == 'increasing':
-                scores[MarketCondition.INFLATION_FEAR] += 2
+                scores[MarketCondition.INFLATION_FEAR] += 6
+                scores[MarketCondition.VOLATILE_MARKET] += 3
             elif macro_analysis['inflation_trend'] == 'decreasing':
-                scores[MarketCondition.RECESSION_FEAR] += 1
+                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.BULL_MARKET] += 2
+            elif macro_analysis['inflation_trend'] == 'stable':
+                scores[MarketCondition.SIDEWAYS_MARKET] += 3
         
-        # 달러 강도 기반 점수
+        # 4. 달러 강도 기반 점수 (가중치: 15%)
         if 'dollar_trend' in macro_analysis:
             if macro_analysis['dollar_trend'] == 'strong':
-                scores[MarketCondition.BULL_MARKET] += 1
-            else:
-                scores[MarketCondition.BEAR_MARKET] += 1
+                scores[MarketCondition.BULL_MARKET] += 4
+                scores[MarketCondition.INFLATION_FEAR] += 2
+            elif macro_analysis['dollar_trend'] == 'weak':
+                scores[MarketCondition.BEAR_MARKET] += 3
+                scores[MarketCondition.RECESSION_FEAR] += 2
+            elif macro_analysis['dollar_trend'] == 'sideways':
+                scores[MarketCondition.SIDEWAYS_MARKET] += 3
         
-        # 금 가격 기반 점수
+        # 4-1. 달러 인덱스 변화율 기반 추가 점수
+        if 'dollar_change' in macro_analysis:
+            dollar_change = macro_analysis['dollar_change']
+            if dollar_change > 0.05:  # 5% 이상 상승
+                scores[MarketCondition.BULL_MARKET] += 3
+            elif dollar_change < -0.05:  # 5% 이상 하락
+                scores[MarketCondition.BEAR_MARKET] += 3
+        
+        # 5. 금 가격 기반 점수 (가중치: 10%)
         if 'gold_trend' in macro_analysis:
             if macro_analysis['gold_trend'] == 'bullish':
-                scores[MarketCondition.RECESSION_FEAR] += 1
-                scores[MarketCondition.VOLATILE_MARKET] += 1
+                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.VOLATILE_MARKET] += 3
+                scores[MarketCondition.INFLATION_FEAR] += 2
+            elif macro_analysis['gold_trend'] == 'bearish':
+                scores[MarketCondition.BULL_MARKET] += 3
+            elif macro_analysis['gold_trend'] == 'sideways':
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
         
-        # 국채 가격 기반 점수
+        # 5-1. 금 가격 변화율 기반 추가 점수
+        if 'gold_change' in macro_analysis:
+            gold_change = macro_analysis['gold_change']
+            if gold_change > 0.1:  # 10% 이상 상승
+                scores[MarketCondition.RECESSION_FEAR] += 3
+                scores[MarketCondition.VOLATILE_MARKET] += 2
+            elif gold_change < -0.1:  # 10% 이상 하락
+                scores[MarketCondition.BULL_MARKET] += 2
+        
+        # 6. 국채 가격 기반 점수 (가중치: 10%)
         if 'bond_trend' in macro_analysis:
             if macro_analysis['bond_trend'] == 'bullish':
-                scores[MarketCondition.RECESSION_FEAR] += 1
-            else:
-                scores[MarketCondition.INFLATION_FEAR] += 1
+                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.VOLATILE_MARKET] += 2
+            elif macro_analysis['bond_trend'] == 'bearish':
+                scores[MarketCondition.INFLATION_FEAR] += 4
+                scores[MarketCondition.BULL_MARKET] += 2
+            elif macro_analysis['bond_trend'] == 'sideways':
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
+        
+        # 6-1. 10년 국채 수익률 기반 추가 점수
+        if 'treasury_10y_yield' in macro_analysis:
+            yield_10y = macro_analysis['treasury_10y_yield']
+            if yield_10y > 4.0:  # 4% 이상
+                scores[MarketCondition.INFLATION_FEAR] += 3
+                scores[MarketCondition.BEAR_MARKET] += 2
+            elif yield_10y < 2.0:  # 2% 미만
+                scores[MarketCondition.RECESSION_FEAR] += 3
+                scores[MarketCondition.BULL_MARKET] += 2
+        
+        # 7. 섹터 로테이션 기반 점수 (가중치: 5%)
+        if 'sector_rotation' in macro_analysis:
+            sector_rotation = macro_analysis['sector_rotation']
+            if sector_rotation == 'defensive':
+                scores[MarketCondition.RECESSION_FEAR] += 3
+                scores[MarketCondition.BEAR_MARKET] += 2
+            elif sector_rotation == 'cyclical':
+                scores[MarketCondition.BULL_MARKET] += 3
+            elif sector_rotation == 'mixed':
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
+        
+        # 8. 거래량 기반 점수 (가중치: 5%)
+        if 'volume_trend' in macro_analysis:
+            if macro_analysis['volume_trend'] == 'high':
+                scores[MarketCondition.VOLATILE_MARKET] += 3
+            elif macro_analysis['volume_trend'] == 'low':
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
+        
+        # 9. 시장 폭 기반 점수 (가중치: 5%)
+        if 'market_breadth' in macro_analysis:
+            market_breadth = macro_analysis['market_breadth']
+            if market_breadth > 0.7:  # 70% 이상 상승
+                scores[MarketCondition.BULL_MARKET] += 3
+            elif market_breadth < 0.3:  # 30% 미만 상승
+                scores[MarketCondition.BEAR_MARKET] += 3
+            elif 0.3 <= market_breadth <= 0.7:
+                scores[MarketCondition.SIDEWAYS_MARKET] += 2
+        
+        # 10. 신용 스프레드 기반 점수 (가중치: 5%)
+        if 'credit_spread' in macro_analysis:
+            credit_spread = macro_analysis['credit_spread']
+            if credit_spread > 0.05:  # 5% 이상 (높은 신용 위험)
+                scores[MarketCondition.RECESSION_FEAR] += 4
+                scores[MarketCondition.BEAR_MARKET] += 2
+            elif credit_spread < 0.02:  # 2% 미만 (낮은 신용 위험)
+                scores[MarketCondition.BULL_MARKET] += 3
         
         # 최고 점수 시장 조건 반환
         return max(scores, key=scores.get)
@@ -781,7 +964,9 @@ class MacroSectorAnalyzer:
             if not end_date:
                 end_date = datetime.now().strftime('%Y-%m-%d')
             if not start_date:
-                start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+                # 설정에서 데이터 수집 기간 가져오기
+                days_back = self.macro_collector._get_days_back("macro_analysis")
+                start_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
             
             # 데이터 수집
             self.logger.info("매크로 & 섹터 데이터 수집 중...")
@@ -1255,40 +1440,77 @@ class HyperparamTuner:
         return result
     
     def _classify_market_regime(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
-        """시장 상태 분류 (고급 버전)"""
+        """시장 상태 분류 (고급 버전 - SPY 기준 추세+수익률 강화)"""
         regime_scores = pd.DataFrame(index=data.index)
         
         # 컬럼명 매핑 (대소문자 처리)
         close_col = 'close' if 'close' in data.columns else 'Close'
         
-        # 1. 트렌드 점수 계산 (개선)
-        if 'trend_weight' in params:
-            trend_score = 0
+        # 1. SPY 기준 추세+수익률 점수 계산 (강화된 핵심 지표)
+        if 'spy_trend_weight' in params:
+            spy_trend_score = 0
             if f'sma_{params.get("sma_short", 20)}' in data.columns and f'sma_{params.get("sma_long", 50)}' in data.columns:
                 sma_short = data[f'sma_{params.get("sma_short", 20)}']
                 sma_long = data[f'sma_{params.get("sma_long", 50)}']
                 # NaN 값 처리
                 valid_mask = ~(sma_short.isna() | sma_long.isna())
                 
-                # ADX 기반 트렌드 강도 추가
+                # 1-1. 기본 이동평균 비교 (가중치: 0.4)
+                sma_trend = np.where(valid_mask, 
+                    np.where(sma_short > sma_long, 1, -1), 0)
+                
+                # 1-2. ADX 기반 트렌드 강도 (가중치: 0.3)
                 adx_strength = 0
                 if 'adx' in data.columns:
                     adx = data['adx']
                     adx_threshold = params.get('adx_threshold', 25)
                     adx_strength = np.where(valid_mask & (adx > adx_threshold), 0.5, 0)
                 
-                # SuperTrend 기반 트렌드 확인
+                # 1-3. SuperTrend 기반 트렌드 확인 (가중치: 0.2)
                 supertrend_signal = 0
                 if 'supertrend' in data.columns:
                     supertrend = data['supertrend']
                     supertrend_signal = np.where(valid_mask & (data[close_col] > supertrend), 0.3, -0.3)
                 
-                trend_score = np.where(valid_mask, 
-                    np.where(sma_short > sma_long, 1 + adx_strength + supertrend_signal, 
-                             -1 + adx_strength + supertrend_signal), 0)
-            regime_scores['trend_score'] = trend_score * params['trend_weight']
+                # 1-4. 수익률 기반 모멘텀 (가중치: 0.1) - 새로 추가
+                returns_momentum = 0
+                if close_col in data.columns:
+                    # 5일, 10일, 20일 수익률 계산
+                    returns_5d = data[close_col].pct_change(5)
+                    returns_10d = data[close_col].pct_change(10)
+                    returns_20d = data[close_col].pct_change(20)
+                    
+                    # 수익률 기반 점수 (단기 > 중기 > 장기 순으로 가중치)
+                    returns_score = np.where(valid_mask,
+                        np.where(returns_5d > 0.02, 0.4,  # 5일 수익률 > 2%
+                        np.where(returns_5d < -0.02, -0.4, 0)) +  # 5일 수익률 < -2%
+                        np.where(returns_10d > 0.03, 0.3,  # 10일 수익률 > 3%
+                        np.where(returns_10d < -0.03, -0.3, 0)) +  # 10일 수익률 < -3%
+                        np.where(returns_20d > 0.05, 0.2,  # 20일 수익률 > 5%
+                        np.where(returns_20d < -0.05, -0.2, 0)), 0)  # 20일 수익률 < -5%
+                    
+                    returns_momentum = returns_score
+                
+                # 1-5. 가격 위치 기반 점수 (가중치: 0.1) - 새로 추가
+                price_position_score = 0
+                if 'bb_upper' in data.columns and 'bb_lower' in data.columns and 'bb_middle' in data.columns:
+                    bb_upper = data['bb_upper']
+                    bb_lower = data['bb_lower']
+                    bb_middle = data['bb_middle']
+                    
+                    # 가격이 Bollinger Band 내에서의 위치
+                    bb_position = (data[close_col] - bb_lower) / (bb_upper - bb_lower)
+                    price_position_score = np.where(valid_mask & (bb_position > 0.8), 0.2,  # 상단 20%
+                                          np.where(valid_mask & (bb_position < 0.2), -0.2, 0))  # 하단 20%
+                
+                # SPY 추세+수익률 종합 점수
+                spy_trend_score = (sma_trend * 0.4 + adx_strength * 0.3 + 
+                                 supertrend_signal * 0.2 + returns_momentum * 0.1 + 
+                                 price_position_score * 0.1)
+            
+            regime_scores['spy_trend_score'] = spy_trend_score * params['spy_trend_weight']
         
-        # 2. 모멘텀 점수 계산 (개선)
+        # 2. 모멘텀 점수 계산 (기존 유지, 가중치 조정)
         if 'momentum_weight' in params:
             momentum_score = 0
             if 'rsi' in data.columns:
@@ -1296,7 +1518,7 @@ class HyperparamTuner:
                 # NaN 값 처리
                 valid_mask = ~rsi.isna()
                 
-                # RSI 기반 모멘텀
+                # RSI 기반 모멘텀 (가중치: 0.5)
                 rsi_momentum = np.where(
                     valid_mask,
                     np.where(
@@ -1306,24 +1528,24 @@ class HyperparamTuner:
                     0
                 )
                 
-                # MACD 기반 모멘텀 추가
+                # MACD 기반 모멘텀 (가중치: 0.3)
                 macd_momentum = 0
                 if 'macd' in data.columns and 'macd_signal' in data.columns:
                     macd = data['macd']
                     macd_signal = data['macd_signal']
                     macd_momentum = np.where(valid_mask & (macd > macd_signal), 0.5, -0.5)
                 
-                # Stochastic 기반 모멘텀 추가
+                # Stochastic 기반 모멘텀 (가중치: 0.2)
                 stoch_momentum = 0
                 if 'stoch_k' in data.columns:
                     stoch_k = data['stoch_k']
                     stoch_momentum = np.where(valid_mask & (stoch_k > 80), -0.3, 
                                             np.where(valid_mask & (stoch_k < 20), 0.3, 0))
                 
-                momentum_score = rsi_momentum + macd_momentum + stoch_momentum
+                momentum_score = (rsi_momentum * 0.5 + macd_momentum * 0.3 + stoch_momentum * 0.2)
             regime_scores['momentum_score'] = momentum_score * params['momentum_weight']
         
-        # 3. 변동성 점수 계산 (개선)
+        # 3. 변동성 점수 계산 (기존 유지)
         if 'volatility_weight' in params:
             volatility_score = 0
             if 'atr' in data.columns and close_col in data.columns:
@@ -1349,24 +1571,99 @@ class HyperparamTuner:
                 volatility_score = atr_volatility + bb_volatility + keltner_volatility
             regime_scores['volatility_score'] = volatility_score * params['volatility_weight']
         
-        # 4. 매크로 점수 계산 (개선)
+        # 4. 고도화된 매크로 점수 계산 (VIX + TIPS + 기타 지표)
         if 'macro_weight' in params:
             macro_score = 0
-            # VIX 기반 변동성 점수
+            
+            # 4-1. VIX 기반 변동성 점수 (고도화)
             if '^VIX' in data.columns:
                 vix = data['^VIX']
                 # NaN 값 처리
                 valid_mask = ~vix.isna()
-                vix_score = np.where(valid_mask, np.where(vix > params.get('vix_threshold', 25), 1, 0), 0)
                 
-                # VIX 변화율 기반 점수 추가
+                # VIX 레벨 기반 점수 (가중치: 0.4)
+                vix_level_score = np.where(valid_mask, 
+                    np.where(vix > params.get('vix_high_threshold', 30), 1,  # 높은 변동성
+                    np.where(vix > params.get('vix_medium_threshold', 20), 0.5,  # 중간 변동성
+                    np.where(vix < params.get('vix_low_threshold', 15), -0.3, 0))), 0)  # 낮은 변동성
+                
+                # VIX 변화율 기반 점수 (가중치: 0.3)
                 vix_change = vix.pct_change()
-                vix_momentum = np.where(valid_mask & (vix_change > 0.1), 0.5, 0)
+                vix_momentum_score = np.where(valid_mask, 
+                    np.where(vix_change > 0.15, 0.8,  # 급격한 상승
+                    np.where(vix_change > 0.05, 0.4,  # 상승
+                    np.where(vix_change < -0.15, -0.8,  # 급격한 하락
+                    np.where(vix_change < -0.05, -0.4, 0)))), 0)  # 하락
                 
-                macro_score = vix_score + vix_momentum
+                # VIX 이동평균 기반 점수 (가중치: 0.3)
+                vix_ma_score = 0
+                if len(vix) >= 20:
+                    vix_ma_20 = vix.rolling(20).mean()
+                    vix_ma_score = np.where(valid_mask & (vix > vix_ma_20 * 1.2), 0.5,  # VIX > MA20 * 1.2
+                                  np.where(valid_mask & (vix < vix_ma_20 * 0.8), -0.3, 0))  # VIX < MA20 * 0.8
+                
+                vix_total_score = (vix_level_score * 0.4 + vix_momentum_score * 0.3 + vix_ma_score * 0.3)
+                macro_score += vix_total_score
+            
+            # 4-2. TIPS Spread 기반 인플레이션 점수 (새로 추가)
+            if 'TIPS_SPREAD' in data.columns:
+                tips_spread = data['TIPS_SPREAD']
+                valid_mask = ~tips_spread.isna()
+                
+                # TIPS Spread 레벨 기반 점수
+                tips_level_score = np.where(valid_mask,
+                    np.where(tips_spread > params.get('tips_high_threshold', 2.5), 0.8,  # 높은 인플레이션 기대
+                    np.where(tips_spread > params.get('tips_medium_threshold', 2.0), 0.4,  # 중간 인플레이션 기대
+                    np.where(tips_spread < params.get('tips_low_threshold', 1.5), -0.4, 0))), 0)  # 낮은 인플레이션 기대
+                
+                # TIPS Spread 변화율 기반 점수
+                tips_change = tips_spread.pct_change()
+                tips_momentum_score = np.where(valid_mask,
+                    np.where(tips_change > 0.1, 0.5,  # 인플레이션 기대 상승
+                    np.where(tips_change < -0.1, -0.5, 0)), 0)  # 인플레이션 기대 하락
+                
+                tips_total_score = tips_level_score + tips_momentum_score
+                macro_score += tips_total_score
+            
+            # 4-3. 달러 인덱스 기반 점수 (새로 추가)
+            if '^DXY' in data.columns:
+                dxy = data['^DXY']
+                valid_mask = ~dxy.isna()
+                
+                # 달러 강도 기반 점수
+                dxy_ma_20 = dxy.rolling(20).mean()
+                dxy_strength_score = np.where(valid_mask & (dxy > dxy_ma_20 * 1.05), 0.3,  # 강한 달러
+                                    np.where(valid_mask & (dxy < dxy_ma_20 * 0.95), -0.3, 0))  # 약한 달러
+                
+                macro_score += dxy_strength_score
+            
+            # 4-4. 금 가격 기반 점수 (새로 추가)
+            if 'GC=F' in data.columns:
+                gold = data['GC=F']
+                valid_mask = ~gold.isna()
+                
+                # 금 가격 추세 기반 점수
+                gold_ma_20 = gold.rolling(20).mean()
+                gold_trend_score = np.where(valid_mask & (gold > gold_ma_20 * 1.05), 0.2,  # 금 상승
+                                  np.where(valid_mask & (gold < gold_ma_20 * 0.95), -0.2, 0))  # 금 하락
+                
+                macro_score += gold_trend_score
+            
+            # 4-5. 국채 수익률 기반 점수 (새로 추가)
+            if '^TNX' in data.columns:
+                treasury_10y = data['^TNX']
+                valid_mask = ~treasury_10y.isna()
+                
+                # 10년 국채 수익률 기반 점수
+                treasury_ma_20 = treasury_10y.rolling(20).mean()
+                treasury_score = np.where(valid_mask & (treasury_10y > treasury_ma_20 * 1.1), 0.3,  # 금리 상승
+                                np.where(valid_mask & (treasury_10y < treasury_ma_20 * 0.9), -0.3, 0))  # 금리 하락
+                
+                macro_score += treasury_score
+            
             regime_scores['macro_score'] = macro_score * params['macro_weight']
         
-        # 5. 거래량 점수 계산 (새로 추가)
+        # 5. 거래량 점수 계산 (기존 유지)
         if 'volume_weight' in params:
             volume_score = 0
             if 'volume' in data.columns and 'volume_ma' in data.columns:
@@ -1389,7 +1686,7 @@ class HyperparamTuner:
                     volume_score += obv_score
             regime_scores['volume_score'] = volume_score * params.get('volume_weight', 0.1)
         
-        # 6. 지지/저항 점수 계산 (새로 추가)
+        # 6. 지지/저항 점수 계산 (기존 유지)
         if 'support_resistance_weight' in params:
             sr_score = 0
             if 'pivot_point' in data.columns:
@@ -1402,7 +1699,7 @@ class HyperparamTuner:
                 sr_score = np.where(valid_mask & (abs(support_distance) < 0.01), 0.3, 0)
             regime_scores['sr_score'] = sr_score * params.get('support_resistance_weight', 0.1)
         
-        # 총점 계산
+        # 총점 계산 (SPY 추세+수익률 가중치 강화)
         total_score = regime_scores.sum(axis=1)
         
         # 시장 상태 분류 (동적 임계값 사용)
@@ -2047,8 +2344,57 @@ class HyperparamTuner:
             self.logger.error(f"목적 함수 실행 중 오류: {e}")
             return -999  # 매우 낮은 값 반환
     
+    def optimize_hyperparameters_with_data(self, spy_data: pd.DataFrame, macro_data: Dict[str, pd.DataFrame], n_trials: int = None) -> Dict[str, Any]:
+        """하이퍼파라미터 최적화 (이미 로드된 데이터 사용)"""
+        if n_trials is None:
+            n_trials = self.config.get('optimization', {}).get('n_trials', 100)
+        
+        if spy_data.empty:
+            raise ValueError("SPY 데이터가 비어있습니다")
+        
+        # Train/Test 분할
+        train_test_split = self.config.get('optimization', {}).get('train_test_split', 0.8)
+        split_idx = int(len(spy_data) * train_test_split)
+        
+        train_spy = spy_data.iloc[:split_idx]
+        test_spy = spy_data.iloc[split_idx:]
+        
+        train_macro = {k: v.iloc[:split_idx] if not v.empty else v for k, v in macro_data.items()}
+        test_macro = {k: v.iloc[split_idx:] if not v.empty else v for k, v in macro_data.items()}
+        
+        self.logger.info(f"Train 데이터: {len(train_spy)}개, Test 데이터: {len(test_spy)}개")
+        
+        # Optuna 스터디 생성
+        study = optuna.create_study(direction='maximize')
+        
+        # 목적 함수 래퍼
+        def objective_wrapper(trial):
+            return self.objective(trial, train_spy, train_macro)
+        
+        # 최적화 실행
+        self.logger.info(f"하이퍼파라미터 최적화 시작 (n_trials={n_trials})...")
+        study.optimize(objective_wrapper, n_trials=n_trials)
+        
+        # 최적 파라미터
+        best_params = study.best_params
+        best_value = study.best_value
+        
+        # Test 데이터에서 성과 평가
+        test_performance = self._evaluate_on_test_data(test_spy, test_macro, best_params)
+        
+        # 결과 저장
+        results = {
+            'best_params': best_params,
+            'best_value': best_value,
+            'test_performance': test_performance,
+            'n_trials': n_trials,
+            'optimization_history': study.trials_dataframe().to_dict('records')
+        }
+        
+        return results
+    
     def optimize_hyperparameters(self, start_date: str, end_date: str, n_trials: int = None) -> Dict[str, Any]:
-        """하이퍼파라미터 최적화"""
+        """하이퍼파라미터 최적화 (데이터 수집 포함)"""
         if n_trials is None:
             n_trials = self.config.get('optimization', {}).get('n_trials', 100)
         
@@ -2201,6 +2547,380 @@ class HyperparamTuner:
             
         except Exception as e:
             self.logger.error(f"결과 저장 중 오류: {e}")
+
+
+class MarketRegimeValidator:
+    """시장 상태 분류 검증 및 통계분석 클래스"""
+    
+    def __init__(self, session_uuid: str = None):
+        self.session_uuid = session_uuid
+        self.logger = logging.getLogger(__name__)
+        
+    def validate_classification_accuracy(self, actual_regimes: pd.Series, predicted_regimes: pd.Series) -> Dict[str, Any]:
+        """시장 상태 분류 정확도 검증"""
+        try:
+            from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix, classification_report
+            
+            # 기본 정확도 계산
+            accuracy = accuracy_score(actual_regimes, predicted_regimes)
+            
+            # 정밀도, 재현율, F1 점수 계산
+            precision, recall, f1, support = precision_recall_fscore_support(
+                actual_regimes, predicted_regimes, average='weighted'
+            )
+            
+            # 혼동 행렬 계산
+            cm = confusion_matrix(actual_regimes, predicted_regimes)
+            
+            # 분류 보고서 생성
+            class_report = classification_report(actual_regimes, predicted_regimes, output_dict=True)
+            
+            # 시장 상태별 정확도 계산
+            regime_accuracy = {}
+            unique_regimes = actual_regimes.unique()
+            for regime in unique_regimes:
+                mask = actual_regimes == regime
+                if mask.sum() > 0:
+                    regime_accuracy[regime] = (actual_regimes[mask] == predicted_regimes[mask]).mean()
+            
+            # 연속성 분석 (시장 상태 변화의 일관성)
+            actual_changes = actual_regimes.diff().fillna(0)
+            predicted_changes = predicted_regimes.diff().fillna(0)
+            change_accuracy = (actual_changes == predicted_changes).mean()
+            
+            # 지연 분석 (예측이 얼마나 빨리 변화를 감지하는지)
+            lag_analysis = self._analyze_prediction_lag(actual_regimes, predicted_regimes)
+            
+            return {
+                'overall_accuracy': accuracy,
+                'precision': precision,
+                'recall': recall,
+                'f1_score': f1,
+                'support': support,
+                'confusion_matrix': cm.tolist(),
+                'classification_report': class_report,
+                'regime_accuracy': regime_accuracy,
+                'change_accuracy': change_accuracy,
+                'lag_analysis': lag_analysis,
+                'regime_distribution': {
+                    'actual': actual_regimes.value_counts().to_dict(),
+                    'predicted': predicted_regimes.value_counts().to_dict()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"분류 정확도 검증 중 오류: {e}")
+            return {'error': str(e)}
+    
+    def _analyze_prediction_lag(self, actual: pd.Series, predicted: pd.Series, max_lag: int = 5) -> Dict[str, Any]:
+        """예측 지연 분석"""
+        lag_analysis = {}
+        
+        for lag in range(1, max_lag + 1):
+            # 실제 변화를 lag일 후에 예측이 감지하는지 확인
+            actual_changes = actual.diff().fillna(0)
+            predicted_changes = predicted.diff().fillna(0)
+            
+            # 지연된 예측과 실제 변화의 상관관계
+            lagged_prediction = predicted_changes.shift(-lag)
+            correlation = actual_changes.corr(lagged_prediction)
+            
+            # 지연된 예측의 정확도
+            accuracy = (actual_changes == lagged_prediction).mean()
+            
+            lag_analysis[f'lag_{lag}'] = {
+                'correlation': correlation,
+                'accuracy': accuracy
+            }
+        
+        return lag_analysis
+    
+    def analyze_strategy_performance(self, strategy_returns: pd.Series, benchmark_returns: pd.Series, 
+                                   regime_series: pd.Series) -> Dict[str, Any]:
+        """전략 성과 분석 (시장 상태별)"""
+        try:
+            import numpy as np
+            from scipy import stats
+            
+            # 전체 성과 지표
+            total_return = (1 + strategy_returns).prod() - 1
+            benchmark_return = (1 + benchmark_returns).prod() - 1
+            excess_return = total_return - benchmark_return
+            
+            # 변동성 계산
+            strategy_vol = strategy_returns.std() * np.sqrt(252)
+            benchmark_vol = benchmark_returns.std() * np.sqrt(252)
+            
+            # 샤프 비율 계산
+            risk_free_rate = 0.02  # 연 2% 가정
+            strategy_sharpe = (strategy_returns.mean() * 252 - risk_free_rate) / strategy_vol
+            benchmark_sharpe = (benchmark_returns.mean() * 252 - risk_free_rate) / benchmark_vol
+            
+            # 최대 낙폭 계산
+            strategy_cumulative = (1 + strategy_returns).cumprod()
+            benchmark_cumulative = (1 + benchmark_returns).cumprod()
+            
+            strategy_drawdown = (strategy_cumulative / strategy_cumulative.expanding().max() - 1).min()
+            benchmark_drawdown = (benchmark_cumulative / benchmark_cumulative.expanding().max() - 1).min()
+            
+            # 승률 계산
+            strategy_win_rate = (strategy_returns > 0).mean()
+            benchmark_win_rate = (benchmark_returns > 0).mean()
+            
+            # 시장 상태별 성과 분석
+            regime_performance = {}
+            unique_regimes = regime_series.unique()
+            
+            for regime in unique_regimes:
+                mask = regime_series == regime
+                if mask.sum() > 0:
+                    regime_strategy_returns = strategy_returns[mask]
+                    regime_benchmark_returns = benchmark_returns[mask]
+                    
+                    regime_total_return = (1 + regime_strategy_returns).prod() - 1
+                    regime_benchmark_return = (1 + regime_benchmark_returns).prod() - 1
+                    regime_excess_return = regime_total_return - regime_benchmark_return
+                    
+                    regime_vol = regime_strategy_returns.std() * np.sqrt(252)
+                    regime_sharpe = (regime_strategy_returns.mean() * 252 - risk_free_rate) / regime_vol
+                    regime_win_rate = (regime_strategy_returns > 0).mean()
+                    
+                    # 정보 비율 계산
+                    regime_information_ratio = regime_excess_return / (regime_strategy_returns - regime_benchmark_returns).std()
+                    
+                    regime_performance[regime] = {
+                        'total_return': regime_total_return,
+                        'benchmark_return': regime_benchmark_return,
+                        'excess_return': regime_excess_return,
+                        'volatility': regime_vol,
+                        'sharpe_ratio': regime_sharpe,
+                        'win_rate': regime_win_rate,
+                        'information_ratio': regime_information_ratio,
+                        'days_count': mask.sum(),
+                        'avg_daily_return': regime_strategy_returns.mean(),
+                        'max_daily_return': regime_strategy_returns.max(),
+                        'min_daily_return': regime_strategy_returns.min()
+                    }
+            
+            # 통계적 유의성 검정
+            t_stat, p_value = stats.ttest_ind(strategy_returns, benchmark_returns)
+            
+            # VaR (Value at Risk) 계산
+            strategy_var_95 = np.percentile(strategy_returns, 5)
+            benchmark_var_95 = np.percentile(benchmark_returns, 5)
+            
+            # CVaR (Conditional Value at Risk) 계산
+            strategy_cvar_95 = strategy_returns[strategy_returns <= strategy_var_95].mean()
+            benchmark_cvar_95 = benchmark_returns[benchmark_returns <= benchmark_var_95].mean()
+            
+            return {
+                'overall_performance': {
+                    'total_return': total_return,
+                    'benchmark_return': benchmark_return,
+                    'excess_return': excess_return,
+                    'volatility': strategy_vol,
+                    'benchmark_volatility': benchmark_vol,
+                    'sharpe_ratio': strategy_sharpe,
+                    'benchmark_sharpe': benchmark_sharpe,
+                    'max_drawdown': strategy_drawdown,
+                    'benchmark_drawdown': benchmark_drawdown,
+                    'win_rate': strategy_win_rate,
+                    'benchmark_win_rate': benchmark_win_rate,
+                    'information_ratio': excess_return / (strategy_returns - benchmark_returns).std(),
+                    't_statistic': t_stat,
+                    'p_value': p_value,
+                    'var_95': strategy_var_95,
+                    'benchmark_var_95': benchmark_var_95,
+                    'cvar_95': strategy_cvar_95,
+                    'benchmark_cvar_95': benchmark_cvar_95
+                },
+                'regime_performance': regime_performance,
+                'regime_effectiveness': self._calculate_regime_effectiveness(regime_performance)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"전략 성과 분석 중 오류: {e}")
+            return {'error': str(e)}
+    
+    def _calculate_regime_effectiveness(self, regime_performance: Dict[str, Any]) -> Dict[str, Any]:
+        """시장 상태별 전략 효과성 분석"""
+        effectiveness = {}
+        
+        # 각 시장 상태에서의 상대적 성과 계산
+        for regime, performance in regime_performance.items():
+            excess_return = performance['excess_return']
+            sharpe_ratio = performance['sharpe_ratio']
+            information_ratio = performance['information_ratio']
+            
+            # 효과성 점수 (가중 평균)
+            effectiveness_score = (
+                excess_return * 0.4 + 
+                sharpe_ratio * 0.3 + 
+                information_ratio * 0.3
+            )
+            
+            effectiveness[regime] = {
+                'effectiveness_score': effectiveness_score,
+                'excess_return_contribution': excess_return * 0.4,
+                'sharpe_contribution': sharpe_ratio * 0.3,
+                'information_ratio_contribution': information_ratio * 0.3,
+                'performance_rank': None  # 나중에 계산
+            }
+        
+        # 성과 순위 계산
+        scores = [(regime, data['effectiveness_score']) for regime, data in effectiveness.items()]
+        scores.sort(key=lambda x: x[1], reverse=True)
+        
+        for rank, (regime, _) in enumerate(scores, 1):
+            effectiveness[regime]['performance_rank'] = rank
+        
+        return effectiveness
+    
+    def generate_validation_report(self, validation_results: Dict[str, Any], 
+                                 performance_results: Dict[str, Any]) -> str:
+        """검증 결과 종합 보고서 생성"""
+        try:
+            report = []
+            report.append("=" * 80)
+            report.append("📊 시장 상태 분류 및 전략 성과 검증 보고서")
+            report.append("=" * 80)
+            report.append(f"생성 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            report.append(f"세션 UUID: {self.session_uuid}")
+            report.append("")
+            
+            # 1. 분류 정확도 분석
+            if 'overall_accuracy' in validation_results:
+                report.append("🎯 시장 상태 분류 정확도 분석")
+                report.append("-" * 50)
+                report.append(f"전체 정확도: {validation_results['overall_accuracy']:.3f} ({validation_results['overall_accuracy']*100:.1f}%)")
+                report.append(f"정밀도: {validation_results['precision']:.3f}")
+                report.append(f"재현율: {validation_results['recall']:.3f}")
+                report.append(f"F1 점수: {validation_results['f1_score']:.3f}")
+                report.append(f"상태 변화 정확도: {validation_results['change_accuracy']:.3f}")
+                report.append("")
+                
+                # 시장 상태별 정확도
+                if 'regime_accuracy' in validation_results:
+                    report.append("📈 시장 상태별 분류 정확도:")
+                    for regime, accuracy in validation_results['regime_accuracy'].items():
+                        report.append(f"  {regime}: {accuracy:.3f} ({accuracy*100:.1f}%)")
+                    report.append("")
+                
+                # 지연 분석
+                if 'lag_analysis' in validation_results:
+                    report.append("⏱️ 예측 지연 분석:")
+                    for lag, data in validation_results['lag_analysis'].items():
+                        report.append(f"  {lag}일 지연: 상관관계={data['correlation']:.3f}, 정확도={data['accuracy']:.3f}")
+                    report.append("")
+            
+            # 2. 전략 성과 분석
+            if 'overall_performance' in performance_results:
+                perf = performance_results['overall_performance']
+                report.append("💰 전략 성과 분석")
+                report.append("-" * 50)
+                report.append(f"총 수익률: {perf['total_return']:.3f} ({perf['total_return']*100:.1f}%)")
+                report.append(f"벤치마크 수익률: {perf['benchmark_return']:.3f} ({perf['benchmark_return']*100:.1f}%)")
+                report.append(f"초과 수익률: {perf['excess_return']:.3f} ({perf['excess_return']*100:.1f}%)")
+                report.append(f"변동성: {perf['volatility']:.3f} ({perf['volatility']*100:.1f}%)")
+                report.append(f"샤프 비율: {perf['sharpe_ratio']:.3f}")
+                report.append(f"최대 낙폭: {perf['max_drawdown']:.3f} ({perf['max_drawdown']*100:.1f}%)")
+                report.append(f"승률: {perf['win_rate']:.3f} ({perf['win_rate']*100:.1f}%)")
+                report.append(f"정보 비율: {perf['information_ratio']:.3f}")
+                report.append(f"VaR (95%): {perf['var_95']:.3f} ({perf['var_95']*100:.1f}%)")
+                report.append(f"CVaR (95%): {perf['cvar_95']:.3f} ({perf['cvar_95']*100:.1f}%)")
+                report.append(f"통계적 유의성 (p-value): {perf['p_value']:.4f}")
+                report.append("")
+                
+                # 시장 상태별 성과
+                if 'regime_performance' in performance_results:
+                    report.append("📊 시장 상태별 성과:")
+                    for regime, regime_perf in performance_results['regime_performance'].items():
+                        report.append(f"  {regime}:")
+                        report.append(f"    수익률: {regime_perf['total_return']:.3f} ({regime_perf['total_return']*100:.1f}%)")
+                        report.append(f"    초과 수익률: {regime_perf['excess_return']:.3f} ({regime_perf['excess_return']*100:.1f}%)")
+                        report.append(f"    샤프 비율: {regime_perf['sharpe_ratio']:.3f}")
+                        report.append(f"    승률: {regime_perf['win_rate']:.3f} ({regime_perf['win_rate']*100:.1f}%)")
+                        report.append(f"    정보 비율: {regime_perf['information_ratio']:.3f}")
+                        report.append(f"    거래일수: {regime_perf['days_count']}일")
+                    report.append("")
+                
+                # 전략 효과성
+                if 'regime_effectiveness' in performance_results:
+                    report.append("🏆 전략 효과성 순위:")
+                    effectiveness = performance_results['regime_effectiveness']
+                    sorted_effectiveness = sorted(effectiveness.items(), 
+                                                key=lambda x: x[1]['performance_rank'])
+                    for regime, data in sorted_effectiveness:
+                        report.append(f"  {data['performance_rank']}. {regime}: {data['effectiveness_score']:.3f}")
+                    report.append("")
+            
+            # 3. 결론 및 권장사항
+            report.append("📋 결론 및 권장사항")
+            report.append("-" * 50)
+            
+            if 'overall_accuracy' in validation_results and validation_results['overall_accuracy'] > 0.7:
+                report.append("✅ 분류 정확도가 양호합니다 (70% 이상)")
+            else:
+                report.append("⚠️ 분류 정확도 개선이 필요합니다")
+            
+            if 'overall_performance' in performance_results:
+                perf = performance_results['overall_performance']
+                if perf['excess_return'] > 0.05:
+                    report.append("✅ 전략이 벤치마크를 상당히 상회합니다")
+                elif perf['excess_return'] > 0:
+                    report.append("✅ 전략이 벤치마크를 상회합니다")
+                else:
+                    report.append("⚠️ 전략 성과 개선이 필요합니다")
+                
+                if perf['p_value'] < 0.05:
+                    report.append("✅ 통계적으로 유의한 성과입니다")
+                else:
+                    report.append("⚠️ 통계적 유의성이 부족합니다")
+            
+            report.append("")
+            report.append("=" * 80)
+            
+            return "\n".join(report)
+            
+        except Exception as e:
+            self.logger.error(f"검증 보고서 생성 중 오류: {e}")
+            return f"보고서 생성 중 오류 발생: {str(e)}"
+    
+    def save_validation_results(self, validation_results: Dict[str, Any], 
+                              performance_results: Dict[str, Any],
+                              output_dir: str = "results/validation") -> str:
+        """검증 결과 저장"""
+        try:
+            import os
+            import json
+            
+            # 출력 디렉토리 생성
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # 타임스탬프 생성
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # JSON 파일로 결과 저장
+            results_file = os.path.join(output_dir, f"validation_results_{timestamp}.json")
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'validation_results': validation_results,
+                    'performance_results': performance_results,
+                    'timestamp': datetime.now().isoformat(),
+                    'session_uuid': self.session_uuid
+                }, f, indent=2, ensure_ascii=False)
+            
+            # 보고서 파일 생성
+            report_file = os.path.join(output_dir, f"validation_report_{timestamp}.txt")
+            report_content = self.generate_validation_report(validation_results, performance_results)
+            with open(report_file, 'w', encoding='utf-8') as f:
+                f.write(report_content)
+            
+            return results_file
+            
+        except Exception as e:
+            self.logger.error(f"검증 결과 저장 중 오류: {e}")
+            return ""
 
 
 def main():

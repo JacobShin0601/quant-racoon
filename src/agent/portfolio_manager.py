@@ -201,7 +201,17 @@ class AdvancedPortfolioManager:
         print("🎯 각 종목별 최적 전략 선택 시작")
         self.logger.log_info("🎯 각 종목별 최적 전략 선택 시작")
 
-        symbols = self.config.get("data", {}).get("symbols", [])
+        # 여러 섹션에서 심볼 찾기 시도
+        symbols = (
+            self.config.get("data", {}).get("symbols", []) or
+            self.config.get("portfolio", {}).get("symbols", []) or
+            self.config.get("scrapper", {}).get("symbols", [])
+        )
+        
+        print(f"🔍 찾은 심볼들: {symbols}")
+        print(f"🔍 최적화 결과 키 수: {len(optimization_results)}")
+        print(f"🔍 최적화 결과 키 예시: {list(optimization_results.keys())[:5]}")
+        
         symbol_best_strategies = {}
 
         for symbol in symbols:
@@ -218,11 +228,11 @@ class AdvancedPortfolioManager:
                     score = result.get("best_score", -999999.0)
                     strategy_name = result.get("strategy_name", "")
 
-                    # -999999 점수는 로그에서 숨기기
-                    if score > -999999.0:
-                        print(f"  - {strategy_name}: 점수 {score:.3f}")
+                    # 모든 점수 로그 출력 (디버깅용)
+                    print(f"  - {strategy_name}: 점수 {score:.3f}")
 
-                    if score > best_score:
+                    # 점수 비교 (모든 점수 허용)
+                    if score >= best_score:  # >= 로 변경하여 동점도 허용
                         best_score = score
                         best_strategy = strategy_name
                         best_params = result.get("best_params", {})
@@ -747,13 +757,20 @@ class AdvancedPortfolioManager:
             self.logger.log_info(f"🔍 UUID: {self.uuid}")
 
             data_dict = {}
-            symbols = self.config.get("data", {}).get("symbols", [])
+            # 여러 섹션에서 심볼 찾기 시도
+            symbols = (
+                self.config.get("data", {}).get("symbols", []) or
+                self.config.get("portfolio", {}).get("symbols", []) or
+                self.config.get("scrapper", {}).get("symbols", [])
+            )
             print(f"🔍 설정된 심볼들: {symbols}")
             self.logger.log_info(f"🔍 설정된 심볼들: {symbols}")
 
             if not symbols:
                 print("❌ 설정 파일에서 심볼을 찾을 수 없습니다")
                 self.logger.log_error("설정 파일에서 심볼을 찾을 수 없습니다")
+                print(f"🔍 config 섹션들: {list(self.config.keys())}")
+                self.logger.log_info(f"🔍 config 섹션들: {list(self.config.keys())}")
                 return {}
 
             # time_horizon을 고려한 데이터 경로 구성

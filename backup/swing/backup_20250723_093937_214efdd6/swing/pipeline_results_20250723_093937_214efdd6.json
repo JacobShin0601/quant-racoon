@@ -1,0 +1,35 @@
+{
+  "uuid": "20250723_093937_214efdd6",
+  "time_horizon": "swing",
+  "start_time": "2025-07-23T09:39:38.160033",
+  "end_time": "2025-07-23T09:44:02.361618",
+  "total_stages": 5,
+  "successful_stages": 5,
+  "results": {
+    "cleaner": {
+      "status": "success",
+      "timestamp": "2025-07-23T09:39:38.161342",
+      "error": null
+    },
+    "scrapper": {
+      "status": "success",
+      "timestamp": "2025-07-23T09:40:29.962435",
+      "error": null
+    },
+    "researcher": {
+      "status": "success",
+      "timestamp": "2025-07-23T09:44:01.609956",
+      "error": null
+    },
+    "portfolio_manager": {
+      "status": "success",
+      "timestamp": "2025-07-23T09:44:01.740824",
+      "error": null
+    },
+    "evaluator": {
+      "status": "success",
+      "timestamp": "2025-07-23T09:44:02.361415",
+      "error": null
+    }
+  }
+}

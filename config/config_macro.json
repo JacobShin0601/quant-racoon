@@ -126,5 +126,112 @@
       "normalization": "standard",
       "feature_selection": true
     }
+  },
+  "data_collection": {
+    "default_days_back": 730,
+    "macro_analysis_days_back": 730,
+    "sector_analysis_days_back": 730,
+    "model_training_days_back": 730,
+    "validation_days_back": 365,
+    "real_time_days_back": 30,
+    "data_sources": {
+      "spy": {
+        "symbol": "SPY",
+        "description": "S&P 500 ETF",
+        "required": true
+      },
+      "vix": {
+        "symbol": "^VIX",
+        "description": "CBOE Volatility Index",
+        "required": true
+      },
+      "tnx": {
+        "symbol": "^TNX",
+        "description": "10-Year Treasury Yield",
+        "required": true
+      },
+      "irx": {
+        "symbol": "^IRX",
+        "description": "13-Week Treasury Yield",
+        "required": true
+      },
+      "uup": {
+        "symbol": "UUP",
+        "description": "US Dollar Index ETF",
+        "required": false
+      },
+      "gld": {
+        "symbol": "GLD",
+        "description": "Gold ETF",
+        "required": false
+      },
+      "tlt": {
+        "symbol": "TLT",
+        "description": "20+ Year Treasury Bond ETF",
+        "required": false
+      },
+      "qqq": {
+        "symbol": "QQQ",
+        "description": "NASDAQ-100 ETF",
+        "required": false
+      },
+      "iwm": {
+        "symbol": "IWM",
+        "description": "Russell 2000 ETF",
+        "required": false
+      },
+      "tip": {
+        "symbol": "TIP",
+        "description": "iShares TIPS Bond ETF",
+        "required": false
+      }
+    },
+    "sector_etfs": {
+      "xlk": {
+        "symbol": "XLK",
+        "description": "Technology",
+        "required": false
+      },
+      "xlf": {
+        "symbol": "XLF",
+        "description": "Financials",
+        "required": false
+      },
+      "xle": {
+        "symbol": "XLE",
+        "description": "Energy",
+        "required": false
+      },
+      "xlv": {
+        "symbol": "XLV",
+        "description": "Healthcare",
+        "required": false
+      },
+      "xli": {
+        "symbol": "XLI",
+        "description": "Industrials",
+        "required": false
+      },
+      "xlp": {
+        "symbol": "XLP",
+        "description": "Consumer Staples",
+        "required": false
+      },
+      "xlu": {
+        "symbol": "XLU",
+        "description": "Utilities",
+        "required": false
+      },
+      "xlb": {
+        "symbol": "XLB",
+        "description": "Materials",
+        "required": false
+      },
+      "xlre": {
+        "symbol": "XLRE",
+        "description": "Real Estate",
+        "required": false
+      }
+    }
   }
 } 

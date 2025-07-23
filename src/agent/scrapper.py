@@ -56,17 +56,24 @@ class DataScrapper:
         try:
             print_subsection_header("📊 데이터 수집 시작")
 
-            # 설정에서 심볼과 설정 가져오기
+            # 설정에서 심볼과 설정 가져오기 (data.symbols와 scrapper.symbols 둘 다 확인)
             data_config = self.config.get("data", {})
-            symbols = data_config.get("symbols", [])
+            scrapper_config = self.config.get("scrapper", {})
+            
+            # 심볼 우선순위: scrapper.symbols > data.symbols
+            symbols = scrapper_config.get("symbols", data_config.get("symbols", []))
             custom_tasks = data_config.get("custom_tasks", [])
 
             if not symbols and not custom_tasks:
                 print("❌ 수집할 심볼이 설정되지 않았습니다.")
+                print(f"   설정 파일에서 확인된 내용:")
+                print(f"   - data.symbols: {data_config.get('symbols', [])}")
+                print(f"   - scrapper.symbols: {scrapper_config.get('symbols', [])}")
+                print(f"   - custom_tasks: {custom_tasks}")
                 return False
 
-            # 공통 설정
-            common_settings = data_config.get("common_settings", data_config)
+            # 공통 설정 (scrapper 설정 우선, 없으면 data 설정 사용)
+            common_settings = scrapper_config if scrapper_config else data_config.get("common_settings", data_config)
 
             # 데이터 수집기 초기화
             collector = YahooFinanceDataCollector()

@@ -1,0 +1,68 @@
+{
+  "market_regime": "SIDEWAYS",
+  "description": "횡보장 시장 환경에 최적화된 앙상블 전략 설정",
+  "time_horizon": "ensemble_sideways",
+  
+  "data": {
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
+    "interval": "1d",
+    "lookback_days": 365,
+    "train_ratio": 0.5,
+    "end_date": "2025-07-22"
+  },
+
+  "output": {
+    "results_folder": "results/ensemble",
+    "logs_folder": "log/ensemble",
+    "backup_folder": "backup/ensemble",
+    "data_folder": "data/ensemble"
+  },
+
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.001,
+    "slippage": 0.0005,
+    "position_sizing": "fixed",
+    "fixed_position_size": 0.1
+  },
+
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
+  },
+  
+  "regime_specific_settings": {
+    "strategy_weights": {
+      "mean_reversion": 0.20,
+      "swing_rsi": 0.18,
+      "swing_bollinger_band": 0.15,
+      "whipsaw_prevention": 0.12,
+      "stochastic": 0.10,
+      "cci_bollinger": 0.08,
+      "williams_r": 0.05,
+      "cci": 0.04,
+      "donchian_rsi_whipsaw": 0.03,
+      "range_breakout": 0.02,
+      "support_resistance": 0.02,
+      "oscillator_convergence": 0.01
+    },
+    "common_params": {
+      "position_size": 0.6,
+      "stop_loss": 0.04,
+      "take_profit": 0.10,
+      "trailing_stop": 0.02
+    },
+    "risk_adjustments": {
+      "max_dd_threshold": 0.12,
+      "max_dd_penalty": 0.6,
+      "volatility_threshold": 0.22,
+      "volatility_penalty": 0.35
+    },
+    "performance_targets": {
+      "target_return": 0.10,
+      "target_sharpe": 1.2,
+      "max_drawdown": 0.15
+    }
+  }
+} 

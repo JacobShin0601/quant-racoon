@@ -1,0 +1,21 @@
+{
+  "uuid": "20250723_152236_503852d6",
+  "backup_time": "2025-07-23 15:22:39",
+  "strategy": "ensemble",
+  "model_status": "existing",
+  "backup_contents": {
+    "data_ensemble": "false",
+    "log_ensemble": "true",
+    "results_ensemble": "true",
+    "models_market_regime": "true",
+    "data_trending_up": "false",
+    "data_trending_down": "false",
+    "data_volatile": "false",
+    "data_sideways": "true"
+  },
+  "execution_info": {
+    "start_time": "2025-07-23 15:22:36",
+    "end_time": "2025-07-23 15:22:39",
+    "script": "run_ensemble.sh"
+  }
+}

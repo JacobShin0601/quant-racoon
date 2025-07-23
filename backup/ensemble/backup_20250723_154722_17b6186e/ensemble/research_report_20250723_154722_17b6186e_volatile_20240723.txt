@@ -1,0 +1,52 @@
+================================================================================
+개별 종목별 전략 최적화 연구 보고서
+================================================================================
+
+연구 시작 시간: 2025-07-23 15:48:48.089427
+연구 완료 시간: 2025-07-23 15:52:52.721078
+총 조합 수: 72
+
+전략별 최적화 결과 요약:
+--------------------------------------------------
+volatility_filtered_breakout:
+  평균 점수: -999999.00
+  최고 점수: -999999.00
+  최적화된 종목 수: 12
+
+multi_timeframe_whipsaw:
+  평균 점수: -833327.68
+  최고 점수: 32.75
+  최적화된 종목 수: 12
+
+adaptive_whipsaw:
+  평균 점수: -999999.00
+  최고 점수: -999999.00
+  최적화된 종목 수: 12
+
+swing_bollinger_band:
+  평균 점수: -916661.44
+  최고 점수: 51.71
+  최적화된 종목 수: 12
+
+whipsaw_prevention:
+  평균 점수: -999999.00
+  최고 점수: -999999.00
+  최적화된 종목 수: 12
+
+donchian_rsi_whipsaw:
+  평균 점수: -916661.87
+  최고 점수: 46.58
+  최적화된 종목 수: 12
+
+상위 10개 최적화 결과:
+--------------------------------------------------
+1. swing_bollinger_band - NFLX: 점수 51.71
+2. donchian_rsi_whipsaw - NFLX: 점수 46.58
+3. multi_timeframe_whipsaw - META: 점수 32.75
+4. multi_timeframe_whipsaw - NFLX: 점수 25.06
+5. volatility_filtered_breakout - AAPL: 점수 -999999.00
+6. volatility_filtered_breakout - META: 점수 -999999.00
+7. volatility_filtered_breakout - NFLX: 점수 -999999.00
+8. volatility_filtered_breakout - QQQ: 점수 -999999.00
+9. volatility_filtered_breakout - SPY: 점수 -999999.00
+10. volatility_filtered_breakout - NVDA: 점수 -999999.00

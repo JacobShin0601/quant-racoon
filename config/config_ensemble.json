@@ -1,0 +1,158 @@
+{
+  "time_horizon": "ensemble",
+  "description": "시장 환경별 앙상블 전략 최적화 및 평가",
+  
+  "data": {
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
+    "interval": "1d",
+    "lookback_days": 365,
+    "train_ratio": 0.5,
+    "end_date": "2025-07-22"
+  },
+
+  "flow": {
+    "stages": ["cleaner", "scrapper", "researcher", "evaluator", "portfolio_manager"],
+    "stop_on_error": true,
+    "enable_research": true
+  },
+
+  "cleaner": {
+    "run_cleaner": true,
+    "action": "clean-and-recreate",
+    "folders": ["data/ensemble", "log", "log/ensemble", "results", "results/ensemble", "analysis"]
+  },
+
+  "scrapper": {
+    "enabled": true,
+    "data_source": "yfinance",
+    "retry_count": 3,
+    "delay_between_requests": 1.0
+  },
+
+  "researcher": {
+    "optimization_method": "bayesian_optimization",
+    "optimization_settings": {
+      "bayesian_optimization": {
+        "n_trials": 70,
+        "n_startup_trials": 5,
+        "early_stopping_patience": 10
+      },
+      "grid_search": {
+        "max_combinations": 70
+      }
+    },
+    "evaluation_metrics": {
+      "weights": {
+        "total_return": 0.20,
+        "sharpe_ratio": 0.20,
+        "sortino_ratio": 0.20,
+        "calmar_ratio": 0.15,
+        "profit_factor": 0.15,
+        "win_rate": 0.10
+      }
+    },
+    "risk_penalties": {
+      "max_drawdown_threshold": 0.25,
+      "max_drawdown_penalty": 0.5,
+      "volatility_threshold": 0.30,
+      "volatility_penalty": 0.3
+    },
+    "performance_thresholds": {
+      "min_return_threshold": -0.30,
+      "min_sharpe_ratio": -1.0,
+      "min_profit_factor": 0.1,
+      "min_win_rate": 0.1,
+      "min_trades": 1
+    }
+  },
+
+  "portfolio": {
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
+    "optimization_method": "risk_parity",
+    "fallback_method": "equal_weight",
+    "rebalance_period": 30,
+    "risk_free_rate": 0.02,
+    "min_weight": 0.01,
+    "max_weight": 0.25,
+    "cash_weight": 0.05,
+    "leverage": 1.0,
+    "target_return": null,
+    "target_volatility": null,
+    "max_drawdown": null
+  },
+
+  "evaluator": {
+    "log_mode": "summary",
+    "save_results": true,
+    "primary_metric": "sharpe_ratio",
+    "minimum_requirements": {
+      "min_sharpe_ratio": -0.5,
+      "min_profit_factor": 0.5,
+      "min_win_rate": 0.3,
+      "max_drawdown_limit": 0.5,
+      "min_trades": 1
+    },
+    "risk_penalties": {
+      "max_drawdown_threshold": 0.25,
+      "max_drawdown_penalty": 0.3,
+      "volatility_threshold": 0.80,
+      "volatility_penalty": 0.2
+    }
+  },
+
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.001,
+    "slippage": 0.0005,
+    "position_sizing": "fixed",
+    "fixed_position_size": 0.1
+  },
+
+  "automation": {
+    "auto_backup": true,
+    "auto_clean": true,
+    "clean_old_files_days": 30
+  },
+
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
+  },
+
+  "market_sensor": {
+    "data_dir": "data/macro",
+    "config_path": "config/config_macro.json",
+    "use_optimized_params": true,
+    "use_ml_model": true
+  },
+
+  "market_regime_configs": {
+    "TRENDING_UP": "config/config_ensemble_trending_up.json",
+    "TRENDING_DOWN": "config/config_ensemble_trending_down.json",
+    "VOLATILE": "config/config_ensemble_volatile.json",
+    "SIDEWAYS": "config/config_ensemble_sideways.json",
+    "UNCERTAIN": "config/config_ensemble_sideways.json"
+  },
+
+  "ensemble_settings": {
+    "regime_detection_frequency": "daily",
+    "regime_confidence_threshold": 0.3,
+    "fallback_regime": "SIDEWAYS",
+    "regime_transition_buffer": 3,
+    "dynamic_weight_adjustment": true,
+    "regime_performance_tracking": true
+  },
+
+  "output": {
+    "results_folder": "results/ensemble",
+    "logs_folder": "log/ensemble",
+    "backup_folder": "backup/ensemble"
+  },
+
+  "logging": {
+    "level": "INFO",
+    "file_rotation": true,
+    "backup_count": 5
+  }
+} 

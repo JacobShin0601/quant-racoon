@@ -1,0 +1,15 @@
+{
+  "uuid": "20250723_091622_0a087b41",
+  "backup_time": "2025-07-23 09:20:54",
+  "strategy": "swing",
+  "backup_contents": {
+    "data_swing": "true",
+    "log_swing": "true",
+    "results_swing": "true"
+  },
+  "execution_info": {
+    "start_time": "2025-07-23 09:16:22",
+    "end_time": "2025-07-23 09:20:54",
+    "script": "run_swing.sh"
+  }
+}

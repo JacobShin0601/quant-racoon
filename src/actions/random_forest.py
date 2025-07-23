@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
 import logging
+import json
 from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -30,15 +31,19 @@ from actions.calculate_index import TechnicalIndicators
 class MarketRegimeRF:
     """Random Forest 기반 시장 상태 분류기"""
     
-    def __init__(self, verbose: bool = True):
+    def __init__(self, verbose: bool = True, config_path: str = "config/config_macro.json"):
         """
         MarketRegimeRF 초기화
         
         Args:
             verbose: 상세 로그 출력 여부
+            config_path: 설정 파일 경로
         """
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
+        
+        # 설정 파일 로드
+        self.config = self._load_config(config_path)
         
         # 모델 관련 변수들
         self.model = None
@@ -64,6 +69,28 @@ class MarketRegimeRF:
         
         self.regime_mapping_reverse = {v: k for k, v in self.regime_mapping.items()}
     
+    def _load_config(self, config_path: str) -> Dict[str, Any]:
+        """설정 파일 로드"""
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            self._print(f"설정 파일 로드 완료: {config_path}")
+            return config
+        except Exception as e:
+            self._print(f"설정 파일 로드 실패: {e}", level="error")
+            return {}
+    
+    def _get_days_back(self, collection_type: str = "default") -> int:
+        """설정에서 데이터 수집 기간 가져오기"""
+        try:
+            data_collection = self.config.get('data_collection', {})
+            days_back = data_collection.get(f'{collection_type}_days_back', 
+                                          data_collection.get('default_days_back', 730))
+            return days_back
+        except Exception as e:
+            self._print(f"설정에서 데이터 수집 기간 로드 실패: {e}", level="error")
+            return 730  # 기본값 2년
+    
     def _print(self, *args, level="info", **kwargs):
         """로그 출력"""
         if self.verbose:
@@ -76,12 +103,12 @@ class MarketRegimeRF:
             else:
                 print(*args, **kwargs)
     
-    def collect_training_data(self, start_date: str = "2020-01-01", end_date: str = None, data_dir: str = "data/macro") -> pd.DataFrame:
+    def collect_training_data(self, start_date: str = None, end_date: str = None, data_dir: str = "data/macro") -> pd.DataFrame:
         """
         학습 데이터 수집 (저장된 데이터 사용)
         
         Args:
-            start_date: 시작 날짜
+            start_date: 시작 날짜 (None이면 설정에서 계산)
             end_date: 종료 날짜 (None이면 현재)
             data_dir: 데이터 디렉토리 경로
             
@@ -90,6 +117,12 @@ class MarketRegimeRF:
         """
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        if start_date is None:
+            # 설정에서 모델 학습용 데이터 수집 기간 가져오기
+            days_back = self._get_days_back("model_training")
+            start_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
+            self._print(f"설정 기반 시작 날짜 설정: {start_date} ({days_back}일)")
         
         self._print(f"저장된 데이터 로드 중: {start_date} ~ {end_date}")
         
@@ -526,7 +559,7 @@ class MarketRegimeRF:
         self._print(f"  테스트 정확도: {test_score:.4f}")
         self._print(f"  교차 검증: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
         
-        # 모델 저장
+        # 모델 저장 (자동 저장)
         if save_model:
             self.save_model()
         
@@ -601,7 +634,7 @@ class MarketRegimeRF:
     
     def get_current_market_probabilities(self, data_dir: str = "data/macro") -> Dict[str, float]:
         """
-        현재 시장 상태 확률 계산
+        현재 시장 상태 확률 계산 (저장된 모델 우선 사용)
         
         Args:
             data_dir: 데이터 디렉토리 경로
@@ -609,6 +642,16 @@ class MarketRegimeRF:
         Returns:
             현재 시장 상태별 확률
         """
+        # 저장된 모델이 있는지 확인하고 로드 시도
+        if not self.is_trained:
+            try:
+                self.load_model()
+                self._print("저장된 모델을 로드했습니다.")
+            except FileNotFoundError:
+                self._print("저장된 모델이 없습니다. 새로 학습을 시작합니다.")
+                # 모델 학습
+                self.train_model(save_model=True)
+        
         # 최근 데이터 로드
         end_date = datetime.now().strftime('%Y-%m-%d')
         start_date = (datetime.now() - timedelta(days=100)).strftime('%Y-%m-%d')

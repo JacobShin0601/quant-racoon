@@ -39,10 +39,12 @@ class Orchestrator:
         config_path: str = DEFAULT_CONFIG_PATH,
         time_horizon: str = "swing",
         uuid: Optional[str] = None,
+        research_config_path: Optional[str] = None,
     ):
         self.config_path = config_path
         self.time_horizon = time_horizon
         self.uuid = uuid or datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.research_config_path = research_config_path or "config/config_research.json"
 
         # 설정 로드 - 절대 경로로 변환
         if not os.path.isabs(config_path):
@@ -57,6 +59,7 @@ class Orchestrator:
 
         print_section_header("🚀 오케스트레이터 초기화")
         print(f"📁 설정 파일: {config_path}")
+        print(f"🔬 연구 설정 파일: {self.research_config_path}")
         print(f"⏰ 시간대: {time_horizon}")
         print(f"🆔 실행 UUID: {self.uuid}")
 
@@ -184,7 +187,7 @@ class Orchestrator:
             horizon_config_path = f"config/config_{self.time_horizon}.json"
 
             researcher = IndividualStrategyResearcher(
-                research_config_path="config/config_research.json",
+                research_config_path=self.research_config_path,
                 source_config_path=horizon_config_path,
                 data_dir=data_dir,
                 results_dir=None,  # config에서 가져옴
@@ -574,6 +577,10 @@ def main():
         help="시간대 설정",
     )
     parser.add_argument(
+        "--research-config",
+        help="연구 설정 파일 경로 (기본값: config/config_research.json)",
+    )
+    parser.add_argument(
         "--stages",
         nargs="+",
         choices=["cleaner", "scrapper", "researcher", "evaluator", "portfolio_manager"],
@@ -593,6 +600,7 @@ def main():
         config_path=args.config,
         time_horizon=args.time_horizon,
         uuid=args.uuid,
+        research_config_path=args.research_config,
     )
 
     # 실행

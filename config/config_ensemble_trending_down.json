@@ -1,0 +1,63 @@
+{
+  "market_regime": "TRENDING_DOWN",
+  "description": "하락 추세 시장 환경에 최적화된 앙상블 전략 설정",
+  "time_horizon": "ensemble_trending_down",
+  
+  "data": {
+    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
+    "interval": "1d",
+    "lookback_days": 365,
+    "train_ratio": 0.5,
+    "end_date": "2025-07-22"
+  },
+
+  "output": {
+    "results_folder": "results/ensemble",
+    "logs_folder": "log/ensemble",
+    "backup_folder": "backup/ensemble",
+    "data_folder": "data/ensemble"
+  },
+
+  "trading": {
+    "initial_capital": 100000,
+    "commission": 0.001,
+    "slippage": 0.0005,
+    "position_sizing": "fixed",
+    "fixed_position_size": 0.1
+  },
+
+  "simulation_settings": {
+    "enable_detailed_logging": true,
+    "log_trade_details": true,
+    "calculate_metrics": true
+  },
+  
+  "regime_specific_settings": {
+    "strategy_weights": {
+      "mean_reversion": 0.30,
+      "swing_rsi": 0.25,
+      "stochastic": 0.15,
+      "williams_r": 0.12,
+      "cci": 0.08,
+      "cci_bollinger": 0.06,
+      "swing_bollinger_band": 0.04
+    },
+    "common_params": {
+      "position_size": 0.4,
+      "stop_loss": 0.03,
+      "take_profit": 0.08,
+      "trailing_stop": 0.015
+    },
+    "risk_adjustments": {
+      "max_dd_threshold": 0.10,
+      "max_dd_penalty": 0.7,
+      "volatility_threshold": 0.20,
+      "volatility_penalty": 0.4
+    },
+    "performance_targets": {
+      "target_return": 0.08,
+      "target_sharpe": 1.0,
+      "max_drawdown": 0.12
+    }
+  }
+} 

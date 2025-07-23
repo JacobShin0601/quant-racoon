@@ -2902,5 +2902,2669 @@ class SectorRotationStrategy(PortfolioStrategy):
         return signals
 
 
-if __name__ == "__main__":
-    main()
+class MomentumAccelerationStrategy(BaseStrategy):
+    """모멘텀 가속도 전략 - 상승 추세에서 모멘텀 가속을 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.acceleration_threshold = params.get('acceleration_threshold', 0.02)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """모멘텀 가속도 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        df['momentum_acceleration'] = df['momentum'] - df['momentum_ma']
+        
+        # 거래량 증가율
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 모멘텀 가속 + 거래량 증가 + RSI 강세
+        buy_condition = (
+            (df['momentum_acceleration'] > self.acceleration_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].rolling(window=20).mean())
+        )
+        
+        # 매도 신호: 모멘텀 감속 또는 RSI 과매수
+        sell_condition = (
+            (df['momentum_acceleration'] < -self.acceleration_threshold) |
+            (df['rsi'] > 80) |
+            (df['close'] < df['close'].rolling(window=20).mean())
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolumeBreakoutStrategy(BaseStrategy):
+    """거래량 브레이크아웃 전략 - 상승 추세에서 거래량 증가와 함께하는 브레이크아웃 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volume_period = params.get('volume_period', 20)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_period = params.get('price_period', 20)
+        self.price_threshold = params.get('price_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """거래량 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 거래량 분석
+        df['volume_ma'] = df['volume'].rolling(window=self.volume_period).mean()
+        df['volume_ratio'] = df['volume'] / df['volume_ma']
+        
+        # 가격 분석
+        df['price_ma'] = df['close'].rolling(window=self.price_period).mean()
+        df['price_breakout'] = df['close'] > df['price_ma'] * (1 + self.price_threshold)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 거래량 급증 + 가격 브레이크아웃 + RSI 강세
+        buy_condition = (
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_breakout']) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].shift(1))
+        )
+        
+        # 매도 신호: 거래량 감소 또는 가격 하락
+        sell_condition = (
+            (df['volume_ratio'] < 0.5) |
+            (df['close'] < df['price_ma']) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class TrendStrengthStrategy(BaseStrategy):
+    """추세 강도 기반 전략 - 상승 추세의 강도를 측정하여 진입"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.short_period = params.get('short_period', 10)
+        self.long_period = params.get('long_period', 50)
+        self.adx_period = params.get('adx_period', 14)
+        self.adx_threshold = params.get('adx_threshold', 25)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """추세 강도 신호 생성"""
+        df = df.copy()
+        
+        # 이동평균 계산
+        df['sma_short'] = df['close'].rolling(window=self.short_period).mean()
+        df['sma_long'] = df['close'].rolling(window=self.long_period).mean()
+        
+        # ADX 계산 (추세 강도)
+        df['adx'] = self._calculate_adx(df, self.adx_period)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 강한 상승 추세 + RSI 강세
+        buy_condition = (
+            (df['sma_short'] > df['sma_long']) &
+            (df['adx'] > self.adx_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['sma_short'])
+        )
+        
+        # 매도 신호: 추세 약화 또는 RSI 과매수
+        sell_condition = (
+            (df['sma_short'] < df['sma_long']) |
+            (df['adx'] < self.adx_threshold) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_adx(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ADX 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        # True Range 계산
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        # Directional Movement
+        dm_plus = high - high.shift(1)
+        dm_minus = low.shift(1) - low
+        dm_plus = dm_plus.where(dm_plus > dm_minus, 0)
+        dm_minus = dm_minus.where(dm_minus > dm_plus, 0)
+        
+        # Smoothed values
+        tr_smooth = tr.rolling(window=period).mean()
+        dm_plus_smooth = dm_plus.rolling(window=period).mean()
+        dm_minus_smooth = dm_minus.rolling(window=period).mean()
+        
+        # DI 계산
+        di_plus = 100 * dm_plus_smooth / tr_smooth
+        di_minus = 100 * dm_minus_smooth / tr_smooth
+        
+        # DX 계산
+        dx = 100 * abs(di_plus - di_minus) / (di_plus + di_minus)
+        
+        # ADX 계산
+        adx = dx.rolling(window=period).mean()
+        
+        return adx
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class DefensiveHedgingStrategy(BaseStrategy):
+    """방어적 헤징 전략 - 하락 추세에서 손실 최소화"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.hedge_ratio = params.get('hedge_ratio', 0.3)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """방어적 헤징 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 헤징 신호: 높은 변동성 + 하락 추세 + RSI 과매도
+        hedge_condition = (
+            (df['volatility'] > self.volatility_threshold) &
+            (df['sma_20'] < df['sma_50']) &
+            (df['rsi'] < self.rsi_oversold) &
+            (df['close'] < df['sma_20'])
+        )
+        
+        # 헤징 해제: 변동성 감소 또는 반등 신호
+        unhedge_condition = (
+            (df['volatility'] < self.volatility_threshold * 0.5) |
+            (df['rsi'] > 50) |
+            (df['close'] > df['sma_20'])
+        )
+        
+        df.loc[hedge_condition, 'signal'] = -1  # 헤징 포지션
+        df.loc[unhedge_condition, 'signal'] = 1  # 헤징 해제
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class ShortMomentumStrategy(BaseStrategy):
+    """숏 모멘텀 전략 - 하락 추세에서 숏 포지션"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.momentum_threshold = params.get('momentum_threshold', -0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 70)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """숏 모멘텀 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 숏 신호: 하락 모멘텀 + RSI 과매수 + 거래량 증가
+        short_condition = (
+            (df['momentum'] < self.momentum_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['sma_20'] < df['sma_50'])
+        )
+        
+        # 숏 해제: 반등 신호 또는 RSI 과매도
+        cover_condition = (
+            (df['momentum'] > 0) |
+            (df['rsi'] < 30) |
+            (df['close'] > df['sma_20'])
+        )
+        
+        df.loc[short_condition, 'signal'] = -1  # 숏 포지션
+        df.loc[cover_condition, 'signal'] = 1   # 숏 해제
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class SafeHavenRotationStrategy(BaseStrategy):
+    """안전자산 순환 전략 - 하락 시 안전자산으로 순환"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 30)
+        self.rotation_threshold = params.get('rotation_threshold', -0.05)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """안전자산 순환 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 누적 수익률
+        df['cumulative_return'] = (1 + df['returns']).cumprod() - 1
+        df['rolling_return'] = df['cumulative_return'] - df['cumulative_return'].shift(20)
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 안전자산 순환 신호: 높은 변동성 + 하락 + RSI 과매도
+        safe_haven_condition = (
+            (df['volatility'] > self.volatility_threshold) &
+            (df['rolling_return'] < self.rotation_threshold) &
+            (df['rsi'] < self.rsi_threshold) &
+            (df['sma_20'] < df['sma_50'])
+        )
+        
+        # 리스크 자산 복귀: 변동성 감소 + 반등 신호
+        risk_return_condition = (
+            (df['volatility'] < self.volatility_threshold * 0.5) &
+            (df['rsi'] > 50) &
+            (df['rolling_return'] > 0)
+        )
+        
+        df.loc[safe_haven_condition, 'signal'] = -1  # 안전자산 순환
+        df.loc[risk_return_condition, 'signal'] = 1  # 리스크 자산 복귀
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolatilityExpansionStrategy(BaseStrategy):
+    """변동성 확장 전략 - 변동성 높은 시장에서 변동성 확장 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.expansion_threshold = params.get('expansion_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.atr_period = params.get('atr_period', 14)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """변동성 확장 신호 생성"""
+        df = df.copy()
+        
+        # ATR 계산
+        df['atr'] = self._calculate_atr(df, self.atr_period)
+        df['atr_ma'] = df['atr'].rolling(window=self.volatility_period).mean()
+        df['volatility_expansion'] = df['atr'] / df['atr_ma']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 볼린저 밴드
+        df['bb_middle'] = df['close'].rolling(window=20).mean()
+        df['bb_std'] = df['close'].rolling(window=20).std()
+        df['bb_upper'] = df['bb_middle'] + (df['bb_std'] * 2)
+        df['bb_lower'] = df['bb_middle'] - (df['bb_std'] * 2)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 변동성 확장 신호: ATR 확장 + 볼린저 밴드 터치
+        expansion_condition = (
+            (df['volatility_expansion'] > self.expansion_threshold) &
+            ((df['close'] > df['bb_upper']) | (df['close'] < df['bb_lower'])) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 변동성 수축 신호: ATR 수축
+        contraction_condition = (
+            (df['volatility_expansion'] < 0.5) &
+            (df['close'].between(df['bb_lower'], df['bb_upper']))
+        )
+        
+        df.loc[expansion_condition, 'signal'] = 1   # 변동성 확장 포착
+        df.loc[contraction_condition, 'signal'] = -1  # 변동성 수축
+        
+        return df
+    
+    def _calculate_atr(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ATR 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        atr = tr.rolling(window=period).mean()
+        return atr
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class GapTradingStrategy(BaseStrategy):
+    """갭 트레이딩 전략 - 변동성 높은 시장에서 갭 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.gap_threshold = params.get('gap_threshold', 0.02)
+        self.fill_threshold = params.get('fill_threshold', 0.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """갭 트레이딩 신호 생성"""
+        df = df.copy()
+        
+        # 갭 계산
+        df['gap_up'] = (df['open'] - df['close'].shift(1)) / df['close'].shift(1)
+        df['gap_down'] = (df['close'].shift(1) - df['open']) / df['close'].shift(1)
+        
+        # 갭 채우기 계산
+        df['gap_fill_up'] = (df['low'] - df['close'].shift(1)) / df['close'].shift(1)
+        df['gap_fill_down'] = (df['close'].shift(1) - df['high']) / df['close'].shift(1)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 갭 업 신호: 상승 갭 + 거래량 증가
+        gap_up_condition = (
+            (df['gap_up'] > self.gap_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 갭 다운 신호: 하락 갭 + 거래량 증가
+        gap_down_condition = (
+            (df['gap_down'] > self.gap_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] < self.rsi_threshold)
+        )
+        
+        # 갭 채우기 신호
+        gap_fill_condition = (
+            (df['gap_fill_up'] > self.fill_threshold) |
+            (df['gap_fill_down'] > self.fill_threshold)
+        )
+        
+        df.loc[gap_up_condition, 'signal'] = 1      # 갭 업 포착
+        df.loc[gap_down_condition, 'signal'] = -1   # 갭 다운 포착
+        df.loc[gap_fill_condition, 'signal'] = 0    # 갭 채우기
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class NewsEventStrategy(BaseStrategy):
+    """뉴스 이벤트 기반 전략 - 변동성 높은 시장에서 이벤트 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 2.0)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_threshold = params.get('price_threshold', 0.03)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """뉴스 이벤트 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        df['volatility_ratio'] = df['volatility'] / df['volatility'].rolling(window=self.volatility_period).mean()
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 가격 변동
+        df['price_change'] = abs(df['close'].pct_change())
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 이벤트 신호: 높은 변동성 + 거래량 급증 + 큰 가격 변동
+        event_condition = (
+            (df['volatility_ratio'] > self.volatility_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_change'] > self.price_threshold)
+        )
+        
+        # 이벤트 후 정리 신호: 변동성 감소
+        cleanup_condition = (
+            (df['volatility_ratio'] < 0.5) &
+            (df['volume_ratio'] < 1.0)
+        )
+        
+        df.loc[event_condition, 'signal'] = 1    # 이벤트 포착
+        df.loc[cleanup_condition, 'signal'] = -1  # 이벤트 후 정리
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class RangeBreakoutStrategy(BaseStrategy):
+    """범위 브레이크아웃 전략 - 횡보장에서 범위 돌파 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.range_period = params.get('range_period', 20)
+        self.breakout_threshold = params.get('breakout_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """범위 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 범위 계산
+        df['range_high'] = df['high'].rolling(window=self.range_period).max()
+        df['range_low'] = df['low'].rolling(window=self.range_period).min()
+        df['range_mid'] = (df['range_high'] + df['range_low']) / 2
+        
+        # 브레이크아웃 계산
+        df['breakout_up'] = (df['close'] - df['range_high']) / df['range_high']
+        df['breakout_down'] = (df['range_low'] - df['close']) / df['range_low']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 상향 브레이크아웃: 상단 돌파 + 거래량 증가
+        breakout_up_condition = (
+            (df['breakout_up'] > self.breakout_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 하향 브레이크아웃: 하단 돌파 + 거래량 증가
+        breakout_down_condition = (
+            (df['breakout_down'] > self.breakout_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] < self.rsi_threshold)
+        )
+        
+        # 범위 내 복귀
+        range_return_condition = (
+            (df['close'].between(df['range_low'], df['range_high'])) &
+            (df['volume_ratio'] < 1.0)
+        )
+        
+        df.loc[breakout_up_condition, 'signal'] = 1      # 상향 브레이크아웃
+        df.loc[breakout_down_condition, 'signal'] = -1   # 하향 브레이크아웃
+        df.loc[range_return_condition, 'signal'] = 0     # 범위 내 복귀
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class SupportResistanceStrategy(BaseStrategy):
+    """지지/저항 기반 전략 - 횡보장에서 지지/저항선 활용"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.support_period = params.get('support_period', 20)
+        self.resistance_period = params.get('resistance_period', 20)
+        self.touch_threshold = params.get('touch_threshold', 0.01)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.rsi_overbought = params.get('rsi_overbought', 70)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """지지/저항 신호 생성"""
+        df = df.copy()
+        
+        # 지지/저항선 계산
+        df['support'] = df['low'].rolling(window=self.support_period).min()
+        df['resistance'] = df['high'].rolling(window=self.resistance_period).max()
+        
+        # 지지/저항 터치 계산
+        df['support_touch'] = (df['low'] - df['support']) / df['support']
+        df['resistance_touch'] = (df['resistance'] - df['high']) / df['resistance']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 지지선 반등: 지지선 터치 + RSI 과매도
+        support_bounce_condition = (
+            (abs(df['support_touch']) < self.touch_threshold) &
+            (df['rsi'] < self.rsi_oversold) &
+            (df['close'] > df['low'])
+        )
+        
+        # 저항선 반락: 저항선 터치 + RSI 과매수
+        resistance_rejection_condition = (
+            (abs(df['resistance_touch']) < self.touch_threshold) &
+            (df['rsi'] > self.rsi_overbought) &
+            (df['close'] < df['high'])
+        )
+        
+        df.loc[support_bounce_condition, 'signal'] = 1      # 지지선 반등
+        df.loc[resistance_rejection_condition, 'signal'] = -1  # 저항선 반락
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class OscillatorConvergenceStrategy(BaseStrategy):
+    """오실레이터 수렴 전략 - 횡보장에서 여러 오실레이터의 수렴 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.stoch_period = params.get('stoch_period', 14)
+        self.williams_period = params.get('williams_period', 14)
+        self.convergence_threshold = params.get('convergence_threshold', 10)
+        self.volume_threshold = params.get('volume_threshold', 1.2)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """오실레이터 수렴 신호 생성"""
+        df = df.copy()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 스토캐스틱 계산
+        df['stoch_k'] = self._calculate_stochastic(df, self.stoch_period)
+        df['stoch_d'] = df['stoch_k'].rolling(window=3).mean()
+        
+        # 윌리엄스 %R 계산
+        df['williams_r'] = self._calculate_williams_r(df, self.williams_period)
+        
+        # 오실레이터 수렴 계산
+        df['oscillator_avg'] = (df['rsi'] + df['stoch_k'] + (100 + df['williams_r'])) / 3
+        df['oscillator_std'] = df[['rsi', 'stoch_k', 'williams_r']].std(axis=1)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 수렴 신호: 오실레이터 수렴 + 거래량 증가
+        convergence_condition = (
+            (df['oscillator_std'] < self.convergence_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['oscillator_avg'].between(30, 70))
+        )
+        
+        # 발산 신호: 오실레이터 발산
+        divergence_condition = (
+            (df['oscillator_std'] > self.convergence_threshold * 2) &
+            (df['volume_ratio'] < 0.8)
+        )
+        
+        df.loc[convergence_condition, 'signal'] = 1    # 수렴 신호
+        df.loc[divergence_condition, 'signal'] = -1    # 발산 신호
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+    
+    def _calculate_stochastic(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """스토캐스틱 %K 계산"""
+        low_min = df['low'].rolling(window=period).min()
+        high_max = df['high'].rolling(window=period).max()
+        stoch_k = 100 * (df['close'] - low_min) / (high_max - low_min)
+        return stoch_k
+    
+    def _calculate_williams_r(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """윌리엄스 %R 계산"""
+        low_min = df['low'].rolling(window=period).min()
+        high_max = df['high'].rolling(window=period).max()
+        williams_r = -100 * (high_max - df['close']) / (high_max - low_min)
+        return williams_r
+
+
+class MomentumAccelerationStrategy(BaseStrategy):
+    """모멘텀 가속도 전략 - 상승 추세에서 모멘텀 가속을 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.acceleration_threshold = params.get('acceleration_threshold', 0.02)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """모멘텀 가속도 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        df['momentum_acceleration'] = df['momentum'] - df['momentum_ma']
+        
+        # 거래량 증가율
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 모멘텀 가속 + 거래량 증가 + RSI 강세
+        buy_condition = (
+            (df['momentum_acceleration'] > self.acceleration_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].rolling(window=20).mean())
+        )
+        
+        # 매도 신호: 모멘텀 감속 또는 RSI 과매수
+        sell_condition = (
+            (df['momentum_acceleration'] < -self.acceleration_threshold) |
+            (df['rsi'] > 80) |
+            (df['close'] < df['close'].rolling(window=20).mean())
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolumeBreakoutStrategy(BaseStrategy):
+    """거래량 브레이크아웃 전략 - 상승 추세에서 거래량 증가와 함께하는 브레이크아웃 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volume_period = params.get('volume_period', 20)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_period = params.get('price_period', 20)
+        self.price_threshold = params.get('price_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """거래량 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 거래량 분석
+        df['volume_ma'] = df['volume'].rolling(window=self.volume_period).mean()
+        df['volume_ratio'] = df['volume'] / df['volume_ma']
+        
+        # 가격 분석
+        df['price_ma'] = df['close'].rolling(window=self.price_period).mean()
+        df['price_breakout'] = df['close'] > df['price_ma'] * (1 + self.price_threshold)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 거래량 급증 + 가격 브레이크아웃 + RSI 강세
+        buy_condition = (
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_breakout']) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].shift(1))
+        )
+        
+        # 매도 신호: 거래량 감소 또는 가격 하락
+        sell_condition = (
+            (df['volume_ratio'] < 0.5) |
+            (df['close'] < df['price_ma']) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class TrendStrengthStrategy(BaseStrategy):
+    """추세 강도 기반 전략 - 상승 추세의 강도를 측정하여 진입"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.short_period = params.get('short_period', 10)
+        self.long_period = params.get('long_period', 50)
+        self.adx_period = params.get('adx_period', 14)
+        self.adx_threshold = params.get('adx_threshold', 25)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """추세 강도 신호 생성"""
+        df = df.copy()
+        
+        # 이동평균 계산
+        df['sma_short'] = df['close'].rolling(window=self.short_period).mean()
+        df['sma_long'] = df['close'].rolling(window=self.long_period).mean()
+        
+        # ADX 계산 (추세 강도)
+        df['adx'] = self._calculate_adx(df, self.adx_period)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 강한 상승 추세 + RSI 강세
+        buy_condition = (
+            (df['sma_short'] > df['sma_long']) &
+            (df['adx'] > self.adx_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['sma_short'])
+        )
+        
+        # 매도 신호: 추세 약화 또는 RSI 과매수
+        sell_condition = (
+            (df['sma_short'] < df['sma_long']) |
+            (df['adx'] < self.adx_threshold) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_adx(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ADX 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        # True Range 계산
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        # Directional Movement
+        dm_plus = high - high.shift(1)
+        dm_minus = low.shift(1) - low
+        dm_plus = dm_plus.where(dm_plus > dm_minus, 0)
+        dm_minus = dm_minus.where(dm_minus > dm_plus, 0)
+        
+        # Smoothed values
+        tr_smooth = tr.rolling(window=period).mean()
+        dm_plus_smooth = dm_plus.rolling(window=period).mean()
+        dm_minus_smooth = dm_minus.rolling(window=period).mean()
+        
+        # DI 계산
+        di_plus = 100 * dm_plus_smooth / tr_smooth
+        di_minus = 100 * dm_minus_smooth / tr_smooth
+        
+        # DX 계산
+        dx = 100 * abs(di_plus - di_minus) / (di_plus + di_minus)
+        
+        # ADX 계산
+        adx = dx.rolling(window=period).mean()
+        
+        return adx
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class DefensiveHedgingStrategy(BaseStrategy):
+    """방어적 헤징 전략 - 하락 추세에서 손실 최소화"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.hedge_ratio = params.get('hedge_ratio', 0.3)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """방어적 헤징 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 헤징 신호: 높은 변동성 + 하락 추세 + RSI 과매도
+        hedge_condition = (
+            (df['volatility'] > self.volatility_threshold) &
+            (df['sma_20'] < df['sma_50']) &
+            (df['rsi'] < self.rsi_oversold) &
+            (df['close'] < df['sma_20'])
+        )
+        
+        # 헤징 해제: 변동성 감소 또는 반등 신호
+        unhedge_condition = (
+            (df['volatility'] < self.volatility_threshold * 0.5) |
+            (df['rsi'] > 50) |
+            (df['close'] > df['sma_20'])
+        )
+        
+        df.loc[hedge_condition, 'signal'] = -1  # 헤징 포지션
+        df.loc[unhedge_condition, 'signal'] = 1  # 헤징 해제
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class ShortMomentumStrategy(BaseStrategy):
+    """숏 모멘텀 전략 - 하락 추세에서 숏 포지션"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.momentum_threshold = params.get('momentum_threshold', -0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 70)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """숏 모멘텀 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 숏 신호: 하락 모멘텀 + RSI 과매수 + 거래량 증가
+        short_condition = (
+            (df['momentum'] < self.momentum_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['sma_20'] < df['sma_50'])
+        )
+        
+        # 숏 해제: 반등 신호 또는 RSI 과매도
+        cover_condition = (
+            (df['momentum'] > 0) |
+            (df['rsi'] < 30) |
+            (df['close'] > df['sma_20'])
+        )
+        
+        df.loc[short_condition, 'signal'] = -1  # 숏 포지션
+        df.loc[cover_condition, 'signal'] = 1   # 숏 해제
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class SafeHavenRotationStrategy(BaseStrategy):
+    """안전자산 순환 전략 - 하락 시 안전자산으로 순환"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 30)
+        self.rotation_threshold = params.get('rotation_threshold', -0.05)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """안전자산 순환 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 누적 수익률
+        df['cumulative_return'] = (1 + df['returns']).cumprod() - 1
+        df['rolling_return'] = df['cumulative_return'] - df['cumulative_return'].shift(20)
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 안전자산 순환 신호: 높은 변동성 + 하락 + RSI 과매도
+        safe_haven_condition = (
+            (df['volatility'] > self.volatility_threshold) &
+            (df['rolling_return'] < self.rotation_threshold) &
+            (df['rsi'] < self.rsi_threshold) &
+            (df['sma_20'] < df['sma_50'])
+        )
+        
+        # 리스크 자산 복귀: 변동성 감소 + 반등 신호
+        risk_return_condition = (
+            (df['volatility'] < self.volatility_threshold * 0.5) &
+            (df['rsi'] > 50) &
+            (df['rolling_return'] > 0)
+        )
+        
+        df.loc[safe_haven_condition, 'signal'] = -1  # 안전자산 순환
+        df.loc[risk_return_condition, 'signal'] = 1  # 리스크 자산 복귀
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolatilityExpansionStrategy(BaseStrategy):
+    """변동성 확장 전략 - 변동성 높은 시장에서 변동성 확장 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.expansion_threshold = params.get('expansion_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.atr_period = params.get('atr_period', 14)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """변동성 확장 신호 생성"""
+        df = df.copy()
+        
+        # ATR 계산
+        df['atr'] = self._calculate_atr(df, self.atr_period)
+        df['atr_ma'] = df['atr'].rolling(window=self.volatility_period).mean()
+        df['volatility_expansion'] = df['atr'] / df['atr_ma']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 볼린저 밴드
+        df['bb_middle'] = df['close'].rolling(window=20).mean()
+        df['bb_std'] = df['close'].rolling(window=20).std()
+        df['bb_upper'] = df['bb_middle'] + (df['bb_std'] * 2)
+        df['bb_lower'] = df['bb_middle'] - (df['bb_std'] * 2)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 변동성 확장 신호: ATR 확장 + 볼린저 밴드 터치
+        expansion_condition = (
+            (df['volatility_expansion'] > self.expansion_threshold) &
+            ((df['close'] > df['bb_upper']) | (df['close'] < df['bb_lower'])) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 변동성 수축 신호: ATR 수축
+        contraction_condition = (
+            (df['volatility_expansion'] < 0.5) &
+            (df['close'].between(df['bb_lower'], df['bb_upper']))
+        )
+        
+        df.loc[expansion_condition, 'signal'] = 1   # 변동성 확장 포착
+        df.loc[contraction_condition, 'signal'] = -1  # 변동성 수축
+        
+        return df
+    
+    def _calculate_atr(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ATR 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        atr = tr.rolling(window=period).mean()
+        return atr
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class GapTradingStrategy(BaseStrategy):
+    """갭 트레이딩 전략 - 변동성 높은 시장에서 갭 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.gap_threshold = params.get('gap_threshold', 0.02)
+        self.fill_threshold = params.get('fill_threshold', 0.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """갭 트레이딩 신호 생성"""
+        df = df.copy()
+        
+        # 갭 계산
+        df['gap_up'] = (df['open'] - df['close'].shift(1)) / df['close'].shift(1)
+        df['gap_down'] = (df['close'].shift(1) - df['open']) / df['close'].shift(1)
+        
+        # 갭 채우기 계산
+        df['gap_fill_up'] = (df['low'] - df['close'].shift(1)) / df['close'].shift(1)
+        df['gap_fill_down'] = (df['close'].shift(1) - df['high']) / df['close'].shift(1)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 갭 업 신호: 상승 갭 + 거래량 증가
+        gap_up_condition = (
+            (df['gap_up'] > self.gap_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 갭 다운 신호: 하락 갭 + 거래량 증가
+        gap_down_condition = (
+            (df['gap_down'] > self.gap_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] < self.rsi_threshold)
+        )
+        
+        # 갭 채우기 신호
+        gap_fill_condition = (
+            (df['gap_fill_up'] > self.fill_threshold) |
+            (df['gap_fill_down'] > self.fill_threshold)
+        )
+        
+        df.loc[gap_up_condition, 'signal'] = 1      # 갭 업 포착
+        df.loc[gap_down_condition, 'signal'] = -1   # 갭 다운 포착
+        df.loc[gap_fill_condition, 'signal'] = 0    # 갭 채우기
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class NewsEventStrategy(BaseStrategy):
+    """뉴스 이벤트 기반 전략 - 변동성 높은 시장에서 이벤트 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 2.0)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_threshold = params.get('price_threshold', 0.03)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """뉴스 이벤트 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        df['volatility_ratio'] = df['volatility'] / df['volatility'].rolling(window=self.volatility_period).mean()
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 가격 변동
+        df['price_change'] = abs(df['close'].pct_change())
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 이벤트 신호: 높은 변동성 + 거래량 급증 + 큰 가격 변동
+        event_condition = (
+            (df['volatility_ratio'] > self.volatility_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_change'] > self.price_threshold)
+        )
+        
+        # 이벤트 후 정리 신호: 변동성 감소
+        cleanup_condition = (
+            (df['volatility_ratio'] < 0.5) &
+            (df['volume_ratio'] < 1.0)
+        )
+        
+        df.loc[event_condition, 'signal'] = 1    # 이벤트 포착
+        df.loc[cleanup_condition, 'signal'] = -1  # 이벤트 후 정리
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class RangeBreakoutStrategy(BaseStrategy):
+    """범위 브레이크아웃 전략 - 횡보장에서 범위 돌파 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.range_period = params.get('range_period', 20)
+        self.breakout_threshold = params.get('breakout_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """범위 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 범위 계산
+        df['range_high'] = df['high'].rolling(window=self.range_period).max()
+        df['range_low'] = df['low'].rolling(window=self.range_period).min()
+        df['range_mid'] = (df['range_high'] + df['range_low']) / 2
+        
+        # 브레이크아웃 계산
+        df['breakout_up'] = (df['close'] - df['range_high']) / df['range_high']
+        df['breakout_down'] = (df['range_low'] - df['close']) / df['range_low']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 상향 브레이크아웃: 상단 돌파 + 거래량 증가
+        breakout_up_condition = (
+            (df['breakout_up'] > self.breakout_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 하향 브레이크아웃: 하단 돌파 + 거래량 증가
+        breakout_down_condition = (
+            (df['breakout_down'] > self.breakout_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] < self.rsi_threshold)
+        )
+        
+        # 범위 내 복귀
+        range_return_condition = (
+            (df['close'].between(df['range_low'], df['range_high'])) &
+            (df['volume_ratio'] < 1.0)
+        )
+        
+        df.loc[breakout_up_condition, 'signal'] = 1      # 상향 브레이크아웃
+        df.loc[breakout_down_condition, 'signal'] = -1   # 하향 브레이크아웃
+        df.loc[range_return_condition, 'signal'] = 0     # 범위 내 복귀
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class SupportResistanceStrategy(BaseStrategy):
+    """지지/저항 기반 전략 - 횡보장에서 지지/저항선 활용"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.support_period = params.get('support_period', 20)
+        self.resistance_period = params.get('resistance_period', 20)
+        self.touch_threshold = params.get('touch_threshold', 0.01)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.rsi_overbought = params.get('rsi_overbought', 70)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """지지/저항 신호 생성"""
+        df = df.copy()
+        
+        # 지지/저항선 계산
+        df['support'] = df['low'].rolling(window=self.support_period).min()
+        df['resistance'] = df['high'].rolling(window=self.resistance_period).max()
+        
+        # 지지/저항 터치 계산
+        df['support_touch'] = (df['low'] - df['support']) / df['support']
+        df['resistance_touch'] = (df['resistance'] - df['high']) / df['resistance']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 지지선 반등: 지지선 터치 + RSI 과매도
+        support_bounce_condition = (
+            (abs(df['support_touch']) < self.touch_threshold) &
+            (df['rsi'] < self.rsi_oversold) &
+            (df['close'] > df['low'])
+        )
+        
+        # 저항선 반락: 저항선 터치 + RSI 과매수
+        resistance_rejection_condition = (
+            (abs(df['resistance_touch']) < self.touch_threshold) &
+            (df['rsi'] > self.rsi_overbought) &
+            (df['close'] < df['high'])
+        )
+        
+        df.loc[support_bounce_condition, 'signal'] = 1      # 지지선 반등
+        df.loc[resistance_rejection_condition, 'signal'] = -1  # 저항선 반락
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class OscillatorConvergenceStrategy(BaseStrategy):
+    """오실레이터 수렴 전략 - 횡보장에서 여러 오실레이터의 수렴 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.stoch_period = params.get('stoch_period', 14)
+        self.williams_period = params.get('williams_period', 14)
+        self.convergence_threshold = params.get('convergence_threshold', 10)
+        self.volume_threshold = params.get('volume_threshold', 1.2)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """오실레이터 수렴 신호 생성"""
+        df = df.copy()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 스토캐스틱 계산
+        df['stoch_k'] = self._calculate_stochastic(df, self.stoch_period)
+        df['stoch_d'] = df['stoch_k'].rolling(window=3).mean()
+        
+        # 윌리엄스 %R 계산
+        df['williams_r'] = self._calculate_williams_r(df, self.williams_period)
+        
+        # 오실레이터 수렴 계산
+        df['oscillator_avg'] = (df['rsi'] + df['stoch_k'] + (100 + df['williams_r'])) / 3
+        df['oscillator_std'] = df[['rsi', 'stoch_k', 'williams_r']].std(axis=1)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 수렴 신호: 오실레이터 수렴 + 거래량 증가
+        convergence_condition = (
+            (df['oscillator_std'] < self.convergence_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['oscillator_avg'].between(30, 70))
+        )
+        
+        # 발산 신호: 오실레이터 발산
+        divergence_condition = (
+            (df['oscillator_std'] > self.convergence_threshold * 2) &
+            (df['volume_ratio'] < 0.8)
+        )
+        
+        df.loc[convergence_condition, 'signal'] = 1    # 수렴 신호
+        df.loc[divergence_condition, 'signal'] = -1    # 발산 신호
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+    
+    def _calculate_stochastic(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """스토캐스틱 %K 계산"""
+        low_min = df['low'].rolling(window=period).min()
+        high_max = df['high'].rolling(window=period).max()
+        stoch_k = 100 * (df['close'] - low_min) / (high_max - low_min)
+        return stoch_k
+    
+    def _calculate_williams_r(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """윌리엄스 %R 계산"""
+        low_min = df['low'].rolling(window=period).min()
+        high_max = df['high'].rolling(window=period).max()
+        williams_r = -100 * (high_max - df['close']) / (high_max - low_min)
+        return williams_r
+
+
+class MomentumAccelerationStrategy(BaseStrategy):
+    """모멘텀 가속도 전략 - 상승 추세에서 모멘텀 가속을 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.acceleration_threshold = params.get('acceleration_threshold', 0.02)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """모멘텀 가속도 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        df['momentum_acceleration'] = df['momentum'] - df['momentum_ma']
+        
+        # 거래량 증가율
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 모멘텀 가속 + 거래량 증가 + RSI 강세
+        buy_condition = (
+            (df['momentum_acceleration'] > self.acceleration_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].rolling(window=20).mean())
+        )
+        
+        # 매도 신호: 모멘텀 감속 또는 RSI 과매수
+        sell_condition = (
+            (df['momentum_acceleration'] < -self.acceleration_threshold) |
+            (df['rsi'] > 80) |
+            (df['close'] < df['close'].rolling(window=20).mean())
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolumeBreakoutStrategy(BaseStrategy):
+    """거래량 브레이크아웃 전략 - 상승 추세에서 거래량 증가와 함께하는 브레이크아웃 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volume_period = params.get('volume_period', 20)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_period = params.get('price_period', 20)
+        self.price_threshold = params.get('price_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """거래량 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 거래량 분석
+        df['volume_ma'] = df['volume'].rolling(window=self.volume_period).mean()
+        df['volume_ratio'] = df['volume'] / df['volume_ma']
+        
+        # 가격 분석
+        df['price_ma'] = df['close'].rolling(window=self.price_period).mean()
+        df['price_breakout'] = df['close'] > df['price_ma'] * (1 + self.price_threshold)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 거래량 급증 + 가격 브레이크아웃 + RSI 강세
+        buy_condition = (
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_breakout']) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].shift(1))
+        )
+        
+        # 매도 신호: 거래량 감소 또는 가격 하락
+        sell_condition = (
+            (df['volume_ratio'] < 0.5) |
+            (df['close'] < df['price_ma']) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class TrendStrengthStrategy(BaseStrategy):
+    """추세 강도 기반 전략 - 상승 추세의 강도를 측정하여 진입"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.short_period = params.get('short_period', 10)
+        self.long_period = params.get('long_period', 50)
+        self.adx_period = params.get('adx_period', 14)
+        self.adx_threshold = params.get('adx_threshold', 25)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """추세 강도 신호 생성"""
+        df = df.copy()
+        
+        # 이동평균 계산
+        df['sma_short'] = df['close'].rolling(window=self.short_period).mean()
+        df['sma_long'] = df['close'].rolling(window=self.long_period).mean()
+        
+        # ADX 계산 (추세 강도)
+        df['adx'] = self._calculate_adx(df, self.adx_period)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 강한 상승 추세 + RSI 강세
+        buy_condition = (
+            (df['sma_short'] > df['sma_long']) &
+            (df['adx'] > self.adx_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['sma_short'])
+        )
+        
+        # 매도 신호: 추세 약화 또는 RSI 과매수
+        sell_condition = (
+            (df['sma_short'] < df['sma_long']) |
+            (df['adx'] < self.adx_threshold) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_adx(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ADX 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        # True Range 계산
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        # Directional Movement
+        dm_plus = high - high.shift(1)
+        dm_minus = low.shift(1) - low
+        dm_plus = dm_plus.where(dm_plus > dm_minus, 0)
+        dm_minus = dm_minus.where(dm_minus > dm_plus, 0)
+        
+        # Smoothed values
+        tr_smooth = tr.rolling(window=period).mean()
+        dm_plus_smooth = dm_plus.rolling(window=period).mean()
+        dm_minus_smooth = dm_minus.rolling(window=period).mean()
+        
+        # DI 계산
+        di_plus = 100 * dm_plus_smooth / tr_smooth
+        di_minus = 100 * dm_minus_smooth / tr_smooth
+        
+        # DX 계산
+        dx = 100 * abs(di_plus - di_minus) / (di_plus + di_minus)
+        
+        # ADX 계산
+        adx = dx.rolling(window=period).mean()
+        
+        return adx
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class DefensiveHedgingStrategy(BaseStrategy):
+    """방어적 헤징 전략 - 하락 추세에서 손실 최소화"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.hedge_ratio = params.get('hedge_ratio', 0.3)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """방어적 헤징 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 헤징 신호: 높은 변동성 + 하락 추세 + RSI 과매도
+        hedge_condition = (
+            (df['volatility'] > self.volatility_threshold) &
+            (df['sma_20'] < df['sma_50']) &
+            (df['rsi'] < self.rsi_oversold) &
+            (df['close'] < df['sma_20'])
+        )
+        
+        # 헤징 해제: 변동성 감소 또는 반등 신호
+        unhedge_condition = (
+            (df['volatility'] < self.volatility_threshold * 0.5) |
+            (df['rsi'] > 50) |
+            (df['close'] > df['sma_20'])
+        )
+        
+        df.loc[hedge_condition, 'signal'] = -1  # 헤징 포지션
+        df.loc[unhedge_condition, 'signal'] = 1  # 헤징 해제
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class ShortMomentumStrategy(BaseStrategy):
+    """숏 모멘텀 전략 - 하락 추세에서 숏 포지션"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.momentum_threshold = params.get('momentum_threshold', -0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 70)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """숏 모멘텀 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 숏 신호: 하락 모멘텀 + RSI 과매수 + 거래량 증가
+        short_condition = (
+            (df['momentum'] < self.momentum_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['sma_20'] < df['sma_50'])
+        )
+        
+        # 숏 해제: 반등 신호 또는 RSI 과매도
+        cover_condition = (
+            (df['momentum'] > 0) |
+            (df['rsi'] < 30) |
+            (df['close'] > df['sma_20'])
+        )
+        
+        df.loc[short_condition, 'signal'] = -1  # 숏 포지션
+        df.loc[cover_condition, 'signal'] = 1   # 숏 해제
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class SafeHavenRotationStrategy(BaseStrategy):
+    """안전자산 순환 전략 - 하락 시 안전자산으로 순환"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 30)
+        self.rotation_threshold = params.get('rotation_threshold', -0.05)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """안전자산 순환 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 누적 수익률
+        df['cumulative_return'] = (1 + df['returns']).cumprod() - 1
+        df['rolling_return'] = df['cumulative_return'] - df['cumulative_return'].shift(20)
+        
+        # 이동평균
+        df['sma_20'] = df['close'].rolling(window=20).mean()
+        df['sma_50'] = df['close'].rolling(window=50).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 안전자산 순환 신호: 높은 변동성 + 하락 + RSI 과매도
+        safe_haven_condition = (
+            (df['volatility'] > self.volatility_threshold) &
+            (df['rolling_return'] < self.rotation_threshold) &
+            (df['rsi'] < self.rsi_threshold) &
+            (df['sma_20'] < df['sma_50'])
+        )
+        
+        # 리스크 자산 복귀: 변동성 감소 + 반등 신호
+        risk_return_condition = (
+            (df['volatility'] < self.volatility_threshold * 0.5) &
+            (df['rsi'] > 50) &
+            (df['rolling_return'] > 0)
+        )
+        
+        df.loc[safe_haven_condition, 'signal'] = -1  # 안전자산 순환
+        df.loc[risk_return_condition, 'signal'] = 1  # 리스크 자산 복귀
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolatilityExpansionStrategy(BaseStrategy):
+    """변동성 확장 전략 - 변동성 높은 시장에서 변동성 확장 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.expansion_threshold = params.get('expansion_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.atr_period = params.get('atr_period', 14)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """변동성 확장 신호 생성"""
+        df = df.copy()
+        
+        # ATR 계산
+        df['atr'] = self._calculate_atr(df, self.atr_period)
+        df['atr_ma'] = df['atr'].rolling(window=self.volatility_period).mean()
+        df['volatility_expansion'] = df['atr'] / df['atr_ma']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 볼린저 밴드
+        df['bb_middle'] = df['close'].rolling(window=20).mean()
+        df['bb_std'] = df['close'].rolling(window=20).std()
+        df['bb_upper'] = df['bb_middle'] + (df['bb_std'] * 2)
+        df['bb_lower'] = df['bb_middle'] - (df['bb_std'] * 2)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 변동성 확장 신호: ATR 확장 + 볼린저 밴드 터치
+        expansion_condition = (
+            (df['volatility_expansion'] > self.expansion_threshold) &
+            ((df['close'] > df['bb_upper']) | (df['close'] < df['bb_lower'])) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 변동성 수축 신호: ATR 수축
+        contraction_condition = (
+            (df['volatility_expansion'] < 0.5) &
+            (df['close'].between(df['bb_lower'], df['bb_upper']))
+        )
+        
+        df.loc[expansion_condition, 'signal'] = 1   # 변동성 확장 포착
+        df.loc[contraction_condition, 'signal'] = -1  # 변동성 수축
+        
+        return df
+    
+    def _calculate_atr(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ATR 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        atr = tr.rolling(window=period).mean()
+        return atr
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class GapTradingStrategy(BaseStrategy):
+    """갭 트레이딩 전략 - 변동성 높은 시장에서 갭 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.gap_threshold = params.get('gap_threshold', 0.02)
+        self.fill_threshold = params.get('fill_threshold', 0.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """갭 트레이딩 신호 생성"""
+        df = df.copy()
+        
+        # 갭 계산
+        df['gap_up'] = (df['open'] - df['close'].shift(1)) / df['close'].shift(1)
+        df['gap_down'] = (df['close'].shift(1) - df['open']) / df['close'].shift(1)
+        
+        # 갭 채우기 계산
+        df['gap_fill_up'] = (df['low'] - df['close'].shift(1)) / df['close'].shift(1)
+        df['gap_fill_down'] = (df['close'].shift(1) - df['high']) / df['close'].shift(1)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 갭 업 신호: 상승 갭 + 거래량 증가
+        gap_up_condition = (
+            (df['gap_up'] > self.gap_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 갭 다운 신호: 하락 갭 + 거래량 증가
+        gap_down_condition = (
+            (df['gap_down'] > self.gap_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] < self.rsi_threshold)
+        )
+        
+        # 갭 채우기 신호
+        gap_fill_condition = (
+            (df['gap_fill_up'] > self.fill_threshold) |
+            (df['gap_fill_down'] > self.fill_threshold)
+        )
+        
+        df.loc[gap_up_condition, 'signal'] = 1      # 갭 업 포착
+        df.loc[gap_down_condition, 'signal'] = -1   # 갭 다운 포착
+        df.loc[gap_fill_condition, 'signal'] = 0    # 갭 채우기
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class NewsEventStrategy(BaseStrategy):
+    """뉴스 이벤트 기반 전략 - 변동성 높은 시장에서 이벤트 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 2.0)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_threshold = params.get('price_threshold', 0.03)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """뉴스 이벤트 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        df['volatility_ratio'] = df['volatility'] / df['volatility'].rolling(window=self.volatility_period).mean()
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 가격 변동
+        df['price_change'] = abs(df['close'].pct_change())
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 이벤트 신호: 높은 변동성 + 거래량 급증 + 큰 가격 변동
+        event_condition = (
+            (df['volatility_ratio'] > self.volatility_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_change'] > self.price_threshold)
+        )
+        
+        # 이벤트 후 정리 신호: 변동성 감소
+        cleanup_condition = (
+            (df['volatility_ratio'] < 0.5) &
+            (df['volume_ratio'] < 1.0)
+        )
+        
+        df.loc[event_condition, 'signal'] = 1    # 이벤트 포착
+        df.loc[cleanup_condition, 'signal'] = -1  # 이벤트 후 정리
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class RangeBreakoutStrategy(BaseStrategy):
+    """범위 브레이크아웃 전략 - 횡보장에서 범위 돌파 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.range_period = params.get('range_period', 20)
+        self.breakout_threshold = params.get('breakout_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """범위 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 범위 계산
+        df['range_high'] = df['high'].rolling(window=self.range_period).max()
+        df['range_low'] = df['low'].rolling(window=self.range_period).min()
+        df['range_mid'] = (df['range_high'] + df['range_low']) / 2
+        
+        # 브레이크아웃 계산
+        df['breakout_up'] = (df['close'] - df['range_high']) / df['range_high']
+        df['breakout_down'] = (df['range_low'] - df['close']) / df['range_low']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 상향 브레이크아웃: 상단 돌파 + 거래량 증가
+        breakout_up_condition = (
+            (df['breakout_up'] > self.breakout_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold)
+        )
+        
+        # 하향 브레이크아웃: 하단 돌파 + 거래량 증가
+        breakout_down_condition = (
+            (df['breakout_down'] > self.breakout_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] < self.rsi_threshold)
+        )
+        
+        # 범위 내 복귀
+        range_return_condition = (
+            (df['close'].between(df['range_low'], df['range_high'])) &
+            (df['volume_ratio'] < 1.0)
+        )
+        
+        df.loc[breakout_up_condition, 'signal'] = 1      # 상향 브레이크아웃
+        df.loc[breakout_down_condition, 'signal'] = -1   # 하향 브레이크아웃
+        df.loc[range_return_condition, 'signal'] = 0     # 범위 내 복귀
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class SupportResistanceStrategy(BaseStrategy):
+    """지지/저항 기반 전략 - 횡보장에서 지지/저항선 활용"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.support_period = params.get('support_period', 20)
+        self.resistance_period = params.get('resistance_period', 20)
+        self.touch_threshold = params.get('touch_threshold', 0.01)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.rsi_overbought = params.get('rsi_overbought', 70)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """지지/저항 신호 생성"""
+        df = df.copy()
+        
+        # 지지/저항선 계산
+        df['support'] = df['low'].rolling(window=self.support_period).min()
+        df['resistance'] = df['high'].rolling(window=self.resistance_period).max()
+        
+        # 지지/저항 터치 계산
+        df['support_touch'] = (df['low'] - df['support']) / df['support']
+        df['resistance_touch'] = (df['resistance'] - df['high']) / df['resistance']
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 지지선 반등: 지지선 터치 + RSI 과매도
+        support_bounce_condition = (
+            (abs(df['support_touch']) < self.touch_threshold) &
+            (df['rsi'] < self.rsi_oversold) &
+            (df['close'] > df['low'])
+        )
+        
+        # 저항선 반락: 저항선 터치 + RSI 과매수
+        resistance_rejection_condition = (
+            (abs(df['resistance_touch']) < self.touch_threshold) &
+            (df['rsi'] > self.rsi_overbought) &
+            (df['close'] < df['high'])
+        )
+        
+        df.loc[support_bounce_condition, 'signal'] = 1      # 지지선 반등
+        df.loc[resistance_rejection_condition, 'signal'] = -1  # 저항선 반락
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class OscillatorConvergenceStrategy(BaseStrategy):
+    """오실레이터 수렴 전략 - 횡보장에서 여러 오실레이터의 수렴 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.stoch_period = params.get('stoch_period', 14)
+        self.williams_period = params.get('williams_period', 14)
+        self.convergence_threshold = params.get('convergence_threshold', 10)
+        self.volume_threshold = params.get('volume_threshold', 1.2)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """오실레이터 수렴 신호 생성"""
+        df = df.copy()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 스토캐스틱 계산
+        df['stoch_k'] = self._calculate_stochastic(df, self.stoch_period)
+        df['stoch_d'] = df['stoch_k'].rolling(window=3).mean()
+        
+        # 윌리엄스 %R 계산
+        df['williams_r'] = self._calculate_williams_r(df, self.williams_period)
+        
+        # 오실레이터 수렴 계산
+        df['oscillator_avg'] = (df['rsi'] + df['stoch_k'] + (100 + df['williams_r'])) / 3
+        df['oscillator_std'] = df[['rsi', 'stoch_k', 'williams_r']].std(axis=1)
+        
+        # 거래량 분석
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 수렴 신호: 오실레이터 수렴 + 거래량 증가
+        convergence_condition = (
+            (df['oscillator_std'] < self.convergence_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['oscillator_avg'].between(30, 70))
+        )
+        
+        # 발산 신호: 오실레이터 발산
+        divergence_condition = (
+            (df['oscillator_std'] > self.convergence_threshold * 2) &
+            (df['volume_ratio'] < 0.8)
+        )
+        
+        df.loc[convergence_condition, 'signal'] = 1    # 수렴 신호
+        df.loc[divergence_condition, 'signal'] = -1    # 발산 신호
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+    
+    def _calculate_stochastic(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """스토캐스틱 %K 계산"""
+        low_min = df['low'].rolling(window=period).min()
+        high_max = df['high'].rolling(window=period).max()
+        stoch_k = 100 * (df['close'] - low_min) / (high_max - low_min)
+        return stoch_k
+    
+    def _calculate_williams_r(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """윌리엄스 %R 계산"""
+        low_min = df['low'].rolling(window=period).min()
+        high_max = df['high'].rolling(window=period).max()
+        williams_r = -100 * (high_max - df['close']) / (high_max - low_min)
+        return williams_r
+
+
+class MomentumAccelerationStrategy(BaseStrategy):
+    """모멘텀 가속도 전략 - 상승 추세에서 모멘텀 가속을 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.get('momentum_period', 10)
+        self.acceleration_threshold = params.get('acceleration_threshold', 0.02)
+        self.volume_threshold = params.get('volume_threshold', 1.5)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """모멘텀 가속도 신호 생성"""
+        df = df.copy()
+        
+        # 모멘텀 계산
+        df['momentum'] = df['close'].pct_change(self.momentum_period)
+        df['momentum_ma'] = df['momentum'].rolling(window=self.momentum_period).mean()
+        df['momentum_acceleration'] = df['momentum'] - df['momentum_ma']
+        
+        # 거래량 증가율
+        df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 모멘텀 가속 + 거래량 증가 + RSI 강세
+        buy_condition = (
+            (df['momentum_acceleration'] > self.acceleration_threshold) &
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].rolling(window=20).mean())
+        )
+        
+        # 매도 신호: 모멘텀 감속 또는 RSI 과매수
+        sell_condition = (
+            (df['momentum_acceleration'] < -self.acceleration_threshold) |
+            (df['rsi'] > 80) |
+            (df['close'] < df['close'].rolling(window=20).mean())
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class VolumeBreakoutStrategy(BaseStrategy):
+    """거래량 브레이크아웃 전략 - 상승 추세에서 거래량 증가와 함께하는 브레이크아웃 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volume_period = params.get('volume_period', 20)
+        self.volume_threshold = params.get('volume_threshold', 2.0)
+        self.price_period = params.get('price_period', 20)
+        self.price_threshold = params.get('price_threshold', 0.02)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 50)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """거래량 브레이크아웃 신호 생성"""
+        df = df.copy()
+        
+        # 거래량 분석
+        df['volume_ma'] = df['volume'].rolling(window=self.volume_period).mean()
+        df['volume_ratio'] = df['volume'] / df['volume_ma']
+        
+        # 가격 분석
+        df['price_ma'] = df['close'].rolling(window=self.price_period).mean()
+        df['price_breakout'] = df['close'] > df['price_ma'] * (1 + self.price_threshold)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 거래량 급증 + 가격 브레이크아웃 + RSI 강세
+        buy_condition = (
+            (df['volume_ratio'] > self.volume_threshold) &
+            (df['price_breakout']) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['close'].shift(1))
+        )
+        
+        # 매도 신호: 거래량 감소 또는 가격 하락
+        sell_condition = (
+            (df['volume_ratio'] < 0.5) |
+            (df['close'] < df['price_ma']) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class TrendStrengthStrategy(BaseStrategy):
+    """추세 강도 기반 전략 - 상승 추세의 강도를 측정하여 진입"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.short_period = params.get('short_period', 10)
+        self.long_period = params.get('long_period', 50)
+        self.adx_period = params.get('adx_period', 14)
+        self.adx_threshold = params.get('adx_threshold', 25)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_threshold = params.get('rsi_threshold', 60)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """추세 강도 신호 생성"""
+        df = df.copy()
+        
+        # 이동평균 계산
+        df['sma_short'] = df['close'].rolling(window=self.short_period).mean()
+        df['sma_long'] = df['close'].rolling(window=self.long_period).mean()
+        
+        # ADX 계산 (추세 강도)
+        df['adx'] = self._calculate_adx(df, self.adx_period)
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 신호 생성
+        df['signal'] = 0
+        
+        # 매수 신호: 강한 상승 추세 + RSI 강세
+        buy_condition = (
+            (df['sma_short'] > df['sma_long']) &
+            (df['adx'] > self.adx_threshold) &
+            (df['rsi'] > self.rsi_threshold) &
+            (df['close'] > df['sma_short'])
+        )
+        
+        # 매도 신호: 추세 약화 또는 RSI 과매수
+        sell_condition = (
+            (df['sma_short'] < df['sma_long']) |
+            (df['adx'] < self.adx_threshold) |
+            (df['rsi'] > 80)
+        )
+        
+        df.loc[buy_condition, 'signal'] = 1
+        df.loc[sell_condition, 'signal'] = -1
+        
+        return df
+    
+    def _calculate_adx(self, df: pd.DataFrame, period: int) -> pd.Series:
+        """ADX 계산"""
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        # True Range 계산
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        # Directional Movement
+        dm_plus = high - high.shift(1)
+        dm_minus = low.shift(1) - low
+        dm_plus = dm_plus.where(dm_plus > dm_minus, 0)
+        dm_minus = dm_minus.where(dm_minus > dm_plus, 0)
+        
+        # Smoothed values
+        tr_smooth = tr.rolling(window=period).mean()
+        dm_plus_smooth = dm_plus.rolling(window=period).mean()
+        dm_minus_smooth = dm_minus.rolling(window=period).mean()
+        
+        # DI 계산
+        di_plus = 100 * dm_plus_smooth / tr_smooth
+        di_minus = 100 * dm_minus_smooth / tr_smooth
+        
+        # DX 계산
+        dx = 100 * abs(di_plus - di_minus) / (di_plus + di_minus)
+        
+        # ADX 계산
+        adx = dx.rolling(window=period).mean()
+        
+        return adx
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+
+class DefensiveHedgingStrategy(BaseStrategy):
+    """방어적 헤징 전략 - 하락 추세에서 손실 최소화"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get('volatility_period', 20)
+        self.volatility_threshold = params.get('volatility_threshold', 0.03)
+        self.rsi_period = params.get('rsi_period', 14)
+        self.rsi_oversold = params.get('rsi_oversold', 30)
+        self.hedge_ratio = params.get('hedge_ratio', 0.3)
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """방어적 헤징 신호 생성"""
+        df = df.copy()
+        
+        # 변동성 계산
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(window=self.volatility_period).std()
+        
+        # RSI 계산
+        df['rsi'] = self._calculate_rsi(df['close'], self.rsi_period)
+        
+        # 이동평균
+
+class DefensiveHedgingStrategy(BaseStrategy):
+    """방어적 헤징 전략 - 하락 추세에서 손실 최소화"""
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.volatility_period = params.get("volatility_period", 20)
+        self.volatility_threshold = params.get("volatility_threshold", 0.03)
+        self.rsi_period = params.get("rsi_period", 14)
+        self.rsi_oversold = params.get("rsi_oversold", 30)
+        self.hedge_ratio = params.get("hedge_ratio", 0.3)
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """방어적 헤징 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        return df
