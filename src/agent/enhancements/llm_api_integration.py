@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-LLM API 통합 시스템
+LLM API 통합 시스템 (LangChain 기반)
 
-실제 LLM API (Bedrock, OpenAI 등)를 활용한 시장 분석 강화 시스템
+LangChain을 활용한 안정적이고 확장 가능한 시장 분석 강화 시스템
 기존 규칙 기반 시스템과 하이브리드로 동작하여 안정성과 성능을 모두 확보
 """
 
@@ -13,26 +13,26 @@ from typing import Dict, Any, List, Optional, Union
 import logging
 import json
 import time
-import asyncio
+import hashlib
 from dataclasses import dataclass
 import warnings
 
-# LLM API 관련 import
+# LangChain 관련 import
 try:
-    import boto3
-
-    BEDROCK_AVAILABLE = True
-except ImportError:
-    BEDROCK_AVAILABLE = False
-    warnings.warn("boto3 not available. Bedrock API will not be available.")
-
-try:
-    import openai
-
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-    warnings.warn("openai not available. OpenAI API will not be available.")
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.output_parsers import JsonOutputParser
+    from langchain_core.pydantic_v1 import BaseModel, Field
+    from langchain_aws import BedrockChat
+    from langchain_openai import ChatOpenAI
+    from langchain_anthropic import ChatAnthropic
+    from langchain.cache import InMemoryCache
+    from langchain.globals import set_llm_cache
+    from langchain.schema import HumanMessage, SystemMessage
+    
+    LANGCHAIN_AVAILABLE = True
+except ImportError as e:
+    LANGCHAIN_AVAILABLE = False
+    warnings.warn(f"LangChain not available: {e}. Using rule-based system only.")
 
 from .llm_insights import LLMPrivilegedInformationSystem
 
@@ -41,38 +41,71 @@ from .llm_insights import LLMPrivilegedInformationSystem
 class LLMConfig:
     """LLM 설정 클래스"""
 
-    provider: str = "bedrock"  # "bedrock", "openai", "hybrid"
+    provider: str = "bedrock"  # "bedrock", "openai", "anthropic", "hybrid"
     model_name: str = "anthropic.claude-3-sonnet-20240229-v1:0"
     api_key: Optional[str] = None
     region: str = "us-east-1"
-    max_tokens: int = 1000
+    max_tokens: int = 2000
     temperature: float = 0.1
     timeout: int = 30
     retry_attempts: int = 3
     fallback_to_rules: bool = True
 
 
+class MarketAnalysisOutput(BaseModel):
+    """시장 분석 결과를 위한 Pydantic 모델"""
+    
+    comprehensive_analysis: Dict[str, Any] = Field(
+        description="종합적인 시장 분석 결과"
+    )
+    risk_assessment: Dict[str, Any] = Field(
+        description="리스크 평가 결과"
+    )
+    strategic_recommendations: Dict[str, Any] = Field(
+        description="전략적 제언"
+    )
+    scenario_analysis: Dict[str, Any] = Field(
+        description="시나리오 분석"
+    )
+    confidence_modifier: float = Field(
+        description="신뢰도 수정자 (0.5-1.5)",
+        ge=0.5,
+        le=1.5
+    )
+    key_insights: List[str] = Field(
+        description="핵심 인사이트 목록"
+    )
+
+
 class LLMAPIIntegration:
     """
-    LLM API 통합 시스템
+    LLM API 통합 시스템 (LangChain 기반)
 
-    실제 LLM API를 활용하여 시장 분석을 강화하는 시스템
+    LangChain을 활용하여 안정적이고 확장 가능한 시장 분석 강화 시스템
     기존 규칙 기반 시스템과 하이브리드로 동작
     """
 
     def __init__(self, config: LLMConfig = None):
-        self.config = config or LLMConfig()
+        # 딕셔너리로 전달된 설정을 LLMConfig 객체로 변환
+        if isinstance(config, dict):
+            self.config = LLMConfig(**config)
+        else:
+            self.config = config or LLMConfig()
+            
         self.logger = logging.getLogger(__name__)
 
         # 기존 규칙 기반 시스템 (fallback용)
         self.rule_based_system = LLMPrivilegedInformationSystem()
 
-        # LLM API 클라이언트 초기화
-        self.llm_client = self._initialize_llm_client()
+        # LangChain 캐시 설정
+        if LANGCHAIN_AVAILABLE:
+            set_llm_cache(InMemoryCache())
 
-        # 캐시 시스템 (API 호출 최적화)
-        self.response_cache = {}
-        self.cache_ttl = 300  # 5분 캐시
+        # LLM 모델 초기화
+        self.llm_model = self._initialize_llm_model()
+        
+        # 출력 파서 초기화
+        self.output_parser = JsonOutputParser(pydantic_object=MarketAnalysisOutput)
 
         # 성능 모니터링
         self.api_call_stats = {
@@ -82,39 +115,68 @@ class LLMAPIIntegration:
             "avg_response_time": 0.0,
         }
 
-    def _initialize_llm_client(self) -> Optional[Any]:
-        """LLM API 클라이언트 초기화"""
+    def _initialize_llm_model(self) -> Optional[Any]:
+        """LangChain LLM 모델 초기화"""
+        if not LANGCHAIN_AVAILABLE:
+            self.logger.warning("LangChain not available. Using rule-based system only.")
+            return None
+            
         try:
+            self.logger.info(f"Initializing LangChain LLM with provider: {self.config.provider}")
+            self.logger.info(f"Model name: {self.config.model_name}")
+            
             if self.config.provider == "bedrock":
-                if not BEDROCK_AVAILABLE:
-                    self.logger.warning(
-                        "Bedrock not available. Using rule-based system only."
-                    )
-                    return None
-
-                return boto3.client("bedrock-runtime", region_name=self.config.region)
+                self.logger.info(f"Creating Bedrock model for region: {self.config.region}")
+                model = BedrockChat(
+                    model_id=self.config.model_name,
+                    region_name=self.config.region,
+                    model_kwargs={
+                        "max_tokens": self.config.max_tokens,
+                        "temperature": self.config.temperature,
+                    }
+                )
+                self.logger.info("Bedrock model created successfully")
+                return model
 
             elif self.config.provider == "openai":
-                if not OPENAI_AVAILABLE:
-                    self.logger.warning(
-                        "OpenAI not available. Using rule-based system only."
-                    )
-                    return None
-
                 if not self.config.api_key:
-                    self.logger.warning(
-                        "OpenAI API key not provided. Using rule-based system only."
-                    )
+                    self.logger.warning("OpenAI API key not provided. Using rule-based system only.")
                     return None
+                    
+                self.logger.info("Creating OpenAI model")
+                model = ChatOpenAI(
+                    model=self.config.model_name,
+                    openai_api_key=self.config.api_key,
+                    max_tokens=self.config.max_tokens,
+                    temperature=self.config.temperature,
+                    timeout=self.config.timeout,
+                )
+                self.logger.info("OpenAI model created successfully")
+                return model
 
-                return openai.OpenAI(api_key=self.config.api_key)
+            elif self.config.provider == "anthropic":
+                if not self.config.api_key:
+                    self.logger.warning("Anthropic API key not provided. Using rule-based system only.")
+                    return None
+                    
+                self.logger.info("Creating Anthropic model")
+                model = ChatAnthropic(
+                    model=self.config.model_name,
+                    anthropic_api_key=self.config.api_key,
+                    max_tokens=self.config.max_tokens,
+                    temperature=self.config.temperature,
+                )
+                self.logger.info("Anthropic model created successfully")
+                return model
 
             else:
                 self.logger.warning(f"Unknown LLM provider: {self.config.provider}")
                 return None
 
         except Exception as e:
-            self.logger.error(f"LLM client initialization failed: {e}")
+            self.logger.error(f"LangChain LLM initialization failed: {e}")
+            import traceback
+            self.logger.error(f"Full traceback: {traceback.format_exc()}")
             return None
 
     def get_enhanced_insights(
@@ -122,9 +184,16 @@ class LLMAPIIntegration:
         current_regime: str,
         macro_data: Dict[str, pd.DataFrame],
         market_metrics: Dict[str, Any],
+        analysis_results: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """
-        향상된 인사이트 획득 (LLM API + 규칙 기반 하이브리드)
+        향상된 인사이트 획득 (LangChain LLM + 규칙 기반 하이브리드)
+        
+        Args:
+            current_regime: 현재 시장 체제
+            macro_data: 매크로 데이터
+            market_metrics: 시장 메트릭
+            analysis_results: 기존 분석 결과
         """
         try:
             # 1. 규칙 기반 분석 (기본)
@@ -132,11 +201,11 @@ class LLMAPIIntegration:
                 current_regime, macro_data, market_metrics
             )
 
-            # 2. LLM API 호출 (향상된 분석)
-            if self.llm_client and self.config.provider != "rule_only":
+            # 2. LangChain LLM 호출 (향상된 분석)
+            if self.llm_model and self.config.provider != "rule_only":
                 try:
-                    llm_insights = self._call_llm_api(
-                        current_regime, macro_data, market_metrics
+                    llm_insights = self._call_langchain_llm(
+                        current_regime, macro_data, market_metrics, analysis_results
                     )
 
                     # 3. 두 결과 융합
@@ -144,11 +213,11 @@ class LLMAPIIntegration:
                         rule_based_insights, llm_insights
                     )
 
-                    self.logger.info("LLM API 통합 분석 완료")
+                    self.logger.info("LangChain LLM 통합 분석 완료")
                     return enhanced_insights
 
                 except Exception as e:
-                    self.logger.warning(f"LLM API 호출 실패, 규칙 기반 분석 사용: {e}")
+                    self.logger.warning(f"LangChain LLM 호출 실패, 규칙 기반 분석 사용: {e}")
                     self.api_call_stats["failed_calls"] += 1
 
             # LLM API 실패 시 규칙 기반만 사용
@@ -160,125 +229,78 @@ class LLMAPIIntegration:
                 current_regime, macro_data, market_metrics
             )
 
-    def _call_llm_api(
+    def _call_langchain_llm(
         self,
         current_regime: str,
         macro_data: Dict[str, pd.DataFrame],
         market_metrics: Dict[str, Any],
+        analysis_results: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """LLM API 호출"""
+        """LangChain LLM 호출"""
         start_time = time.time()
 
-        # 캐시 키 생성
-        cache_key = self._generate_cache_key(current_regime, macro_data, market_metrics)
+        try:
+            # 프롬프트 생성
+            prompt = self._create_langchain_prompt(
+                current_regime, macro_data, market_metrics, analysis_results
+            )
+            
+            self.logger.info(f"Calling LangChain LLM with prompt length: {len(prompt)} characters")
+            
+            # LangChain 체인 실행
+            chain = prompt | self.llm_model | self.output_parser
+            
+            # API 호출 (재시도 로직 포함)
+            response = None
+            for attempt in range(self.config.retry_attempts):
+                try:
+                    response = chain.invoke({})
+                    if response:
+                        break
+                except Exception as e:
+                    self.logger.warning(f"LangChain LLM call attempt {attempt + 1} failed: {e}")
+                    if attempt < self.config.retry_attempts - 1:
+                        time.sleep(2**attempt)  # 지수 백오프
 
-        # 캐시 확인
-        if cache_key in self.response_cache:
-            cached_response = self.response_cache[cache_key]
-            if time.time() - cached_response["timestamp"] < self.cache_ttl:
-                self.logger.info("Using cached LLM response")
-                return cached_response["data"]
-
-        # 프롬프트 생성
-        prompt = self._create_llm_prompt(current_regime, macro_data, market_metrics)
-
-        # API 호출
-        response = None
-        for attempt in range(self.config.retry_attempts):
-            try:
-                if self.config.provider == "bedrock":
-                    response = self._call_bedrock_api(prompt)
-                elif self.config.provider == "openai":
-                    response = self._call_openai_api(prompt)
-
-                if response:
-                    break
-
-            except Exception as e:
-                self.logger.warning(f"LLM API call attempt {attempt + 1} failed: {e}")
-                if attempt < self.config.retry_attempts - 1:
-                    time.sleep(2**attempt)  # 지수 백오프
-
-        # 응답 처리
-        if response:
-            try:
-                parsed_response = self._parse_llm_response(response)
-
-                # 캐시 저장
-                self.response_cache[cache_key] = {
-                    "data": parsed_response,
-                    "timestamp": time.time(),
-                }
-
+            # 응답 처리
+            if response:
                 # 통계 업데이트
                 response_time = time.time() - start_time
                 self.api_call_stats["successful_calls"] += 1
                 self.api_call_stats["total_calls"] += 1
                 self._update_avg_response_time(response_time)
 
-                return parsed_response
+                self.logger.info("LangChain LLM response received successfully")
+                return response
 
-            except Exception as e:
-                self.logger.error(f"LLM response parsing failed: {e}")
-
-        # API 호출 실패
-        self.api_call_stats["failed_calls"] += 1
-        self.api_call_stats["total_calls"] += 1
-        raise Exception("LLM API call failed")
-
-    def _call_bedrock_api(self, prompt: str) -> Optional[str]:
-        """Bedrock API 호출"""
-        try:
-            response = self.llm_client.invoke_model(
-                modelId=self.config.model_name,
-                body=json.dumps(
-                    {
-                        "prompt": prompt,
-                        "max_tokens": self.config.max_tokens,
-                        "temperature": self.config.temperature,
-                    }
-                ),
-            )
-
-            result = json.loads(response["body"].read())
-            return result.get("completion", "")
+            # API 호출 실패
+            self.api_call_stats["failed_calls"] += 1
+            self.api_call_stats["total_calls"] += 1
+            raise Exception("LangChain LLM call failed")
 
         except Exception as e:
-            self.logger.error(f"Bedrock API call failed: {e}")
-            return None
+            self.logger.error(f"LangChain LLM call failed: {e}")
+            import traceback
+            self.logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
 
-    def _call_openai_api(self, prompt: str) -> Optional[str]:
-        """OpenAI API 호출"""
-        try:
-            response = self.llm_client.chat.completions.create(
-                model=self.config.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=self.config.max_tokens,
-                temperature=self.config.temperature,
-            )
-
-            return response.choices[0].message.content
-
-        except Exception as e:
-            self.logger.error(f"OpenAI API call failed: {e}")
-            return None
-
-    def _create_llm_prompt(
+    def _create_langchain_prompt(
         self,
         current_regime: str,
         macro_data: Dict[str, pd.DataFrame],
         market_metrics: Dict[str, Any],
-    ) -> str:
-        """LLM 프롬프트 생성"""
-
-        # 매크로 데이터 요약
+        analysis_results: Dict[str, Any] = None,
+    ) -> ChatPromptTemplate:
+        """LangChain 프롬프트 템플릿 생성"""
+        
+        # 시장 요약 생성
         market_summary = self._create_market_summary(macro_data)
-
-        # 시장 메트릭 요약
         metrics_summary = self._create_metrics_summary(market_metrics)
+        analysis_summary = self._create_analysis_summary(analysis_results) if analysis_results else "기존 분석 결과 없음"
 
-        prompt = f"""
-당신은 금융 시장 분석 전문가입니다. 현재 시장 상황을 분석하고 투자 전략을 제시해주세요.
+        # LangChain 프롬프트 템플릿
+        template = f"""
+당신은 금융 시장 분석 전문가입니다. 제공된 종합적인 시장 분석 결과를 바탕으로 다면적이고 심층적인 해석을 제공해주세요.
 
 ## 현재 시장 상황
 - 감지된 시장 체제: {current_regime}
@@ -290,77 +312,160 @@ class LLMAPIIntegration:
 ## 시장 메트릭
 {metrics_summary}
 
-## 분석 요청사항
-다음 질문들에 답변해주세요:
+## 기존 분석 결과
+{analysis_summary}
 
-1. **Regime 일관성**: 현재 감지된 시장 체제가 경제 환경과 일치합니까?
-2. **위험 요인**: 현재 시장에서 주목해야 할 위험 요인들은 무엇입니까?
-3. **투자 전략**: 현재 상황에서 어떤 투자 전략을 추천하시겠습니까?
-4. **섹터 로테이션**: 어떤 섹터에 집중해야 할까요?
-5. **리스크 관리**: 어떤 리스크 관리 전략을 사용해야 할까요?
+## 종합 분석 요청사항
+다음 관점에서 심층적인 분석을 제공해주세요:
 
-## 답변 형식
+1. **지표 해석**: 각 기술적/매크로 지표의 의미와 현재 시장에서의 중요성
+2. **다면적 분석**: 기술적, 매크로, 섹터 분석 결과의 일관성과 상충점
+3. **시장 역학**: 현재 시장의 주요 동인과 변동성 원인
+4. **리스크 평가**: 단기/중기/장기 관점에서의 위험 요인
+5. **전략적 제언**: 현재 상황에 최적화된 포트폴리오 구성 방안
+6. **시나리오 분석**: 다양한 시장 시나리오별 대응 방안
+
 다음 JSON 형태로 답변해주세요:
 
 {{
-    "regime_validation": {{
-        "consistency": 0.0-1.0,
-        "supporting_factors": ["요인1", "요인2"],
-        "conflicting_factors": ["요인1", "요인2"],
-        "alternative_regimes": ["대안1", "대안2"]
+    "comprehensive_analysis": {{
+        "market_dynamics": {{
+            "primary_drivers": ["주요 동인1", "주요 동인2"],
+            "volatility_factors": ["변동성 요인1", "변동성 요인2"],
+            "trend_strength": "strong/moderate/weak",
+            "momentum_quality": "high/medium/low"
+        }},
+        "indicator_interpretation": {{
+            "technical_indicators": {{
+                "rsi_interpretation": "RSI 해석",
+                "macd_interpretation": "MACD 해석",
+                "volume_analysis": "거래량 분석"
+            }},
+            "macro_indicators": {{
+                "yield_curve_analysis": "수익률 곡선 분석",
+                "inflation_outlook": "인플레이션 전망",
+                "growth_prospects": "성장 전망"
+            }}
+        }},
+        "consistency_analysis": {{
+            "technical_macro_alignment": 0.0-1.0,
+            "sector_macro_alignment": 0.0-1.0,
+            "conflicting_signals": ["상충 신호1", "상충 신호2"],
+            "supporting_signals": ["지지 신호1", "지지 신호2"]
+        }}
     }},
-    "risk_analysis": {{
-        "identified_risks": ["위험1", "위험2"],
-        "risk_level": "low/moderate/high",
-        "mitigation_strategies": ["전략1", "전략2"]
+    "risk_assessment": {{
+        "short_term_risks": ["단기 위험1", "단기 위험2"],
+        "medium_term_risks": ["중기 위험1", "중기 위험2"],
+        "long_term_risks": ["장기 위험1", "장기 위험2"],
+        "risk_mitigation": {{
+            "portfolio_hedging": ["헤징 전략1", "헤징 전략2"],
+            "position_sizing": "conservative/moderate/aggressive",
+            "stop_loss_levels": "적정 손절 수준"
+        }}
     }},
-    "investment_strategy": {{
-        "primary_strategy": "전략명",
-        "sector_rotation": ["섹터1", "섹터2"],
-        "position_sizing": "conservative/moderate/aggressive",
-        "time_horizon": "short/medium/long"
+    "strategic_recommendations": {{
+        "portfolio_allocation": {{
+            "equity_allocation": "0-100%",
+            "bond_allocation": "0-100%",
+            "cash_allocation": "0-100%",
+            "alternative_allocation": "0-100%"
+        }},
+        "sector_focus": {{
+            "overweight_sectors": ["과중 배치 섹터1", "과중 배치 섹터2"],
+            "underweight_sectors": ["과소 배치 섹터1", "과소 배치 섹터2"],
+            "avoid_sectors": ["회피 섹터1", "회피 섹터2"]
+        }},
+        "trading_strategy": {{
+            "entry_timing": "immediate/gradual/wait",
+            "holding_period": "short/medium/long",
+            "exit_strategy": "exit 전략"
+        }}
+    }},
+    "scenario_analysis": {{
+        "bull_scenario": {{
+            "probability": 0.0-1.0,
+            "triggers": ["상승 트리거1", "상승 트리거2"],
+            "actions": ["상승 시 행동1", "상승 시 행동2"]
+        }},
+        "bear_scenario": {{
+            "probability": 0.0-1.0,
+            "triggers": ["하락 트리거1", "하락 트리거2"],
+            "actions": ["하락 시 행동1", "하락 시 행동2"]
+        }},
+        "sideways_scenario": {{
+            "probability": 0.0-1.0,
+            "triggers": ["횡보 트리거1", "횡보 트리거2"],
+            "actions": ["횡보 시 행동1", "횡보 시 행동2"]
+        }}
     }},
     "confidence_modifier": 0.5-1.5,
-    "strategic_recommendations": ["추천1", "추천2", "추천3"]
+    "key_insights": ["핵심 인사이트1", "핵심 인사이트2", "핵심 인사이트3"]
 }}
-
-분석은 객관적이고 실용적이어야 하며, 구체적인 수치와 근거를 포함해주세요.
 """
 
-        return prompt
+        return ChatPromptTemplate.from_template(template)
 
     def _create_market_summary(
         self, macro_data: Dict[str, pd.DataFrame]
     ) -> Dict[str, float]:
-        """매크로 데이터 요약"""
+        """시장 요약 생성"""
         summary = {}
-
+        
         try:
-            if "^VIX" in macro_data and not macro_data["^VIX"].empty:
-                close_col = (
-                    "close" if "close" in macro_data["^VIX"].columns else "Close"
-                )
-                summary["vix_level"] = round(macro_data["^VIX"][close_col].iloc[-1], 2)
+            # VIX 분석
+            if "VIX" in macro_data:
+                vix_data = macro_data["VIX"]
+                if not vix_data.empty:
+                    latest_vix = vix_data.iloc[-1]["Close"]
+                    summary["vix_level"] = latest_vix
+                    
+                    if latest_vix < 15:
+                        summary["vix_level"] = "낮음 (안정)"
+                    elif latest_vix < 25:
+                        summary["vix_level"] = "보통"
+                    else:
+                        summary["vix_level"] = "높음 (변동성)"
 
-            if "^TNX" in macro_data and not macro_data["^TNX"].empty:
-                close_col = (
-                    "close" if "close" in macro_data["^TNX"].columns else "Close"
-                )
-                summary["tnx_level"] = round(macro_data["^TNX"][close_col].iloc[-1], 2)
+            # TNX (10년 국채 수익률) 분석
+            if "TNX" in macro_data:
+                tnx_data = macro_data["TNX"]
+                if not tnx_data.empty:
+                    latest_tnx = tnx_data.iloc[-1]["Close"]
+                    summary["tnx_level"] = latest_tnx
+                    
+                    if latest_tnx < 2.0:
+                        summary["tnx_level"] = "낮음 (성장 우려)"
+                    elif latest_tnx < 4.0:
+                        summary["tnx_level"] = "보통"
+                    else:
+                        summary["tnx_level"] = "높음 (인플레이션 우려)"
 
-            if "^TIP" in macro_data and not macro_data["^TIP"].empty:
-                close_col = (
-                    "close" if "close" in macro_data["^TIP"].columns else "Close"
-                )
-                summary["tips_level"] = round(macro_data["^TIP"][close_col].iloc[-1], 2)
+            # TIPS 분석
+            if "TIPS" in macro_data:
+                tips_data = macro_data["TIPS"]
+                if not tips_data.empty:
+                    latest_tips = tips_data.iloc[-1]["Close"]
+                    summary["tips_level"] = latest_tips
+                    
+                    if latest_tips < 0:
+                        summary["tips_level"] = "음수 (디플레이션 우려)"
+                    else:
+                        summary["tips_level"] = "양수 (인플레이션 우려)"
 
-            if "DX-Y.NYB" in macro_data and not macro_data["DX-Y.NYB"].empty:
-                close_col = (
-                    "close" if "close" in macro_data["DX-Y.NYB"].columns else "Close"
-                )
-                summary["dxy_level"] = round(
-                    macro_data["DX-Y.NYB"][close_col].iloc[-1], 2
-                )
+            # DXY (달러 인덱스) 분석
+            if "DXY" in macro_data:
+                dxy_data = macro_data["DXY"]
+                if not dxy_data.empty:
+                    latest_dxy = dxy_data.iloc[-1]["Close"]
+                    summary["dxy_level"] = latest_dxy
+                    
+                    if latest_dxy < 95:
+                        summary["dxy_level"] = "약세"
+                    elif latest_dxy < 105:
+                        summary["dxy_level"] = "보통"
+                    else:
+                        summary["dxy_level"] = "강세"
 
         except Exception as e:
             self.logger.warning(f"Market summary creation failed: {e}")
@@ -368,231 +473,124 @@ class LLMAPIIntegration:
         return summary
 
     def _create_metrics_summary(self, market_metrics: Dict[str, Any]) -> str:
-        """시장 메트릭 요약"""
-        summary_parts = []
-
+        """메트릭 요약 생성"""
         try:
-            if "current_probabilities" in market_metrics:
-                probs = market_metrics["current_probabilities"]
-                summary_parts.append(f"- 시장 체제 확률: {dict(probs)}")
-
-            if "stat_arb_signal" in market_metrics:
-                signal = market_metrics["stat_arb_signal"]
-                summary_parts.append(
-                    f"- 통계적 차익거래 신호: {signal.get('direction', 'N/A')} (강도: {signal.get('signal_strength', 0):.3f})"
-                )
-
-            if "vix_level" in market_metrics:
-                summary_parts.append(f"- VIX 수준: {market_metrics['vix_level']:.2f}")
-
+            summary_parts = []
+            
+            # 기본 메트릭
+            if "probabilities" in market_metrics:
+                probs = market_metrics["probabilities"]
+                summary_parts.append(f"시장 체제 확률: 상승 {probs.get('UP', 0):.1%}, 하락 {probs.get('DOWN', 0):.1%}, 횡보 {probs.get('SIDEWAYS', 0):.1%}")
+            
+            # 통계적 차익거래 신호
+            if "stat_arb_signals" in market_metrics:
+                signals = market_metrics["stat_arb_signals"]
+                summary_parts.append(f"통계적 차익거래 신호: {signals}")
+            
+            # 기타 메트릭들
+            for key, value in market_metrics.items():
+                if key not in ["probabilities", "stat_arb_signals"]:
+                    summary_parts.append(f"{key}: {value}")
+            
+            return "\n".join(summary_parts) if summary_parts else "메트릭 데이터 없음"
+            
         except Exception as e:
             self.logger.warning(f"Metrics summary creation failed: {e}")
+            return "메트릭 요약 생성 실패"
 
-        return "\n".join(summary_parts) if summary_parts else "메트릭 데이터 없음"
-
-    def _parse_llm_response(self, response: str) -> Dict[str, Any]:
-        """LLM 응답 파싱"""
+    def _create_analysis_summary(self, analysis_results: Dict[str, Any]) -> str:
+        """기존 분석 결과 요약 생성"""
         try:
-            # JSON 추출 시도
-            json_start = response.find("{")
-            json_end = response.rfind("}") + 1
-
-            if json_start != -1 and json_end != 0:
-                json_str = response[json_start:json_end]
-                parsed = json.loads(json_str)
-
-                # 필수 필드 검증 및 기본값 설정
-                validated_response = {
-                    "regime_validation": parsed.get(
-                        "regime_validation",
-                        {
-                            "consistency": 0.5,
-                            "supporting_factors": [],
-                            "conflicting_factors": [],
-                            "alternative_regimes": [],
-                        },
-                    ),
-                    "risk_analysis": parsed.get(
-                        "risk_analysis",
-                        {
-                            "identified_risks": [],
-                            "risk_level": "moderate",
-                            "mitigation_strategies": [],
-                        },
-                    ),
-                    "investment_strategy": parsed.get(
-                        "investment_strategy",
-                        {
-                            "primary_strategy": "balanced",
-                            "sector_rotation": [],
-                            "position_sizing": "moderate",
-                            "time_horizon": "medium",
-                        },
-                    ),
-                    "confidence_modifier": parsed.get("confidence_modifier", 1.0),
-                    "strategic_recommendations": parsed.get(
-                        "strategic_recommendations", []
-                    ),
-                }
-
-                return validated_response
-            else:
-                raise ValueError("No JSON found in response")
-
+            if not analysis_results:
+                return "기존 분석 결과 없음"
+            
+            summary_parts = []
+            
+            # 현재 체제
+            if "current_regime" in analysis_results:
+                summary_parts.append(f"현재 체제: {analysis_results['current_regime']}")
+            
+            # 신뢰도
+            if "confidence" in analysis_results:
+                summary_parts.append(f"신뢰도: {analysis_results['confidence']:.2f}")
+            
+            # 확률
+            if "probabilities" in analysis_results:
+                probs = analysis_results["probabilities"]
+                summary_parts.append(f"체제 확률: {probs}")
+            
+            # 최적화 성능
+            if "optimization_performance" in analysis_results:
+                perf = analysis_results["optimization_performance"]
+                summary_parts.append(f"최적화 성능: {perf}")
+            
+            # 검증 결과
+            if "validation_results" in analysis_results:
+                validation = analysis_results["validation_results"]
+                summary_parts.append(f"검증 결과: {validation}")
+            
+            return "\n".join(summary_parts) if summary_parts else "분석 결과 요약 없음"
+            
         except Exception as e:
-            self.logger.error(f"LLM response parsing failed: {e}")
-            self.logger.debug(f"Raw response: {response}")
-
-            # 파싱 실패 시 기본 응답 반환
-            return self._get_default_llm_response()
-
-    def _get_default_llm_response(self) -> Dict[str, Any]:
-        """기본 LLM 응답"""
-        return {
-            "regime_validation": {
-                "consistency": 0.5,
-                "supporting_factors": [],
-                "conflicting_factors": [],
-                "alternative_regimes": [],
-            },
-            "risk_analysis": {
-                "identified_risks": [],
-                "risk_level": "moderate",
-                "mitigation_strategies": [],
-            },
-            "investment_strategy": {
-                "primary_strategy": "balanced",
-                "sector_rotation": [],
-                "position_sizing": "moderate",
-                "time_horizon": "medium",
-            },
-            "confidence_modifier": 1.0,
-            "strategic_recommendations": [],
-        }
+            self.logger.warning(f"Analysis summary creation failed: {e}")
+            return "분석 결과 요약 생성 실패"
 
     def _combine_insights(
         self, rule_insights: Dict[str, Any], llm_insights: Dict[str, Any]
     ) -> Dict[str, Any]:
         """규칙 기반과 LLM 인사이트 융합"""
-        combined = rule_insights.copy()
-
-        # LLM의 regime 검증 결과 반영
-        if "regime_validation" in llm_insights:
-            llm_validation = llm_insights["regime_validation"]
-            rule_validation = combined.get("regime_validation", {})
-
-            # 일관성 점수 융합 (가중 평균)
-            rule_consistency = rule_validation.get("consistency", 0.5)
-            llm_consistency = llm_validation.get("consistency", 0.5)
-            combined_consistency = (rule_consistency * 0.6) + (llm_consistency * 0.4)
-
-            combined["regime_validation"] = {
-                "consistency": combined_consistency,
-                "supporting_factors": rule_validation.get("supporting_factors", [])
-                + llm_validation.get("supporting_factors", []),
-                "conflicting_factors": rule_validation.get("conflicting_factors", [])
-                + llm_validation.get("conflicting_factors", []),
-                "alternative_regimes": list(
-                    set(
-                        rule_validation.get("alternative_regimes", [])
-                        + llm_validation.get("alternative_regimes", [])
-                    )
-                ),
+        try:
+            combined = {
+                "analysis_timestamp": datetime.now().isoformat(),
+                "data_source": "hybrid_llm_rules",
+                "rule_based_insights": rule_insights,
+                "llm_enhanced_insights": llm_insights,
             }
 
-        # 위험 분석 융합
-        if "risk_analysis" in llm_insights:
-            llm_risks = llm_insights["risk_analysis"]
-            rule_risks = combined.get("risk_adjustments", {})
+            # LLM 인사이트에서 주요 섹션들 추출
+            if "comprehensive_analysis" in llm_insights:
+                combined["market_dynamics"] = llm_insights["comprehensive_analysis"].get("market_dynamics", {})
+                combined["indicator_interpretation"] = llm_insights["comprehensive_analysis"].get("indicator_interpretation", {})
+                combined["consistency_analysis"] = llm_insights["comprehensive_analysis"].get("consistency_analysis", {})
 
-            combined["risk_adjustments"] = {
-                "identified_risks": list(
-                    set(
-                        rule_risks.get("identified_risks", [])
-                        + llm_risks.get("identified_risks", [])
-                    )
-                ),
-                "risk_level": self._determine_risk_level(
-                    rule_risks.get("risk_level", "moderate"),
-                    llm_risks.get("risk_level", "moderate"),
-                ),
-                "mitigation_strategies": list(
-                    set(
-                        rule_risks.get("mitigation_strategies", [])
-                        + llm_risks.get("mitigation_strategies", [])
-                    )
-                ),
-            }
+            if "risk_assessment" in llm_insights:
+                combined["risk_assessment"] = llm_insights["risk_assessment"]
 
-        # 전략적 추천사항 융합
-        if "strategic_recommendations" in llm_insights:
-            rule_recommendations = combined.get("strategic_recommendations", [])
-            llm_recommendations = llm_insights["strategic_recommendations"]
+            if "strategic_recommendations" in llm_insights:
+                combined["strategic_recommendations"] = llm_insights["strategic_recommendations"]
 
-            # 중복 제거하면서 융합
-            all_recommendations = rule_recommendations + llm_recommendations
-            unique_recommendations = list(
-                dict.fromkeys(all_recommendations)
-            )  # 순서 유지하면서 중복 제거
+            if "scenario_analysis" in llm_insights:
+                combined["scenario_analysis"] = llm_insights["scenario_analysis"]
 
-            combined["strategic_recommendations"] = unique_recommendations
+            if "key_insights" in llm_insights:
+                combined["key_insights"] = llm_insights["key_insights"]
 
-        # 신뢰도 수정자 융합
-        if "confidence_modifier" in llm_insights:
-            rule_modifiers = combined.get("confidence_modifiers", [1.0])
-            llm_modifier = llm_insights["confidence_modifier"]
+            # 신뢰도 수정자 적용
+            confidence_modifier = llm_insights.get("confidence_modifier", 1.0)
+            if "confidence" in rule_insights:
+                original_confidence = rule_insights["confidence"]
+                combined["adjusted_confidence"] = min(1.0, original_confidence * confidence_modifier)
 
-            # LLM 수정자 추가
-            rule_modifiers.append(llm_modifier)
-            combined["confidence_modifiers"] = rule_modifiers
+            # API 통계 추가
+            combined["api_stats"] = self.get_api_stats()
 
-        # 투자 전략 정보 추가
-        if "investment_strategy" in llm_insights:
-            combined["investment_strategy"] = llm_insights["investment_strategy"]
+            return combined
 
-        return combined
-
-    def _determine_risk_level(self, rule_level: str, llm_level: str) -> str:
-        """위험 수준 결정 (두 수준 중 더 높은 것 선택)"""
-        risk_hierarchy = {"low": 1, "moderate": 2, "high": 3}
-
-        rule_score = risk_hierarchy.get(rule_level, 2)
-        llm_score = risk_hierarchy.get(llm_level, 2)
-
-        max_score = max(rule_score, llm_score)
-
-        for level, score in risk_hierarchy.items():
-            if score == max_score:
-                return level
-
-        return "moderate"
-
-    def _generate_cache_key(
-        self,
-        current_regime: str,
-        macro_data: Dict[str, pd.DataFrame],
-        market_metrics: Dict[str, Any],
-    ) -> str:
-        """캐시 키 생성"""
-        # 간단한 해시 기반 캐시 키
-        key_parts = [
-            current_regime,
-            str(hash(str(macro_data.keys()))),
-            str(hash(str(market_metrics.keys()))),
-        ]
-        return "_".join(key_parts)
+        except Exception as e:
+            self.logger.error(f"Insights combination failed: {e}")
+            return rule_insights
 
     def _update_avg_response_time(self, new_response_time: float):
         """평균 응답 시간 업데이트"""
-        current_avg = self.api_call_stats["avg_response_time"]
         total_calls = self.api_call_stats["successful_calls"]
-
+        current_avg = self.api_call_stats["avg_response_time"]
+        
         if total_calls == 1:
             self.api_call_stats["avg_response_time"] = new_response_time
         else:
             self.api_call_stats["avg_response_time"] = (
-                current_avg * (total_calls - 1) + new_response_time
-            ) / total_calls
+                (current_avg * (total_calls - 1) + new_response_time) / total_calls
+            )
 
     def _get_fallback_insights(
         self,
@@ -600,80 +598,105 @@ class LLMAPIIntegration:
         macro_data: Dict[str, pd.DataFrame],
         market_metrics: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """fallback 인사이트"""
+        """Fallback 인사이트 생성"""
         return self.rule_based_system.get_privileged_insights(
             current_regime, macro_data, market_metrics
         )
 
     def get_api_stats(self) -> Dict[str, Any]:
         """API 통계 반환"""
-        stats = self.api_call_stats.copy()
-
-        if stats["total_calls"] > 0:
-            stats["success_rate"] = stats["successful_calls"] / stats["total_calls"]
-        else:
-            stats["success_rate"] = 0.0
-
-        return stats
+        total_calls = self.api_call_stats["total_calls"]
+        success_rate = (
+            self.api_call_stats["successful_calls"] / total_calls * 100
+            if total_calls > 0
+            else 0
+        )
+        
+        return {
+            **self.api_call_stats,
+            "success_rate": success_rate,
+            "provider": self.config.provider,
+            "model": self.config.model_name,
+        }
 
     def clear_cache(self):
         """캐시 클리어"""
-        self.response_cache.clear()
-        self.logger.info("LLM response cache cleared")
+        if LANGCHAIN_AVAILABLE:
+            # LangChain 캐시는 자동으로 관리됨
+            pass
 
     def update_config(self, new_config: LLMConfig):
         """설정 업데이트"""
         self.config = new_config
-        self.llm_client = self._initialize_llm_client()
-        self.logger.info("LLM configuration updated")
+        self.llm_model = self._initialize_llm_model()
 
 
-# 사용 예시 및 테스트 함수
-def test_llm_api_integration():
-    """LLM API 통합 테스트"""
+def test_langchain_llm_integration():
+    """LangChain LLM 통합 테스트"""
+    print("🧪 LangChain LLM 통합 테스트")
+    print("=" * 50)
 
-    # 설정
+    # 테스트 설정
     config = LLMConfig(
-        provider="hybrid",  # "bedrock", "openai", "hybrid", "rule_only"
+        provider="bedrock",
         model_name="anthropic.claude-3-sonnet-20240229-v1:0",
-        api_key="your_api_key_here",  # OpenAI 사용 시
-        region="us-east-1",
+        max_tokens=2000,
+        temperature=0.1
     )
 
-    # 시스템 초기화
-    llm_system = LLMAPIIntegration(config)
-
-    # 테스트 데이터
-    macro_data = {
-        "^VIX": pd.DataFrame({"close": [25.5]}),
-        "^TNX": pd.DataFrame({"close": [4.2]}),
-        "^TIP": pd.DataFrame({"close": [105.3]}),
-    }
-
-    market_metrics = {
-        "current_probabilities": {
-            "TRENDING_UP": 0.6,
-            "TRENDING_DOWN": 0.2,
-            "VOLATILE": 0.15,
-            "SIDEWAYS": 0.05,
-        },
-        "vix_level": 25.5,
-    }
-
-    # 향상된 인사이트 획득
-    insights = llm_system.get_enhanced_insights(
-        current_regime="TRENDING_UP",
-        macro_data=macro_data,
-        market_metrics=market_metrics,
-    )
-
-    print("향상된 인사이트 결과:")
-    print(json.dumps(insights, indent=2, ensure_ascii=False))
-
-    # API 통계 확인
-    stats = llm_system.get_api_stats()
-    print(f"\nAPI 통계: {stats}")
+    try:
+        # LLM API 통합 시스템 초기화
+        llm_system = LLMAPIIntegration(config)
+        
+        print(f"✅ LangChain LLM 시스템 초기화 성공")
+        print(f"🤖 Provider: {config.provider}")
+        print(f"📊 Model: {config.model_name}")
+        
+        # 테스트 데이터
+        test_macro_data = {
+            "VIX": pd.DataFrame({"Close": [20.5]}, index=[pd.Timestamp.now()]),
+            "TNX": pd.DataFrame({"Close": [3.2]}, index=[pd.Timestamp.now()]),
+        }
+        
+        test_market_metrics = {
+            "probabilities": {"UP": 0.6, "DOWN": 0.2, "SIDEWAYS": 0.2},
+            "stat_arb_signals": "neutral"
+        }
+        
+        test_analysis_results = {
+            "current_regime": "TRENDING_UP",
+            "confidence": 0.75,
+            "probabilities": {"UP": 0.6, "DOWN": 0.2, "SIDEWAYS": 0.2}
+        }
+        
+        # 향상된 인사이트 획득 테스트
+        print("\n🚀 향상된 인사이트 획득 테스트...")
+        insights = llm_system.get_enhanced_insights(
+            "TRENDING_UP",
+            test_macro_data,
+            test_market_metrics,
+            test_analysis_results
+        )
+        
+        print(f"✅ 인사이트 획득 성공")
+        print(f"📊 API 통계: {llm_system.get_api_stats()}")
+        
+        # 결과 출력
+        if "llm_enhanced_insights" in insights:
+            llm_result = insights["llm_enhanced_insights"]
+            print(f"\n🤖 LLM 종합 분석 결과:")
+            print(f"   - 시장 역학: {llm_result.get('comprehensive_analysis', {}).get('market_dynamics', {})}")
+            print(f"   - 핵심 인사이트: {llm_result.get('key_insights', [])}")
+            print(f"   - 신뢰도 수정자: {llm_result.get('confidence_modifier', 1.0)}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ 테스트 실패: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 if __name__ == "__main__":
-    test_llm_api_integration()
+    test_langchain_llm_integration()

@@ -1,0 +1,309 @@
+{
+  "session_uuid": "1e4b1633-07cf-4e51-9c03-40b5e92109b7",
+  "timestamp": "2025-07-24T16:39:56.011839",
+  "analysis_type": "enhanced",
+  "data_period": "2_years",
+  "current_regime": "SIDEWAYS",
+  "confidence": 0.8477886221164499,
+  "probabilities": {
+    "TRENDING_UP": 0.07973397462185934,
+    "TRENDING_DOWN": 0.07247740326169066,
+    "VOLATILE": 0.0,
+    "SIDEWAYS": 0.8477886221164499
+  },
+  "macro_analysis": {
+    "market_condition": "recession_fear",
+    "confidence": 0.7999999999999999,
+    "key_indicators": {
+      "vix_current": 15.369999885559082,
+      "vix_ma_20": 16.60799984931946,
+      "vix_percentile": 29.371296288466624,
+      "volatility_regime": "normal",
+      "yield_spread": 0.14800024032592773,
+      "spread_ma_20": 0.13590004444122314,
+      "recession_risk": "low",
+      "dollar_strength": 27.059999465942383,
+      "dollar_ma_50": 27.33479999542236,
+      "dollar_trend": "weak",
+      "gold_price": 312.17999267578125,
+      "gold_ma_50": 306.69859985351565,
+      "gold_trend": "bullish",
+      "bond_price": 86.04000091552734,
+      "bond_ma_50": 85.82727600097657,
+      "bond_trend": "bullish",
+      "rate_environment": "moderate_rates",
+      "rate_trend": "decreasing",
+      "growth_outlook_confidence": 1.0,
+      "growth_indicators_count": 5,
+      "growth_outlook": "negative",
+      "market_sentiment": "risk_on",
+      "risk_on_score": 2,
+      "risk_off_score": 1
+    },
+    "sector_rotation": {},
+    "recommendations": {
+      "overweight_sectors": [],
+      "underweight_sectors": [],
+      "neutral_sectors": [],
+      "strategy": "Recession hedge - 방어적 섹터 + 국채 비중 확대",
+      "risk_level": "low"
+    }
+  },
+  "optimal_params": {
+    "sma_short": 28,
+    "sma_medium": 36,
+    "sma_long": 134,
+    "ema_short": 18,
+    "ema_long": 46,
+    "adx_period": 24,
+    "adx_threshold": 27,
+    "supertrend_period": 7,
+    "supertrend_multiplier": 3.341873443561565,
+    "rsi_period": 25,
+    "rsi_overbought": 85,
+    "rsi_oversold": 24,
+    "macd_fast": 8,
+    "macd_slow": 28,
+    "macd_signal": 5,
+    "stoch_k_period": 12,
+    "stoch_d_period": 6,
+    "cci_period": 15,
+    "williams_r_period": 26,
+    "bb_period": 26,
+    "bb_std": 2.1268646281896517,
+    "atr_period": 15,
+    "keltner_period": 19,
+    "keltner_multiplier": 2.212786403528386,
+    "donchian_period": 14,
+    "volume_ma_period": 10,
+    "obv_ma_period": 11,
+    "vwap_period": 24,
+    "money_flow_period": 28,
+    "pivot_period": 7,
+    "fibonacci_levels": 4,
+    "support_tolerance": 0.010097997110996541,
+    "resistance_tolerance": 0.014189261180992343,
+    "trend_weight": 0.3696191239502316,
+    "momentum_weight": 0.19909071040404105,
+    "volatility_weight": 0.19647112382394188,
+    "macro_weight": 0.12457446278243704,
+    "volume_weight": 0.1924252183777377,
+    "support_resistance_weight": 0.1663863353929019,
+    "base_position": 0.5229821586952607,
+    "volatile_reduction": 0.6160068838273016,
+    "trending_boost": 1.4106971420742351,
+    "momentum_boost": 1.1412165796019533,
+    "volume_boost": 1.103903800504752,
+    "stop_atr_multiplier": 2.5550185550614577,
+    "stop_fixed_percentage": 0.04212144882903449,
+    "profit_atr_multiplier": 4.096808008142391,
+    "profit_fixed_percentage": 0.11547009200345498,
+    "trailing_stop_percentage": 0.03096284190145325,
+    "max_position_size": 0.8214884116503316,
+    "max_drawdown_limit": 0.06013229413841796,
+    "entry_confirmation_periods": 2,
+    "exit_confirmation_periods": 1,
+    "trend_confirmation_periods": 4,
+    "volume_confirmation_threshold": 1.9066390781385212,
+    "momentum_confirmation_threshold": 0.7407205017815771
+  },
+  "optimization_performance": {
+    "total_return": 0.3149270650849043,
+    "log_return": 0.2737812002777927,
+    "buy_hold_return": 0.09050241794625191,
+    "buy_hold_log_return": 0.08663852393930027,
+    "excess_return": 0.2244246471386524,
+    "sharpe_ratio": 2.234543747414517,
+    "sortino_ratio": 2.7522018997269027,
+    "calmar_ratio": 2.5828746848676176,
+    "max_drawdown": -0.12192889842080959,
+    "win_rate": 0.594059405940594,
+    "avg_win": 0.010021160308367784,
+    "avg_loss": -0.007650609582462974,
+    "profit_factor": 1.9647768325556725,
+    "max_consecutive_wins": 9,
+    "max_consecutive_losses": 4,
+    "win_rate_weighted_return": 0.002847471540802822,
+    "trade_frequency": 0.9900990099009901,
+    "total_trades": "100"
+  },
+  "validation_results": {
+    "data_quality": {
+      "spy_data_points": 501,
+      "macro_indicators": 14,
+      "data_completeness": 0.95
+    },
+    "regime_consistency": {
+      "confidence_threshold_met": true,
+      "probability_sum": 0.9999999999999999
+    }
+  },
+  "rlmf_analysis": {
+    "statistical_arbitrage": {
+      "overall_signal": 0.16,
+      "confidence": 0.48,
+      "individual_signals": {
+        "XRT": {
+          "signal": 1.0,
+          "return": 0.04817303533194095,
+          "weight": 0.32,
+          "symbol": "xrt_data"
+        },
+        "GTX": {
+          "signal": 0.0,
+          "return": 0.0,
+          "weight": 0.25,
+          "symbol": "gtx_data"
+        },
+        "VIX": {
+          "signal": -1.0,
+          "return": -0.10431235301688979,
+          "weight": 0.16,
+          "symbol": "^vix_data"
+        }
+      },
+      "signal_strength": 0.16,
+      "direction": "BULLISH"
+    },
+    "market_feedback": {
+      "prediction_accuracy": 0.7,
+      "return_alignment": 0.851870977752378,
+      "volatility_prediction": 0.3,
+      "regime_persistence": 0.8,
+      "macro_consistency": 0.4
+    },
+    "adaptation_status": {
+      "status": "adapting",
+      "weights": {
+        "trend_strength": 1.0,
+        "volatility_regime": 1.0,
+        "momentum_persistence": 1.0,
+        "macro_alignment": 1.0,
+        "correlation_shift": 1.0
+      },
+      "performance": 0.7,
+      "feedback_count": 1,
+      "last_update": "2025-07-24T16:39:55.850704"
+    },
+    "learning_rate": 0.01
+  },
+  "confidence_analysis": {
+    "confidence_result": {
+      "total_confidence": 0.6869471555291126,
+      "adjusted_confidence": 0.5965042364485378,
+      "component_confidences": {
+        "technical": 0.21194715552911247,
+        "macro": 0.16,
+        "statistical_arb": 0.125,
+        "rlmf_feedback": 0.13999999999999999,
+        "cross_validation": 0.05
+      },
+      "consistency_score": 0.7366815821199164,
+      "confidence_distribution": {
+        "mean": 0.13738943110582252,
+        "std": 0.052663683576016716,
+        "min": 0.05,
+        "max": 0.21194715552911247
+      }
+    },
+    "component_breakdown": {
+      "technical": 0.8477886221164499,
+      "macro": 0.7999999999999999,
+      "rlmf_feedback": 0.7
+    }
+  },
+  "regime_detection": {
+    "regime_shift_detection": {
+      "regime_shift_detected": false,
+      "confidence": 0.5,
+      "last_change_date": null
+    },
+    "stability_analysis": {
+      "stability_score": 0.7
+    },
+    "persistence_analysis": {
+      "persistence_score": 0.8
+    }
+  },
+  "llm_insights": {
+    "regime_validation": {
+      "consistency": 0.5,
+      "supporting_factors": [],
+      "conflicting_factors": [],
+      "alternative_regimes": []
+    },
+    "contextual_factors": {
+      "seasonal": {
+        "current_season": "summer_weakness",
+        "seasonal_bias": "cautious",
+        "confidence_modifier": 0.95
+      }
+    },
+    "risk_adjustments": {
+      "identified_risks": [],
+      "risk_level": "low",
+      "mitigation_strategies": []
+    },
+    "confidence_modifiers": [
+      1.0,
+      0.95,
+      1.1
+    ],
+    "strategic_recommendations": [
+      "레인지 바운드 전략 및 평균 회귀 전략 활용",
+      "여름철 약세 패턴 고려한 신중한 접근"
+    ]
+  },
+  "llm_api_insights": {
+    "regime_validation": {
+      "consistency": 0.5,
+      "supporting_factors": [],
+      "conflicting_factors": [],
+      "alternative_regimes": []
+    },
+    "contextual_factors": {
+      "seasonal": {
+        "current_season": "summer_weakness",
+        "seasonal_bias": "cautious",
+        "confidence_modifier": 0.95
+      }
+    },
+    "risk_adjustments": {
+      "identified_risks": [],
+      "risk_level": "low",
+      "mitigation_strategies": []
+    },
+    "confidence_modifiers": [
+      1.0,
+      0.95,
+      1.1
+    ],
+    "strategic_recommendations": [
+      "레인지 바운드 전략 및 평균 회귀 전략 활용",
+      "여름철 약세 패턴 고려한 신중한 접근"
+    ],
+    "api_stats": {
+      "total_calls": 0,
+      "successful_calls": 0,
+      "failed_calls": 0,
+      "avg_response_time": 0.0,
+      "success_rate": 0.0
+    }
+  },
+  "final_confidence": {
+    "final_confidence": 0.2982521182242689,
+    "base_confidence": 0.8477886221164499,
+    "adjusted_confidence": 0.5965042364485378,
+    "regime_shift_impact": 0.5,
+    "confidence_level": "LOW"
+  },
+  "enhanced_recommendations": {
+    "primary_strategy": "BALANCED",
+    "position_sizing": "MODERATE"
+  },
+  "random_forest_info": {
+    "model_used": true,
+    "accuracy": null,
+    "trained_at": "2025-07-24T16:02:56.022593"
+  }
+}

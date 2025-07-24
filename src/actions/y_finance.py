@@ -8,6 +8,11 @@ import sys
 import argparse
 import json
 
+# yfinance 디버그 로그 억제
+logging.getLogger('yfinance').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+logging.getLogger('requests').setLevel(logging.WARNING)
+
 
 class YahooFinanceDataCollector:
     """

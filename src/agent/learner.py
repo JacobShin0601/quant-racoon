@@ -775,6 +775,12 @@ class RLQuantLearner:
                 trainer.load_model(model_path)
                 logger.info(f"✅ PPO 모델 로드 완료: {model_path}")
                 return trainer
+            elif method.upper() == "HYBRID":
+                # 하이브리드 모델 로드 로직
+                trainer = HybridPPOTrainer(0, 0, action_type="continuous")  # 더미 값
+                trainer.load_model(model_path)
+                logger.info(f"✅ 하이브리드 모델 로드 완료: {model_path}")
+                return trainer
             else:
                 raise ValueError(f"지원하지 않는 방법론: {method}")
         except Exception as e:

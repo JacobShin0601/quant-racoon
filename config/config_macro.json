@@ -134,6 +134,23 @@
     "model_training_days_back": 730,
     "validation_days_back": 365,
     "real_time_days_back": 30,
+    "data_periods": {
+      "default_period": "2_years",
+      "macro_analysis_period": "2_years",
+      "sector_analysis_period": "2_years",
+      "model_training_period": "2_years",
+      "validation_period": "1_year",
+      "real_time_period": "1_month"
+    },
+    "period_days": {
+      "1_month": 30,
+      "3_months": 90,
+      "6_months": 180,
+      "1_year": 365,
+      "2_years": 730,
+      "3_years": 1095,
+      "5_years": 1825
+    },
     "data_sources": {
       "spy": {
         "symbol": "SPY",
@@ -183,6 +200,16 @@
       "tip": {
         "symbol": "TIP",
         "description": "iShares TIPS Bond ETF",
+        "required": false
+      },
+      "xrt": {
+        "symbol": "XRT",
+        "description": "SPDR S&P Retail ETF",
+        "required": false
+      },
+      "gtx": {
+        "symbol": "GTX",
+        "description": "Global X Gold Explorers ETF",
         "required": false
       }
     },

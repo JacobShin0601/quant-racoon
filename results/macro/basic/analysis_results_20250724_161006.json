@@ -1,0 +1,177 @@
+{
+  "session_uuid": "2c1f96eb-70f7-489e-8332-5f609628e34a",
+  "timestamp": "2025-07-24T16:10:06.247900",
+  "analysis_type": "basic",
+  "data_period": "2_years",
+  "current_regime": "SIDEWAYS",
+  "confidence": 0.8477886221164499,
+  "probabilities": {
+    "TRENDING_UP": 0.07973397462185934,
+    "TRENDING_DOWN": 0.07247740326169065,
+    "VOLATILE": 0.0,
+    "SIDEWAYS": 0.8477886221164499
+  },
+  "macro_analysis": {
+    "market_condition": "bull_market",
+    "confidence": 0.6,
+    "key_indicators": {
+      "rate_environment": "unknown",
+      "rate_trend": "unknown",
+      "growth_outlook": "unknown"
+    },
+    "sector_rotation": {},
+    "recommendations": {
+      "overweight_sectors": [],
+      "underweight_sectors": [],
+      "neutral_sectors": [],
+      "strategy": "Momentum following - 순환적 섹터 중 선도 섹터 집중",
+      "risk_level": "high"
+    }
+  },
+  "optimal_params": {
+    "sma_short": 28,
+    "sma_medium": 36,
+    "sma_long": 134,
+    "ema_short": 18,
+    "ema_long": 46,
+    "adx_period": 24,
+    "adx_threshold": 27,
+    "supertrend_period": 7,
+    "supertrend_multiplier": 3.341873443561565,
+    "rsi_period": 25,
+    "rsi_overbought": 85,
+    "rsi_oversold": 24,
+    "macd_fast": 8,
+    "macd_slow": 28,
+    "macd_signal": 5,
+    "stoch_k_period": 12,
+    "stoch_d_period": 6,
+    "cci_period": 15,
+    "williams_r_period": 26,
+    "bb_period": 26,
+    "bb_std": 2.1268646281896517,
+    "atr_period": 15,
+    "keltner_period": 19,
+    "keltner_multiplier": 2.212786403528386,
+    "donchian_period": 14,
+    "volume_ma_period": 10,
+    "obv_ma_period": 11,
+    "vwap_period": 24,
+    "money_flow_period": 28,
+    "pivot_period": 7,
+    "fibonacci_levels": 4,
+    "support_tolerance": 0.010097997110996541,
+    "resistance_tolerance": 0.014189261180992343,
+    "trend_weight": 0.3696191239502316,
+    "momentum_weight": 0.19909071040404105,
+    "volatility_weight": 0.19647112382394188,
+    "macro_weight": 0.12457446278243704,
+    "volume_weight": 0.1924252183777377,
+    "support_resistance_weight": 0.1663863353929019,
+    "base_position": 0.5229821586952607,
+    "volatile_reduction": 0.6160068838273016,
+    "trending_boost": 1.4106971420742351,
+    "momentum_boost": 1.1412165796019533,
+    "volume_boost": 1.103903800504752,
+    "stop_atr_multiplier": 2.5550185550614577,
+    "stop_fixed_percentage": 0.04212144882903449,
+    "profit_atr_multiplier": 4.096808008142391,
+    "profit_fixed_percentage": 0.11547009200345498,
+    "trailing_stop_percentage": 0.03096284190145325,
+    "max_position_size": 0.8214884116503316,
+    "max_drawdown_limit": 0.06013229413841796,
+    "entry_confirmation_periods": 2,
+    "exit_confirmation_periods": 1,
+    "trend_confirmation_periods": 4,
+    "volume_confirmation_threshold": 1.9066390781385212,
+    "momentum_confirmation_threshold": 0.7407205017815771
+  },
+  "optimization_performance": {
+    "total_return": 0.3149270650849043,
+    "log_return": 0.2737812002777927,
+    "buy_hold_return": 0.09050241794625191,
+    "buy_hold_log_return": 0.08663852393930027,
+    "excess_return": 0.2244246471386524,
+    "sharpe_ratio": 2.234543747414517,
+    "sortino_ratio": 2.7522018997269027,
+    "calmar_ratio": 2.5828746848676176,
+    "max_drawdown": -0.12192889842080959,
+    "win_rate": 0.594059405940594,
+    "avg_win": 0.010021160308367784,
+    "avg_loss": -0.007650609582462974,
+    "profit_factor": 1.9647768325556725,
+    "max_consecutive_wins": 9,
+    "max_consecutive_losses": 4,
+    "win_rate_weighted_return": 0.002847471540802822,
+    "trade_frequency": 0.9900990099009901,
+    "total_trades": "100"
+  },
+  "validation_results": {
+    "data_quality": {
+      "spy_data_points": 501,
+      "macro_indicators": 14,
+      "data_completeness": 0.95
+    },
+    "regime_consistency": {
+      "confidence_threshold_met": true,
+      "probability_sum": 0.9999999999999999
+    }
+  },
+  "rlmf_analysis": {
+    "statistical_arbitrage": {
+      "overall_signal": 0.0,
+      "confidence": 0.0,
+      "individual_signals": {},
+      "signal_strength": 0.0,
+      "direction": "NEUTRAL"
+    },
+    "market_feedback": {
+      "prediction_accuracy": 0.0,
+      "return_alignment": 0.0,
+      "volatility_prediction": 0.0,
+      "regime_persistence": 0.0,
+      "macro_consistency": 0.0
+    },
+    "adaptation_status": {
+      "status": "initializing",
+      "weights": {
+        "trend_strength": 1.0,
+        "volatility_regime": 1.0,
+        "momentum_persistence": 1.0,
+        "macro_alignment": 1.0,
+        "correlation_shift": 1.0
+      },
+      "performance": 0.5,
+      "feedback_count": 0
+    },
+    "learning_rate": 0.01
+  },
+  "confidence_analysis": {},
+  "regime_detection": {},
+  "llm_insights": {},
+  "llm_api_insights": {},
+  "final_confidence": {
+    "final_confidence": 0.8477886221164499
+  },
+  "enhanced_recommendations": {
+    "primary_strategy": "RANGE_TRADING",
+    "risk_level": "high",
+    "position_sizing": "MODERATE",
+    "time_horizon": "MEDIUM",
+    "overweight_sectors": [],
+    "underweight_sectors": [],
+    "neutral_sectors": [],
+    "key_actions": [
+      "범위 내 거래",
+      "지지/저항선 활용"
+    ],
+    "risk_warnings": [],
+    "sector_rotation": [],
+    "strategy": "Momentum following - 순환적 섹터 중 선도 섹터 집중"
+  },
+  "random_forest_info": {
+    "model_used": true,
+    "accuracy": null,
+    "trained_at": "2025-07-24T16:02:56.022593"
+  }
+}

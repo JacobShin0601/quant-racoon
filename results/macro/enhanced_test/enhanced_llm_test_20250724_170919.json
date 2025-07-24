@@ -1,0 +1,49 @@
+{
+  "session_uuid": "f8a9a17d-4088-4a37-b851-0691be2479a1",
+  "current_regime": "SIDEWAYS",
+  "confidence": 0.5382659082606612,
+  "probabilities": {
+    "TRENDING_UP": 0.07973397462185933,
+    "TRENDING_DOWN": 0.07247740326169066,
+    "VOLATILE": 0.0,
+    "SIDEWAYS": 0.8477886221164499
+  },
+  "llm_api_insights": {
+    "regime_validation": {
+      "consistency": 0.5,
+      "supporting_factors": [],
+      "conflicting_factors": [],
+      "alternative_regimes": []
+    },
+    "contextual_factors": {
+      "seasonal": {
+        "current_season": "summer_weakness",
+        "seasonal_bias": "cautious",
+        "confidence_modifier": 0.95
+      }
+    },
+    "risk_adjustments": {
+      "identified_risks": [],
+      "risk_level": "low",
+      "mitigation_strategies": []
+    },
+    "confidence_modifiers": [
+      1.0,
+      0.95,
+      1.1
+    ],
+    "strategic_recommendations": [
+      "레인지 바운드 전략 및 평균 회귀 전략 활용",
+      "여름철 약세 패턴 고려한 신중한 접근"
+    ],
+    "api_stats": {
+      "total_calls": 0,
+      "successful_calls": 0,
+      "failed_calls": 0,
+      "avg_response_time": 0.0,
+      "success_rate": 0.0
+    }
+  },
+  "timestamp": "2025-07-24T17:09:19.117817",
+  "analysis_type": "enhanced_llm_test"
+}

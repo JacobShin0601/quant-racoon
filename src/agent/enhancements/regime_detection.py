@@ -121,7 +121,7 @@ class DynamicRegimeSwitchingDetector:
             }
     
     def analyze_regime_stability(self, spy_data: pd.DataFrame, lookback_periods: int = 5) -> Dict[str, Any]:
-        """최근 regime 안정성 분석"""
+        """최근 regime 안정성 분석 (고도화)"""
         try:
             if len(spy_data) < self.window_size * lookback_periods:
                 return {'stability_score': 0.5, 'trend_consistency': 0.5}
@@ -131,6 +131,9 @@ class DynamicRegimeSwitchingDetector:
             # 여러 기간에 걸친 안정성 평가
             stability_scores = []
             trend_scores = []
+            volatility_scores = []
+            momentum_scores = []
+            correlation_scores = []
             
             for i in range(lookback_periods):
                 start_idx = -(self.window_size * (i + 1))
@@ -138,22 +141,57 @@ class DynamicRegimeSwitchingDetector:
                 
                 period_returns = spy_returns.iloc[start_idx:end_idx]
                 
-                # 변동성 안정성
+                # 1. 변동성 안정성
                 vol_stability = 1.0 - (period_returns.std() / period_returns.mean()) if period_returns.mean() != 0 else 0.5
                 stability_scores.append(max(0.0, min(1.0, vol_stability)))
                 
-                # 트렌드 일관성
+                # 2. 트렌드 일관성
                 positive_ratio = np.mean(period_returns > 0)
                 trend_consistency = abs(positive_ratio - 0.5) * 2  # 0.5에서 멀수록 일관된 트렌드
                 trend_scores.append(trend_consistency)
+                
+                # 3. 변동성 일관성 (새로 추가)
+                vol_consistency = 1.0 - period_returns.rolling(5).std().std() / period_returns.std() if period_returns.std() > 0 else 0.5
+                volatility_scores.append(max(0.0, min(1.0, vol_consistency)))
+                
+                # 4. 모멘텀 안정성 (새로 추가)
+                momentum = period_returns.rolling(5).mean()
+                momentum_stability = 1.0 - momentum.std() / abs(momentum.mean()) if abs(momentum.mean()) > 0 else 0.5
+                momentum_scores.append(max(0.0, min(1.0, momentum_stability)))
+                
+                # 5. 상관관계 안정성 (새로 추가)
+                if len(period_returns) > 10:
+                    # 5일 이동상관관계의 변동성
+                    rolling_corr = period_returns.rolling(5).corr(period_returns.shift(1))
+                    corr_stability = 1.0 - rolling_corr.std() if not rolling_corr.isna().all() else 0.5
+                    correlation_scores.append(max(0.0, min(1.0, corr_stability)))
+                else:
+                    correlation_scores.append(0.5)
+            
+            # 종합 안정성 점수 계산 (가중 평균)
+            weights = [0.3, 0.25, 0.2, 0.15, 0.1]  # 변동성 > 트렌드 > 변동성일관성 > 모멘텀 > 상관관계
+            stability_score = np.average([
+                np.mean(stability_scores),
+                np.mean(trend_scores),
+                np.mean(volatility_scores),
+                np.mean(momentum_scores),
+                np.mean(correlation_scores)
+            ], weights=weights)
             
             return {
-                'stability_score': np.mean(stability_scores),
+                'stability_score': stability_score,
                 'trend_consistency': np.mean(trend_scores),
+                'volatility_consistency': np.mean(volatility_scores),
+                'momentum_stability': np.mean(momentum_scores),
+                'correlation_stability': np.mean(correlation_scores),
                 'volatility_trend': 'increasing' if stability_scores[-1] < stability_scores[0] else 'decreasing',
+                'overall_trend': 'improving' if stability_score > 0.6 else 'deteriorating' if stability_score < 0.4 else 'stable',
                 'period_analysis': {
                     'stability_scores': stability_scores,
-                    'trend_scores': trend_scores
+                    'trend_scores': trend_scores,
+                    'volatility_scores': volatility_scores,
+                    'momentum_scores': momentum_scores,
+                    'correlation_scores': correlation_scores
                 }
             }
             
