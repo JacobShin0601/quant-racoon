@@ -213,6 +213,18 @@ class TechnicalIndicators:
         return rsi
 
     @staticmethod
+    def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
+        """Relative Strength Index (RSI) 계산 - 공개 메서드"""
+        return TechnicalIndicators._calculate_rsi(series, period)
+
+    @staticmethod
+    def calculate_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
+        """Average True Range (ATR) 계산 - 공개 메서드"""
+        return TechnicalIndicators._calculate_atr(
+            df["high"], df["low"], df["close"], period
+        )
+
+    @staticmethod
     def _calculate_donchian_channels(
         high: pd.Series, low: pd.Series, period: int = 20
     ) -> Tuple[pd.Series, pd.Series, pd.Series]:
