@@ -122,17 +122,15 @@ class TrainTestEvaluator:
         self.portfolio_results_path = portfolio_results_path
         self.results = {}
         self.logger = Logger()
-        
+
         # config에서 output 경로 가져오기
         output_config = self.config.get("output", {})
         logs_folder = output_config.get("logs_folder", "log")
         self.logger.set_log_dir(logs_folder)
-        
+
         # 로거 설정
-        self.logger.setup_logger(
-            strategy="train_test_evaluation", mode="evaluator"
-        )
-        
+        self.logger.setup_logger(strategy="train_test_evaluation", mode="evaluator")
+
         self.evaluation_start_time = datetime.now()
         self.execution_uuid = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -253,8 +251,25 @@ class TrainTestEvaluator:
             with open(self.optimization_results_path, "r", encoding="utf-8") as f:
                 results = json.load(f)
 
-            self.logger.log_success(f"최적화 결과 로드 완료: {len(results)}개 조합")
-            return results
+            # 실패한 전략 필터링 (-999999 점수 제외)
+            filtered_results = {}
+            failed_count = 0
+
+            for key, result in results.items():
+                score = result.get("best_score", -999999.0)
+                if score > -999999.0:
+                    filtered_results[key] = result
+                else:
+                    failed_count += 1
+
+            print(
+                f"🔍 필터링: {len(results)}개 중 {len(filtered_results)}개 성공, {failed_count}개 실패 제외"
+            )
+
+            self.logger.log_success(
+                f"최적화 결과 로드 완료: {len(filtered_results)}개 성공 조합 (실패 {failed_count}개 제외)"
+            )
+            return filtered_results
         except Exception as e:
             self.logger.log_error(f"최적화 결과 로드 실패: {e}")
             return {}
@@ -266,9 +281,11 @@ class TrainTestEvaluator:
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
             results_dir = Path(results_folder)
-            
+
             if not results_dir.exists():
-                self.logger.log_warning(f"{results_folder} 디렉토리가 존재하지 않습니다")
+                self.logger.log_warning(
+                    f"{results_folder} 디렉토리가 존재하지 않습니다"
+                )
                 return None
 
             # hyperparam_optimization_*.json 파일들 찾기
@@ -316,7 +333,7 @@ class TrainTestEvaluator:
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
             results_dir = Path(results_folder)
-            
+
             if not results_dir.exists():
                 return None
 
@@ -375,7 +392,7 @@ class TrainTestEvaluator:
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
             results_dir = Path(results_folder)
-            
+
             if not results_dir.exists():
                 return None
 
@@ -611,12 +628,14 @@ class TrainTestEvaluator:
         print(f"🔍 최적화 결과 분석:")
         print(f"  - 최적화 결과 키 수: {len(optimization_results)}")
         print(f"  - 최적화 결과 키 예시: {list(optimization_results.keys())[:5]}")
-        
+
         if portfolio_results:
             print(f"  - 포트폴리오 결과 키: {list(portfolio_results.keys())}")
             if "symbol_strategies" in portfolio_results:
                 symbol_strategies = portfolio_results["symbol_strategies"]
-                print(f"  - 포트폴리오 symbol_strategies: {list(symbol_strategies.keys())}")
+                print(
+                    f"  - 포트폴리오 symbol_strategies: {list(symbol_strategies.keys())}"
+                )
             else:
                 print(f"  - 포트폴리오에 symbol_strategies 없음")
 
@@ -645,23 +664,27 @@ class TrainTestEvaluator:
                     if result.get("symbol") == symbol:
                         score = result.get("best_score", -999999.0)
                         strategy_name = result.get("strategy_name", "")
-                        
+
                         # -999999 점수는 제외하고 실제 성공한 전략만 고려
                         if score > -999999.0 and score > best_score:
                             best_score = score
                             best_strategy_candidate = strategy_name
                             best_params_candidate = result.get("best_params", {})
                             found = True
-                            print(f"🔍 {symbol} 성공한 전략 발견: {strategy_name} (점수: {score:.3f})")
+                            print(
+                                f"🔍 {symbol} 성공한 전략 발견: {strategy_name} (점수: {score:.3f})"
+                            )
 
                 if found:
                     best_strategy = best_strategy_candidate
                     best_params = best_params_candidate
-                    print(f"✅ {symbol} 최적 전략 선택: {best_strategy} (점수: {best_score:.3f})")
+                    print(
+                        f"✅ {symbol} 최적 전략 선택: {best_strategy} (점수: {best_score:.3f})"
+                    )
                 else:
                     # 성공한 전략이 없으면 패턴 매칭으로 fallback
                     print(f"🔍 {symbol} 성공한 전략 없음, 패턴 매칭 시도...")
-                    
+
                     # 패턴 1: "strategy_symbol" 형태
                     for key, result in optimization_results.items():
                         if key.endswith(f"_{symbol}"):
@@ -684,7 +707,9 @@ class TrainTestEvaluator:
             if not best_strategy:
                 print(f"⚠️ {symbol}의 최적 전략을 찾을 수 없습니다")
                 # 디버깅을 위해 해당 symbol과 관련된 키들 출력
-                related_keys = [key for key in optimization_results.keys() if symbol in key]
+                related_keys = [
+                    key for key in optimization_results.keys() if symbol in key
+                ]
                 print(f"  - 관련 키들: {related_keys[:5]}")  # 최대 5개만 출력
                 continue
 
@@ -1458,14 +1483,14 @@ class TrainTestEvaluator:
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"performance_evaluation_{timestamp}.txt"
-            
+
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
-            
+
             # results 폴더 생성
             os.makedirs(results_folder, exist_ok=True)
-            
+
             output_path = os.path.join(results_folder, filename)
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -1732,7 +1757,7 @@ class TrainTestEvaluator:
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
-            
+
             # results 폴더 생성
             os.makedirs(results_folder, exist_ok=True)
 
@@ -1839,7 +1864,7 @@ class TrainTestEvaluator:
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             logs_folder = output_config.get("logs_folder", "log")
-            
+
             # 로그 디렉토리 생성
             log_dir = Path(logs_folder)
             log_dir.mkdir(exist_ok=True)
@@ -2578,75 +2603,79 @@ class TrainTestEvaluator:
         except Exception:
             return 0.0
 
-    def _get_end_date_from_csv(self, symbol: str, target_date: str = None) -> Optional[Dict[str, Any]]:
+    def _get_end_date_from_csv(
+        self, symbol: str, target_date: str = None
+    ) -> Optional[Dict[str, Any]]:
         """원본 CSV 파일에서 특정 날짜의 주가 데이터를 가져오기"""
         try:
             # CSV 파일 경로 구성 - 실제 파일명 패턴에 맞게 수정
             data_path = Path(self.data_dir)
-            
+
             # 파일명 패턴 찾기 (symbol_*.csv 형태)
             pattern = f"{symbol}_*.csv"
             files = list(data_path.glob(pattern))
-            
+
             if not files:
                 return None
-            
+
             # 가장 최신 파일 선택
             latest_file = max(files, key=lambda x: x.stat().st_mtime)
-            
+
             # CSV 파일 읽기
             df = pd.read_csv(latest_file)
-            
+
             # 날짜 컬럼 찾기
             date_column = None
-            for col in ['date', 'Date', 'datetime', 'DateTime']:
+            for col in ["date", "Date", "datetime", "DateTime"]:
                 if col in df.columns:
                     date_column = col
                     break
-            
+
             if date_column is None:
                 return None
-            
+
             # 날짜 컬럼을 datetime으로 변환
             df[date_column] = pd.to_datetime(df[date_column])
-            
+
             if target_date:
                 # 설정 파일의 end_date와 정확히 일치하는 날짜 찾기
                 target_dt = pd.to_datetime(target_date)
                 exact_match = df[df[date_column] == target_dt]
-                
+
                 if not exact_match.empty:
                     row = exact_match.iloc[0]
                 else:
                     # 정확한 일치가 없으면 가장 가까운 날짜 찾기
-                    df['date_diff'] = abs(df[date_column] - target_dt)
-                    closest_idx = df['date_diff'].idxmin()
+                    df["date_diff"] = abs(df[date_column] - target_dt)
+                    closest_idx = df["date_diff"].idxmin()
                     row = df.loc[closest_idx]
             else:
                 # target_date가 없으면 마지막 데이터 사용
                 row = df.iloc[-1]
-            
+
             # 변동률 계산 (전일 대비)
             change_rate = 0.0
             if len(df) > 1:
                 # 현재 행의 인덱스 찾기
                 current_idx = df[df[date_column] == row[date_column]].index[0]
                 if current_idx > 0:
-                    prev_close = df.iloc[current_idx - 1].get('close', row.get('close', 0))
-                    curr_close = row.get('close', 0)
+                    prev_close = df.iloc[current_idx - 1].get(
+                        "close", row.get("close", 0)
+                    )
+                    curr_close = row.get("close", 0)
                     if prev_close > 0:
                         change_rate = ((curr_close - prev_close) / prev_close) * 100
-            
+
             return {
-                'date': row[date_column].strftime('%Y-%m-%d'),
-                'open': row.get('open', 0),
-                'high': row.get('high', 0),
-                'low': row.get('low', 0),
-                'close': row.get('close', 0),
-                'volume': row.get('volume', 0),
-                'change_rate': change_rate
+                "date": row[date_column].strftime("%Y-%m-%d"),
+                "open": row.get("open", 0),
+                "high": row.get("high", 0),
+                "low": row.get("low", 0),
+                "close": row.get("close", 0),
+                "volume": row.get("volume", 0),
+                "change_rate": change_rate,
             }
-            
+
         except Exception as e:
             self.logger.log_warning(f"CSV에서 {symbol} end_date 데이터 로드 실패: {e}")
             return None
@@ -2664,7 +2693,7 @@ class TrainTestEvaluator:
         # 설정 파일에서 end_date 가져오기
         config_end_date = None
         try:
-            config_end_date = self.config.get('data', {}).get('end_date')
+            config_end_date = self.config.get("data", {}).get("end_date")
         except Exception as e:
             self.logger.log_warning(f"설정 파일에서 end_date 로드 실패: {e}")
 
@@ -2682,17 +2711,17 @@ class TrainTestEvaluator:
         for symbol, weight in sorted_symbols:
             # 1. 원본 CSV 파일에서 end_date 데이터 찾기
             csv_data = self._get_end_date_from_csv(symbol, config_end_date)
-            
+
             if csv_data:
                 # CSV에서 찾은 데이터 사용
-                end_date = csv_data['date']
-                open_price = csv_data['open']
-                high_price = csv_data['high']
-                low_price = csv_data['low']
-                close_price = csv_data['close']
-                volume = csv_data['volume']
-                change_rate = csv_data['change_rate']
-                
+                end_date = csv_data["date"]
+                open_price = csv_data["open"]
+                high_price = csv_data["high"]
+                low_price = csv_data["low"]
+                close_price = csv_data["close"]
+                volume = csv_data["volume"]
+                change_rate = csv_data["change_rate"]
+
                 # 거래량 포맷팅 (천 단위)
                 if volume > 1000000:
                     volume_str = f"{volume/1000000:.1f}M"

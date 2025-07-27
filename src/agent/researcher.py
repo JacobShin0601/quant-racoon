@@ -66,7 +66,7 @@ class IndividualStrategyResearcher:
         source_config_path: str = "config/config_swing.json",  # swing config를 기본값으로 설정
         data_dir: str = "data",
         results_dir: str = None,  # None이면 config에서 가져옴
-        log_dir: str = None,      # None이면 config에서 가져옴
+        log_dir: str = None,  # None이면 config에서 가져옴
         analysis_dir: Optional[str] = None,
         auto_detect_source_config: bool = False,  # 자동 감지 비활성화
         uuid: Optional[str] = None,
@@ -86,7 +86,7 @@ class IndividualStrategyResearcher:
         output_config = self.source_config.get("output", {})
         self.results_dir = results_dir or output_config.get("results_folder", "results")
         self.log_dir = log_dir or output_config.get("logs_folder", "log")
-        
+
         # analysis_dir이 None이면 config에서 가져오거나 기본값 사용
         if analysis_dir is None:
             results_folder = output_config.get("results_folder", "results")
@@ -111,9 +111,7 @@ class IndividualStrategyResearcher:
             )
         else:
             # UUID가 없어도 기본 로거 설정
-            self.logger.setup_logger(
-                strategy="individual_research", mode="research"
-            )
+            self.logger.setup_logger(strategy="individual_research", mode="research")
 
         # 평가기 초기화 (단일 종목 모드)
         self.evaluator = TrainTestEvaluator(
@@ -243,20 +241,20 @@ class IndividualStrategyResearcher:
         """source config에서 심볼 목록 로드"""
         logger.info(f"🔍 source_config_path: {self.source_config_path}")
         logger.info(f"🔍 source_config keys: {list(self.source_config.keys())}")
-        
+
         # 먼저 data 섹션에서 시도
         data_section = self.source_config.get("data", {})
         symbols = data_section.get("symbols", [])
-        
+
         # data 섹션에 없으면 scrapper 섹션에서 시도
         if not symbols:
             scrapper_section = self.source_config.get("scrapper", {})
             symbols = scrapper_section.get("symbols", [])
             logger.info(f"🔍 scrapper section keys: {list(scrapper_section.keys())}")
-        
+
         logger.info(f"🔍 로드된 심볼들: {symbols}")
         logger.info(f"🔍 심볼 개수: {len(symbols)}")
-        
+
         return symbols
 
     def _load_source_config_settings(self) -> Dict[str, Any]:
@@ -626,6 +624,7 @@ class IndividualStrategyResearcher:
             if self.verbose:
                 logger.error(f"{symbol} - {strategy_name} 최적화 중 오류: {e}")
                 import traceback
+
                 logger.error(f"상세 오류: {traceback.format_exc()}")
             return None
 
@@ -641,7 +640,7 @@ class IndividualStrategyResearcher:
             param_values = list(param_ranges.values())
 
             all_combinations = list(product(*param_values))
-            max_combinations = settings.get("max_combinations", 1000)
+            max_combinations = settings.get("max_combinations", 3000)
 
             if len(all_combinations) > max_combinations:
                 if self.verbose:
@@ -695,9 +694,9 @@ class IndividualStrategyResearcher:
             import optuna
             import logging
 
-            # Optuna 로그 레벨을 WARNING으로 설정하여 불필요한 로그 억제
+            # Optuna 로그 레벨을 ERROR로 설정하여 불필요한 로그 억제
             optuna_logger = logging.getLogger("optuna")
-            optuna_logger.setLevel(logging.WARNING)
+            optuna_logger.setLevel(logging.ERROR)
 
             best_score_so_far = -999999.0
             best_params_so_far = {}
@@ -751,7 +750,9 @@ class IndividualStrategyResearcher:
             for trial in study.trials:
                 if trial.value is not None and trial.value >= -999999.0:
                     # trial.duration이 None이거나 유효하지 않을 경우 기본값 사용
-                    evaluation_time = trial.duration if trial.duration is not None else 0.0
+                    evaluation_time = (
+                        trial.duration if trial.duration is not None else 0.0
+                    )
                     result = {
                         "params": trial.params,
                         "score": trial.value,
@@ -759,7 +760,7 @@ class IndividualStrategyResearcher:
                         "combination_index": trial.number,
                     }
                     all_results.append(result)
-            
+
             # 점수별로 정렬 (상위 10개만 유지)
             all_results.sort(key=lambda x: x["score"], reverse=True)
             all_results = all_results[:10]
@@ -882,12 +883,14 @@ class IndividualStrategyResearcher:
             # all_results는 최종 최고 결과만 포함
             all_results = []
             if best_score > -999999.0:
-                all_results.append({
-                    "params": best_individual,
-                    "score": best_score,
-                    "evaluation_time": 0.0,
-                    "combination_index": 0,
-                })
+                all_results.append(
+                    {
+                        "params": best_individual,
+                        "score": best_score,
+                        "evaluation_time": 0.0,
+                        "combination_index": 0,
+                    }
+                )
 
             return {
                 "params": best_individual,
@@ -916,25 +919,17 @@ class IndividualStrategyResearcher:
         if not symbols:
             symbols = self._load_source_config_symbols()
 
-        logger.info(f"📊 대상: {len(strategies)}개 전략, {len(symbols)}개 심볼")
-        logger.info(f"🔍 전략 목록: {strategies[:5]}...")
-        logger.info(f"🔍 심볼 목록: {symbols[:5]}...")
-
         # 최적화 방법 설정 (config에서 로드)
         if optimization_method is None:
             optimization_method = self.source_config.get("researcher", {}).get(
                 "optimization_method", "bayesian_optimization"
             )
-        logger.info(f"🔧 최적화 방법: {optimization_method}")
 
         # 데이터 로드 및 Train/Test 분할
-        logger.info(f"📁 데이터 디렉토리: {self.data_dir}")
         data_dict = load_and_preprocess_data(self.data_dir, symbols)
         if not data_dict:
             logger.error(f"데이터를 로드할 수 없습니다: {self.data_dir}")
             return {}
-        
-        logger.info(f"✅ 데이터 로드 완료: {len(data_dict)}개 심볼")
 
         # Train/Test 분할 (train 데이터만 사용)
         if use_train_data_only:
@@ -943,7 +938,6 @@ class IndividualStrategyResearcher:
                 data_dict, train_ratio
             )
             data_dict = train_data_dict  # train 데이터만 사용
-            logger.info(f"📊 Train/Test 분할 완료 (train_ratio: {train_ratio})")
 
         results = {}
         total_combinations = len(strategies) * len(symbols)
@@ -951,17 +945,18 @@ class IndividualStrategyResearcher:
         successful_combinations = 0
         failed_combinations = 0
 
-        logger.info(f"🎯 총 {total_combinations}개 조합 최적화 시작")
+        logger.info(
+            f"🎯 {len(strategies)}개 전략 × {len(symbols)}개 심볼 = {total_combinations}개 조합 최적화 시작"
+        )
 
         # 종목별로 그룹화하여 처리
         for symbol_idx, symbol in enumerate(symbols):
             # 전체 프로세스 진행률 계산 (종목 기준)
             symbol_progress = (symbol_idx / len(symbols)) * 100
-            logger.info(f"[전체 프로세스 {symbol_progress:.1f}% 완료...]")
-            logger.info(f"({symbol_idx+1}/{len(symbols)}) {symbol}의 최적 전략 탐색 중... (총 {len(strategies)}개 전략 테스트)")
-            
+            logger.info(f"[{symbol_progress:.1f}%] {symbol} 최적화 중...")
+
             symbol_results = []
-            
+
             for strategy_name in strategies:
                 current_combination += 1
 
@@ -977,24 +972,41 @@ class IndividualStrategyResearcher:
                 else:
                     failed_combinations += 1
 
-            # 해당 종목에서 상위 2개 전략만 로그 출력
+            # 해당 종목에서 상위 1개 전략만 로그 출력
             if symbol_results:
                 symbol_results.sort(key=lambda x: x.best_score, reverse=True)
-                logger.info(f"({symbol_idx+1}/{len(symbols)}) {symbol}의 최적 전략 (상위2개):")
-                for i, result in enumerate(symbol_results[:2], 1):
-                    logger.info(f"  {i}. {result.strategy_name} (점수: {result.best_score:.2f})")
+                best_result = symbol_results[0]
+                logger.info(
+                    f"  → {best_result.strategy_name} (점수: {best_result.best_score:.2f})"
+                )
             else:
-                logger.warning(f"({symbol_idx+1}/{len(symbols)}) {symbol}: 모든 전략 최적화 실패")
-            
+                logger.warning(f"  → 모든 전략 최적화 실패")
+
             logger.info("")  # 종목 간 구분을 위한 빈 줄
 
-        logger.info(f"✅ 종합 연구 완료: {len(results)}개 조합 최적화됨")
-        logger.info(f"📊 성공: {successful_combinations}개, 실패: {failed_combinations}개")
+        logger.info(
+            f"✅ 완료: {successful_combinations}개 성공, {failed_combinations}개 실패"
+        )
         return results
 
     def save_research_results(self, results: Dict[str, OptimizationResult]):
         """연구 결과 저장"""
         try:
+            # 실패한 전략 필터링 (-999999 점수 제외)
+            filtered_results = {}
+            failed_count = 0
+
+            for key, result in results.items():
+                if result.best_score > -999999.0:
+                    filtered_results[key] = result
+                else:
+                    failed_count += 1
+
+            if self.verbose:
+                logger.info(
+                    f"🔍 필터링: {len(results)}개 중 {len(filtered_results)}개 성공, {failed_count}개 실패 제외"
+                )
+
             # 날짜와 UUID로 파일명 생성
             current_date = datetime.now().strftime("%Y%m%d")
             if hasattr(self, "uuid") and self.uuid:
@@ -1005,10 +1017,10 @@ class IndividualStrategyResearcher:
 
             # 결과를 JSON 직렬화 가능한 형태로 변환
             serializable_results = {}
-            for key, result in results.items():
+            for key, result in filtered_results.items():  # Use filtered_results here
                 # execution_time을 안전하게 float로 변환
                 try:
-                    if hasattr(result.execution_time, 'total_seconds'):
+                    if hasattr(result.execution_time, "total_seconds"):
                         execution_time_seconds = result.execution_time.total_seconds()
                     elif isinstance(result.execution_time, (int, float)):
                         execution_time_seconds = float(result.execution_time)
@@ -1016,7 +1028,7 @@ class IndividualStrategyResearcher:
                         execution_time_seconds = 0.0
                 except (TypeError, ValueError, AttributeError):
                     execution_time_seconds = 0.0
-                
+
                 # all_results 내부의 evaluation_time도 안전하게 변환
                 serializable_all_results = []
                 for all_result in result.all_results:
@@ -1024,16 +1036,20 @@ class IndividualStrategyResearcher:
                     if "evaluation_time" in serializable_all_result:
                         try:
                             eval_time = serializable_all_result["evaluation_time"]
-                            if hasattr(eval_time, 'total_seconds'):
-                                serializable_all_result["evaluation_time"] = eval_time.total_seconds()
+                            if hasattr(eval_time, "total_seconds"):
+                                serializable_all_result["evaluation_time"] = (
+                                    eval_time.total_seconds()
+                                )
                             elif isinstance(eval_time, (int, float)):
-                                serializable_all_result["evaluation_time"] = float(eval_time)
+                                serializable_all_result["evaluation_time"] = float(
+                                    eval_time
+                                )
                             else:
                                 serializable_all_result["evaluation_time"] = 0.0
                         except (TypeError, ValueError, AttributeError):
                             serializable_all_result["evaluation_time"] = 0.0
                     serializable_all_results.append(serializable_all_result)
-                
+
                 serializable_results[key] = {
                     "strategy_name": result.strategy_name,
                     "symbol": result.symbol,
@@ -1153,8 +1169,12 @@ def main():
         "--source-config", default="config/config_swing.json", help="소스 설정 파일"
     )
     parser.add_argument("--data-dir", default="data", help="데이터 디렉토리")
-    parser.add_argument("--results-dir", default=None, help="결과 디렉토리 (None이면 config에서 가져옴)")
-    parser.add_argument("--log-dir", default=None, help="로그 디렉토리 (None이면 config에서 가져옴)")
+    parser.add_argument(
+        "--results-dir", default=None, help="결과 디렉토리 (None이면 config에서 가져옴)"
+    )
+    parser.add_argument(
+        "--log-dir", default=None, help="로그 디렉토리 (None이면 config에서 가져옴)"
+    )
     parser.add_argument(
         "--optimization-method",
         choices=["grid_search", "bayesian_optimization", "genetic_algorithm"],

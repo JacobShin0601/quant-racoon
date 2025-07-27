@@ -24,6 +24,7 @@ from actions.portfolio_optimization import (
 )
 from actions.portfolio_weight import PortfolioWeightCalculator
 from actions.calculate_index import StrategyParams
+
 try:
     from .helper import (
         PortfolioConfig,
@@ -107,12 +108,12 @@ class AdvancedPortfolioManager:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)
             self.logger.log_success(f"✅ 설정 파일 로드 완료")
-            
+
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             logs_folder = output_config.get("logs_folder", "log")
             self.logger.set_log_dir(logs_folder)
-            
+
             # UUID 설정 - logger를 통해 설정
             if self.uuid:
                 self.logger.setup_logger(
@@ -123,7 +124,7 @@ class AdvancedPortfolioManager:
                 self.logger.setup_logger(
                     strategy="portfolio_optimization", mode="portfolio"
                 )
-                
+
         except Exception as e:
             print(f"❌ 설정 파일 로드 실패: {e}")
             # 기본 로거 설정
@@ -181,10 +182,25 @@ class AdvancedPortfolioManager:
                 print(f"🔍 결과 키 예시: {list(results.keys())[:3]}")
                 print(f"🔍 첫 번째 결과 내용: {list(results.items())[:1]}")
 
-            self.logger.log_success(
-                f"개별 최적화 결과 로드 완료: {len(results)}개 조합"
+            # 실패한 전략 필터링 (-999999 점수 제외)
+            filtered_results = {}
+            failed_count = 0
+
+            for key, result in results.items():
+                score = result.get("best_score", -999999.0)
+                if score > -999999.0:
+                    filtered_results[key] = result
+                else:
+                    failed_count += 1
+
+            print(
+                f"🔍 필터링: {len(results)}개 중 {len(filtered_results)}개 성공, {failed_count}개 실패 제외"
             )
-            return results
+
+            self.logger.log_success(
+                f"개별 최적화 결과 로드 완료: {len(filtered_results)}개 성공 조합 (실패 {failed_count}개 제외)"
+            )
+            return filtered_results
 
         except Exception as e:
             print(f"❌ 개별 최적화 결과 로드 실패: {e}")
@@ -203,15 +219,15 @@ class AdvancedPortfolioManager:
 
         # 여러 섹션에서 심볼 찾기 시도
         symbols = (
-            self.config.get("data", {}).get("symbols", []) or
-            self.config.get("portfolio", {}).get("symbols", []) or
-            self.config.get("scrapper", {}).get("symbols", [])
+            self.config.get("data", {}).get("symbols", [])
+            or self.config.get("portfolio", {}).get("symbols", [])
+            or self.config.get("scrapper", {}).get("symbols", [])
         )
-        
+
         print(f"🔍 찾은 심볼들: {symbols}")
         print(f"🔍 최적화 결과 키 수: {len(optimization_results)}")
         print(f"🔍 최적화 결과 키 예시: {list(optimization_results.keys())[:5]}")
-        
+
         symbol_best_strategies = {}
 
         for symbol in symbols:
@@ -228,10 +244,15 @@ class AdvancedPortfolioManager:
                     score = result.get("best_score", -999999.0)
                     strategy_name = result.get("strategy_name", "")
 
+                    # 실패한 전략 제외 (-999999 점수)
+                    if score <= -999999.0:
+                        print(f"  - {strategy_name}: 실패 (점수: {score:.3f}) - 제외")
+                        continue
+
                     # 모든 점수 로그 출력 (디버깅용)
                     print(f"  - {strategy_name}: 점수 {score:.3f}")
 
-                    # 점수 비교 (모든 점수 허용)
+                    # 점수 비교 (성공한 전략만)
                     if score >= best_score:  # >= 로 변경하여 동점도 허용
                         best_score = score
                         best_strategy = strategy_name
@@ -359,6 +380,10 @@ class AdvancedPortfolioManager:
                 optimization_method = OptimizationMethod.SHARPE_MAXIMIZATION
             elif method_name == "sortino_maximization":
                 optimization_method = OptimizationMethod.SORTINO_MAXIMIZATION
+            elif method_name == "sortino_ratio":
+                optimization_method = (
+                    OptimizationMethod.SORTINO_MAXIMIZATION
+                )  # sortino_ratio를 sortino_maximization으로 매핑
             elif method_name == "risk_parity":
                 optimization_method = OptimizationMethod.RISK_PARITY
             elif method_name == "minimum_variance":
@@ -427,31 +452,23 @@ class AdvancedPortfolioManager:
             print(f"🔍 Fallback 방법: {fallback_method}")
             self.logger.log_info(f"🔍 Fallback 방법: {fallback_method}")
 
-            # PortfolioWeightCalculator 사용
-            weights_df = self.weight_calculator.calculate_optimal_weights(data_dict)
-
-            if weights_df.empty:
-                print("❌ Fallback 최적화 실패: 빈 결과")
-                self.logger.log_warning("❌ Fallback 최적화 실패: 빈 결과")
+            # 간단한 동등 비중 계산 (PortfolioWeightCalculator 대신)
+            symbols = list(data_dict.keys())
+            if not symbols:
+                print("❌ Fallback 최적화 실패: 데이터가 없음")
+                self.logger.log_warning("❌ Fallback 최적화 실패: 데이터가 없음")
                 return None
 
-            # 최신 비중 추출
-            latest_weights = weights_df.iloc[-1].to_dict()
+            # 동등 비중 계산
+            equal_weight = 1.0 / len(symbols)
+            normalized_weights = {symbol: equal_weight for symbol in symbols}
 
-            # CASH 제거하고 정규화
-            if "CASH" in latest_weights:
-                del latest_weights["CASH"]
-
-            # 비중 합계로 정규화
-            total_weight = sum(latest_weights.values())
-            if total_weight > 0:
-                normalized_weights = {
-                    k: v / total_weight for k, v in latest_weights.items()
-                }
-            else:
-                # 모든 비중이 0인 경우 동등 비중
-                symbols = list(latest_weights.keys())
-                normalized_weights = {symbol: 1.0 / len(symbols) for symbol in symbols}
+            print(
+                f"✅ Fallback 동등 비중 계산 완료: {len(symbols)}개 종목, 각 {equal_weight*100:.2f}%"
+            )
+            self.logger.log_success(
+                f"✅ Fallback 동등 비중 계산 완료: {len(symbols)}개 종목, 각 {equal_weight*100:.2f}%"
+            )
 
             # 성과 지표 계산 (간단한 추정)
             performance = {
@@ -580,7 +597,7 @@ class AdvancedPortfolioManager:
                     )
                 else:
                     print(f"  ⚠️ 전략에 없는 파라미터: {param_name} (무시됨)")
-            
+
             print(f"  - 적용된 유효 파라미터: {list(valid_params.keys())}")
 
             # 신호 생성
@@ -759,9 +776,9 @@ class AdvancedPortfolioManager:
             data_dict = {}
             # 여러 섹션에서 심볼 찾기 시도
             symbols = (
-                self.config.get("data", {}).get("symbols", []) or
-                self.config.get("portfolio", {}).get("symbols", []) or
-                self.config.get("scrapper", {}).get("symbols", [])
+                self.config.get("data", {}).get("symbols", [])
+                or self.config.get("portfolio", {}).get("symbols", [])
+                or self.config.get("scrapper", {}).get("symbols", [])
             )
             print(f"🔍 설정된 심볼들: {symbols}")
             self.logger.log_info(f"🔍 설정된 심볼들: {symbols}")
@@ -775,20 +792,24 @@ class AdvancedPortfolioManager:
 
             # time_horizon을 고려한 데이터 경로 구성
             # data_dir이 이미 time_horizon을 포함하고 있는지 확인
-            if self.time_horizon and not str(data_dir).endswith(f"/{self.time_horizon}"):
+            if self.time_horizon and not str(data_dir).endswith(
+                f"/{self.time_horizon}"
+            ):
                 data_path = Path(data_dir) / self.time_horizon
             else:
                 data_path = Path(data_dir)
-            
+
             print(f"🔍 time_horizon 기반 데이터 경로: {data_path}")
             self.logger.log_info(f"🔍 time_horizon 기반 데이터 경로: {data_path}")
-            
+
             # data_path가 존재하는지 확인
             if not data_path.exists():
                 print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
-                self.logger.log_error(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
+                self.logger.log_error(
+                    f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}"
+                )
                 return {}
-            
+
             print(f"🔍 최종 검색 경로: {data_path}")
             self.logger.log_info(f"🔍 최종 검색 경로: {data_path}")
 
@@ -809,7 +830,7 @@ class AdvancedPortfolioManager:
                     latest_file = max(files, key=lambda x: x.stat().st_mtime)
                     self.logger.log_info(f"🔍 {symbol} 파일 로드: {latest_file}")
                     df = pd.read_csv(latest_file)
-                    
+
                     # datetime 컬럼 처리
                     if "datetime" in df.columns:
                         df["datetime"] = pd.to_datetime(df["datetime"])
@@ -820,7 +841,7 @@ class AdvancedPortfolioManager:
                     else:
                         # 인덱스가 이미 datetime인 경우
                         df.index = pd.to_datetime(df.index)
-                    
+
                     data_dict[symbol] = df
                     self.logger.log_info(
                         f"✅ {symbol} 데이터 로드: {latest_file.name} (행: {len(df)})"
@@ -869,7 +890,7 @@ class AdvancedPortfolioManager:
         # 기본 제약조건 (설정 파일에서 읽기)
         min_weight = portfolio_config.get("min_weight", 0.0)
         max_weight = portfolio_config.get("max_weight", 1.0)
-        
+
         print(f"🔍 포트폴리오 제약조건 설정:")
         print(f"  - 최소 비중: {min_weight}")
         print(f"  - 최대 비중: {max_weight}")
@@ -915,16 +936,20 @@ class AdvancedPortfolioManager:
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
-            
+
             # results 폴더 생성
             os.makedirs(results_folder, exist_ok=True)
-            
+
             # UUID가 있으면 사용, 없으면 현재 시간 사용
             if self.uuid:
-                output_path = os.path.join(results_folder, f"portfolio_optimization_{self.uuid}.json")
+                output_path = os.path.join(
+                    results_folder, f"portfolio_optimization_{self.uuid}.json"
+                )
             else:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_path = os.path.join(results_folder, f"portfolio_optimization_{timestamp}.json")
+                output_path = os.path.join(
+                    results_folder, f"portfolio_optimization_{timestamp}.json"
+                )
 
         try:
             # 결과를 JSON 직렬화 가능한 형태로 변환
@@ -964,7 +989,7 @@ class AdvancedPortfolioManager:
                 serializable_result["returns_data"] = {
                     "columns": returns_df.columns.tolist(),
                     "index": returns_df.index.tolist(),
-                    "values": returns_df.values.tolist()
+                    "values": returns_df.values.tolist(),
                 }
 
             # 디렉토리 생성
@@ -1245,7 +1270,7 @@ class AdvancedPortfolioManager:
         """최신 개별 최적화 결과 파일 찾기"""
         try:
             self.logger.log_info("🔍 최신 최적화 결과 파일 검색 시작")
-            
+
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")

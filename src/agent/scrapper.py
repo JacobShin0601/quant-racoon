@@ -47,9 +47,7 @@ class DataScrapper:
             )
         else:
             # UUID가 없어도 기본 로거 설정
-            self.logger.setup_logger(
-                strategy="data_collection", mode="scrapper"
-            )
+            self.logger.setup_logger(strategy="data_collection", mode="scrapper")
 
     def run_scrapper(self) -> bool:
         """데이터 수집 실행"""
@@ -59,7 +57,7 @@ class DataScrapper:
             # 설정에서 심볼과 설정 가져오기 (data.symbols와 scrapper.symbols 둘 다 확인)
             data_config = self.config.get("data", {})
             scrapper_config = self.config.get("scrapper", {})
-            
+
             # 심볼 우선순위: scrapper.symbols > data.symbols
             symbols = scrapper_config.get("symbols", data_config.get("symbols", []))
             custom_tasks = data_config.get("custom_tasks", [])
@@ -72,8 +70,8 @@ class DataScrapper:
                 print(f"   - custom_tasks: {custom_tasks}")
                 return False
 
-            # 공통 설정 (scrapper 설정 우선, 없으면 data 설정 사용)
-            common_settings = scrapper_config if scrapper_config else data_config.get("common_settings", data_config)
+            # 공통 설정 (data 설정 우선, 없으면 scrapper 설정 사용)
+            common_settings = data_config if data_config else scrapper_config
 
             # 데이터 수집기 초기화
             collector = YahooFinanceDataCollector()
@@ -101,7 +99,7 @@ class DataScrapper:
                         )
                         df = collector.get_candle_data(
                             symbol=symbol,
-                            interval=common_settings.get("interval", "60m"),
+                            interval=common_settings.get("interval", "1d"),
                             start_date=common_settings.get("start_date"),
                             end_date=effective_end_date,
                             days_back=common_settings.get("lookback_days", 60),
@@ -121,7 +119,7 @@ class DataScrapper:
                             filepath = collector.save_to_csv(
                                 df=df_with_indicators,
                                 symbol=symbol,
-                                interval=common_settings.get("interval", "60m"),
+                                interval=common_settings.get("interval", "1d"),
                                 start_date=common_settings.get("start_date") or "auto",
                                 end_date=common_settings.get("end_date") or "auto",
                                 output_dir=self.data_dir,
@@ -157,7 +155,7 @@ class DataScrapper:
                         effective_end_date = self.end_date or task.get("end_date")
                         df = collector.get_candle_data(
                             symbol=symbol,
-                            interval=task.get("interval", "60m"),
+                            interval=task.get("interval", "1d"),
                             start_date=task.get("start_date"),
                             end_date=effective_end_date,
                             days_back=task.get("days_back", 60),
@@ -177,7 +175,7 @@ class DataScrapper:
                             filepath = collector.save_to_csv(
                                 df=df_with_indicators,
                                 symbol=symbol,
-                                interval=task.get("interval", "60m"),
+                                interval=task.get("interval", "1d"),
                                 start_date=task.get("start_date") or "auto",
                                 end_date=task.get("end_date") or "auto",
                                 output_dir=self.data_dir,
@@ -285,7 +283,7 @@ def main():
                 effective_end_date = args.end_date or data_config.get("end_date")
                 df = collector.get_candle_data(
                     symbol=symbol,
-                    interval=common_settings.get("interval", "15m"),
+                    interval=common_settings.get("interval", "1d"),
                     start_date=common_settings.get("start_date"),
                     end_date=effective_end_date,
                     days_back=common_settings.get(
@@ -350,7 +348,7 @@ def main():
                 filepath = collector.save_to_csv(
                     df=df_with_indicators,
                     symbol=symbol,
-                    interval=common_settings.get("interval", "15m"),
+                    interval=common_settings.get("interval", "1d"),
                     start_date=common_settings.get("start_date") or "auto",
                     end_date=common_settings.get("end_date") or "auto",
                     output_dir=args.data_dir,
@@ -383,7 +381,7 @@ def main():
                 effective_end_date = args.end_date or task.get("end_date")
                 df = collector.get_candle_data(
                     symbol=symbol,
-                    interval=task.get("interval", "15m"),
+                    interval=task.get("interval", "1d"),
                     start_date=task.get("start_date"),
                     end_date=effective_end_date,
                     days_back=task.get("days_back", 30),
@@ -446,7 +444,7 @@ def main():
                 filepath = collector.save_to_csv(
                     df=df_with_indicators,
                     symbol=symbol,
-                    interval=task.get("interval", "15m"),
+                    interval=task.get("interval", "1d"),
                     start_date=task.get("start_date") or "auto",
                     end_date=task.get("end_date") or "auto",
                     output_dir=args.data_dir,
