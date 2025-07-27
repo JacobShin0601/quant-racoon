@@ -318,13 +318,42 @@ class StockPredictionNetwork:
                     logger.warning(f"{symbol}: {col} 컬럼 없음")
                     stock_data[col] = stock_data.get("close", 100)  # 기본값
 
-            # 기본 피처들만 생성
+            # 확장된 기본 피처들 생성
             features["dual_momentum"] = self._calculate_dual_momentum(stock_data)
-            features["volatility_breakout"] = self._calculate_volatility_breakout(
-                stock_data
-            )
+            features["volatility_breakout"] = self._calculate_volatility_breakout(stock_data)
             features["swing_ema"] = self._calculate_swing_ema(stock_data)
             features["swing_rsi"] = self._calculate_swing_rsi(stock_data)
+            
+            # 추가 기술적 지표 피처들
+            features["swing_donchian"] = self._calculate_swing_donchian(stock_data)
+            features["stoch_donchian"] = self._calculate_stoch_donchian(stock_data)
+            features["whipsaw_prevention"] = self._calculate_whipsaw_prevention(stock_data)
+            features["donchian_rsi_whipsaw"] = self._calculate_donchian_rsi_whipsaw(stock_data)
+            features["volatility_filtered_breakout"] = self._calculate_volatility_filtered_breakout(stock_data)
+            features["multi_timeframe_whipsaw"] = self._calculate_multi_timeframe_whipsaw(stock_data)
+            features["adaptive_whipsaw"] = self._calculate_adaptive_whipsaw(stock_data)
+            features["cci_bollinger"] = self._calculate_cci_bollinger(stock_data)
+            features["mean_reversion"] = self._calculate_mean_reversion(stock_data)
+            features["swing_breakout"] = self._calculate_swing_breakout(stock_data)
+            features["swing_pullback_entry"] = self._calculate_swing_pullback_entry(stock_data)
+            features["swing_candle_pattern"] = self._calculate_swing_candle_pattern(stock_data)
+            features["swing_bollinger_band"] = self._calculate_swing_bollinger_band(stock_data)
+            features["swing_macd"] = self._calculate_swing_macd(stock_data)
+            
+            # 추가 가격 기반 피처들
+            features["atr_normalized"] = self._calculate_atr(stock_data) / stock_data["close"]
+            features["rsi_14"] = self._calculate_rsi(stock_data, 14) / 100 - 0.5  # -0.5 ~ 0.5 정규화
+            features["macd_signal"] = self._calculate_macd(stock_data) / stock_data["close"]
+            
+            # 새로운 고급 피처들
+            features["volume_price_trend"] = self._calculate_volume_price_trend(stock_data)
+            features["price_volume_oscillator"] = self._calculate_price_volume_oscillator(stock_data)
+            features["trend_strength"] = self._calculate_trend_strength(stock_data)
+            features["volatility_regime"] = self._calculate_volatility_regime(stock_data)
+            features["support_resistance"] = self._calculate_support_resistance_strength(stock_data)
+            features["momentum_divergence"] = self._calculate_momentum_divergence(stock_data)
+            features["volatility_skew"] = self._calculate_volatility_skew(stock_data)
+            features["market_microstructure"] = self._calculate_market_microstructure(stock_data)
 
             # NaN 처리
             features = features.fillna(method="ffill").fillna(method="bfill").fillna(0)
@@ -593,6 +622,129 @@ class StockPredictionNetwork:
         upper_band = sma + (std_dev * std)
         lower_band = sma - (std_dev * std)
         return upper_band, lower_band
+
+    def _calculate_volume_price_trend(self, data: pd.DataFrame) -> pd.Series:
+        """볼륨-가격 추세 계산"""
+        try:
+            price_change = data["close"].pct_change()
+            volume_norm = data["volume"] / data["volume"].rolling(20).mean()
+            vpt = (price_change * volume_norm).rolling(10).sum()
+            return vpt.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_price_volume_oscillator(self, data: pd.DataFrame) -> pd.Series:
+        """가격-볼륨 오실레이터"""
+        try:
+            volume_sma_short = data["volume"].rolling(12).mean()
+            volume_sma_long = data["volume"].rolling(26).mean()
+            pvo = (volume_sma_short - volume_sma_long) / volume_sma_long
+            return pvo.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_trend_strength(self, data: pd.DataFrame) -> pd.Series:
+        """추세 강도 계산"""
+        try:
+            close = data["close"]
+            ma_5 = close.rolling(5).mean()
+            ma_10 = close.rolling(10).mean()
+            ma_20 = close.rolling(20).mean()
+            ma_50 = close.rolling(50).mean()
+            
+            # 이동평균선 정렬도 계산
+            trend_alignment = (
+                (ma_5 > ma_10).astype(int) +
+                (ma_10 > ma_20).astype(int) +
+                (ma_20 > ma_50).astype(int)
+            ) / 3.0 - 0.5  # -0.5 ~ 0.5 정규화
+            
+            return trend_alignment.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_volatility_regime(self, data: pd.DataFrame) -> pd.Series:
+        """변동성 체제 분류"""
+        try:
+            returns = data["close"].pct_change()
+            volatility = returns.rolling(20).std()
+            vol_percentile = volatility.rolling(252).rank(pct=True)
+            
+            # 변동성 체제 (0: 낮음, 1: 높음)
+            vol_regime = (vol_percentile > 0.7).astype(float) - (vol_percentile < 0.3).astype(float)
+            return vol_regime.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_support_resistance_strength(self, data: pd.DataFrame) -> pd.Series:
+        """지지/저항 강도 계산"""
+        try:
+            close = data["close"]
+            high = data["high"]
+            low = data["low"]
+            
+            # 최근 20일 고점/저점 대비 현재 위치
+            period_high = high.rolling(20).max()
+            period_low = low.rolling(20).min()
+            
+            # 고점/저점 근접도 (-1: 저점 근처, 1: 고점 근처)
+            position = (close - period_low) / (period_high - period_low) * 2 - 1
+            return position.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_momentum_divergence(self, data: pd.DataFrame) -> pd.Series:
+        """모멘텀 다이버전스 감지"""
+        try:
+            close = data["close"]
+            rsi = self._calculate_rsi(data, 14)
+            
+            # 가격과 RSI의 상관관계 변화로 다이버전스 감지
+            price_momentum = close.pct_change(5)
+            rsi_momentum = rsi.diff(5)
+            
+            # 상관계수 기반 다이버전스 신호
+            correlation = price_momentum.rolling(10).corr(rsi_momentum)
+            divergence = (1 - correlation).fillna(0)  # 낮은 상관관계 = 다이버전스
+            
+            return divergence
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_volatility_skew(self, data: pd.DataFrame) -> pd.Series:
+        """변동성 비대칭성 (스큐) 계산"""
+        try:
+            returns = data["close"].pct_change()
+            
+            # 롤링 스큐 계산
+            skewness = returns.rolling(20).skew()
+            
+            # 정규화 (-1 ~ 1)
+            normalized_skew = np.tanh(skewness / 2)
+            return normalized_skew.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
+
+    def _calculate_market_microstructure(self, data: pd.DataFrame) -> pd.Series:
+        """시장 미시구조 지표"""
+        try:
+            high = data["high"]
+            low = data["low"]
+            close = data["close"]
+            open_price = data["open"]
+            
+            # 일중 가격 효율성 측정
+            intraday_range = (high - low) / close
+            gap = abs(open_price - close.shift(1)) / close.shift(1)
+            
+            # 미시구조 신호 (갭 대비 일중 레인지)
+            microstructure = (intraday_range / (gap + 0.001)).rolling(5).mean()
+            
+            # 로그 변환 후 정규화
+            microstructure_norm = np.tanh(np.log1p(microstructure))
+            return microstructure_norm.fillna(0)
+        except:
+            return pd.Series([0.0] * len(data), index=data.index)
 
     def create_features(
         self,
@@ -1461,14 +1613,40 @@ class StockPredictionNetwork:
 
             # 4. 앙상블 가중치 학습기 훈련 (Train set만 사용)
             if self.enable_weight_learning:
+                print("\n" + "="*50)
+                print("⚖️ 앙상블 가중치 학습 시작")
+                print("="*50)
                 logger.info("⚖️ 앙상블 가중치 학습기 훈련 시작...")
                 logger.info(
                     f"   📊 enable_weight_learning: {self.enable_weight_learning}"
                 )
                 logger.info(f"   📈 train_data 종목 수: {len(train_data)}")
-                if not self._train_ensemble_weight_learner(train_data):
+                
+                weight_learning_success = self._train_ensemble_weight_learner(train_data)
+                if not weight_learning_success:
+                    print("❌ 앙상블 가중치 학습기 훈련 실패")
+                    print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
                     logger.warning("앙상블 가중치 학습기 훈련 실패")
+                else:
+                    print("✅ 앙상블 가중치 학습기 훈련 완룼!")
+                    
+                    # 동적 가중치 테스트 (샘플 데이터로)
+                    sample_symbol = list(train_data.keys())[0] if train_data else None
+                    if sample_symbol and len(train_data[sample_symbol]['features']) > 20:
+                        sample_features = train_data[sample_symbol]['features'].tail(20)
+                        try:
+                            dynamic_universal, dynamic_individual = self._update_ensemble_weights(sample_symbol, sample_features)
+                            print(f"   • 동적 가중치 학습 성공: Universal {dynamic_universal:.3f}, Individual {dynamic_individual:.3f}")
+                            print(f"   • 기본 가중치 (백업용): Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
+                        except Exception as e:
+                            print(f"   • 동적 가중치 테스트 실패: {e}")
+                            print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
+                    else:
+                        print(f"   • 기본 가중치: Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
+                        print(f"   • 동적 가중치는 예측 시 실시간 계산됨")
+                    print("="*50 + "\n")
             else:
+                print("⏩ 앙상블 가중치 학습 건너뛰기 (비활성화)")
                 logger.info(
                     "⏩ 앙상블 가중치 학습 건너뛰기 (enable_weight_learning: False)"
                 )
@@ -1502,6 +1680,9 @@ class StockPredictionNetwork:
                 else:
                     logger.warning("⚠️ 유효한 RMSE가 없습니다.")
 
+            print("\n" + "="*60)
+            print("🎉 앙상블 신경망 모델 학습 완료!")
+            print("="*60)
             logger.info("✅ 앙상블 신경망 모델 학습 완료")
             return True
 
@@ -2035,7 +2216,12 @@ class StockPredictionNetwork:
                     "target": train_target,
                 }
 
-                test_data[symbol] = {"features": test_features, "target": test_target}
+                test_data[symbol] = {
+                    "features": test_features, 
+                    "target": test_target,
+                    "full_features": features,  # 연속 예측용 전체 피처
+                    "train_end_idx": train_end_idx  # 학습 종료 인덱스
+                }
 
                 logger.info(
                     f"📊 {symbol} 데이터 분할: Train {len(train_features)}일, Test {len(test_features)}일"
@@ -2314,6 +2500,11 @@ class StockPredictionNetwork:
                     logger.info(f"Early stopping at epoch {epoch+1}")
                     break
 
+            print(f"\n✅ 앙상블 가중치 학습기 훈련 완료!")
+            print(f"   • 최종 검증 손실: {best_val_loss:.6f}")
+            print(f"   • 훈련 에포크: {epochs}회")
+            print(f"   • 학습률: {learning_rate}")
+            print(f"   • 배치 크기: {batch_size}")
             logger.info(
                 f"✅ 앙상블 가중치 학습기 훈련 완료 - Best Val Loss: {best_val_loss:.6f}"
             )
@@ -2477,23 +2668,19 @@ class StockPredictionNetwork:
                                         f"{symbol} {i}일차 통합 모델 예측 실패: {e}"
                                     )
 
-                            # 앙상블 입력 피처 생성
-                            ensemble_input = self._create_ensemble_input_features(
-                                current_features,
-                                symbol,
-                                individual_pred,
-                                universal_pred,
-                                future_returns,
+                            # 메타 피처 생성 (순환 의존성 제거)
+                            meta_features = self._create_meta_features_for_weight_learning(
+                                current_features, symbol
                             )
 
-                            if ensemble_input is not None:
-                                # 최적 가중치 계산
+                            if meta_features is not None and len(meta_features) == 20:
+                                # 최적 가중치 계산 (예측값 기반)
                                 optimal_weight = self._calculate_optimal_weights(
                                     individual_pred, universal_pred, future_returns
                                 )
 
-                                if optimal_weight is not None:
-                                    ensemble_inputs.append(ensemble_input)
+                                if optimal_weight is not None and len(optimal_weight) == 2:
+                                    ensemble_inputs.append(meta_features)
                                     optimal_weights.append(optimal_weight)
 
                         except Exception as e:
@@ -2688,7 +2875,7 @@ class StockPredictionNetwork:
         self, symbol: str, features: pd.DataFrame
     ) -> Tuple[float, float]:
         """
-        동적으로 앙상블 가중치 업데이트
+        동적으로 앙상블 가중치 업데이트 (개선된 버전)
 
         Args:
             symbol: 종목 심볼
@@ -2699,62 +2886,179 @@ class StockPredictionNetwork:
         """
         try:
             if self.weight_learner is None:
-                # 가중치 학습기가 없으면 기본값 사용
+                logger.warning(f"{symbol} 가중치 학습기가 없어 기본값 사용")
                 return self.universal_weight, self.individual_weight
 
-            # 개별 모델과 통합 모델 예측값 생성
-            individual_pred = None
-            universal_pred = None
-
-            # 개별 모델 예측 시도
-            if symbol in self.individual_models:
+            # 메타 피처 생성 (예측값 제외, 시장 상황 기반)
+            meta_features = self._create_meta_features_for_weight_learning(features, symbol)
+            
+            if meta_features is not None and len(meta_features) > 0:
                 try:
-                    X_individual = self.individual_scalers[symbol].transform(
-                        self._prepare_prediction_data(features, 20)
-                    )
-                    individual_pred = self._predict_with_model(
-                        self.individual_models[symbol], X_individual
-                    )
+                    # 가중치 학습기로 동적 가중치 예측
+                    self.weight_learner.eval()
+                    with torch.no_grad():
+                        # 차원 맞추기
+                        if len(meta_features.shape) == 1:
+                            meta_features = meta_features.reshape(1, -1)
+                        
+                        # 스케일링
+                        X_scaled = self.weight_learner_scaler.transform(meta_features)
+                        X_tensor = torch.FloatTensor(X_scaled)
+                        
+                        # 가중치 예측
+                        weights = self.weight_learner(X_tensor)
+                        weights_np = weights.numpy()[0]
+
+                        dynamic_universal_weight = float(weights_np[0])
+                        dynamic_individual_weight = float(weights_np[1])
+
+                        # 유효성 검증
+                        if dynamic_universal_weight < 0 or dynamic_individual_weight < 0:
+                            logger.warning(f"{symbol} 음수 가중치 감지, 기본값 사용")
+                            return self.universal_weight, self.individual_weight
+
+                        # 가중치 정규화 (합이 1이 되도록)
+                        total_weight = dynamic_universal_weight + dynamic_individual_weight
+                        if total_weight > 0:
+                            dynamic_universal_weight /= total_weight
+                            dynamic_individual_weight /= total_weight
+                        else:
+                            return self.universal_weight, self.individual_weight
+
+                        logger.info(
+                            f"🎯 {symbol} 동적 가중치: Universal={dynamic_universal_weight:.3f}, Individual={dynamic_individual_weight:.3f}"
+                        )
+
+                        return dynamic_universal_weight, dynamic_individual_weight
+
                 except Exception as e:
-                    logger.warning(f"{symbol} 개별 모델 예측 실패: {e}")
-
-            # 통합 모델 예측 시도 (시뮬레이션)
-            try:
-                universal_pred = np.random.normal(0, 0.1)  # 임시 값
-            except Exception as e:
-                logger.warning(f"{symbol} 통합 모델 예측 실패: {e}")
-
-            # 앙상블 입력 피처 생성
-            ensemble_input = self._create_ensemble_input_features(
-                features, symbol, individual_pred, universal_pred, np.array([0.0])
-            )
-
-            if ensemble_input is not None:
-                # 가중치 학습기로 동적 가중치 예측
-                self.weight_learner.eval()
-                with torch.no_grad():
-                    X_scaled = self.weight_learner_scaler.transform(
-                        ensemble_input.reshape(1, -1)
-                    )
-                    X_tensor = torch.FloatTensor(X_scaled)
-                    weights = self.weight_learner(X_tensor)
-                    weights_np = weights.numpy()[0]
-
-                    dynamic_universal_weight = float(weights_np[0])
-                    dynamic_individual_weight = float(weights_np[1])
-
-                    logger.info(
-                        f"{symbol} 동적 가중치: Universal={dynamic_universal_weight:.3f}, Individual={dynamic_individual_weight:.3f}"
-                    )
-
-                    return dynamic_universal_weight, dynamic_individual_weight
-
-            # 실패시 기본값 반환
+                    logger.error(f"{symbol} 가중치 학습기 실행 실패: {e}")
+                    return self.universal_weight, self.individual_weight
+            
+            # 메타 피처 생성 실패시 기본값
+            logger.warning(f"{symbol} 메타 피처 생성 실패, 기본값 사용")
             return self.universal_weight, self.individual_weight
 
         except Exception as e:
             logger.error(f"앙상블 가중치 업데이트 실패: {e}")
             return self.universal_weight, self.individual_weight
+
+    def _create_meta_features_for_weight_learning(
+        self, features: pd.DataFrame, symbol: str
+    ) -> Optional[np.ndarray]:
+        """
+        가중치 학습기를 위한 메타 피처 생성 (순환 의존성 제거)
+        
+        Args:
+            features: 종목 피처 데이터
+            symbol: 종목 심볼
+            
+        Returns:
+            메타 피처 배열 (예측값 의존성 없음)
+        """
+        try:
+            # 최근 20일 데이터만 사용
+            recent_features = features.tail(20)
+            if len(recent_features) < 10:
+                logger.warning(f"{symbol} 메타 피처 생성용 데이터 부족")
+                return None
+            
+            meta_features = []
+            
+            # 1. 시장 변동성 지표
+            if 'volatility_regime' in recent_features.columns:
+                volatility_level = recent_features['volatility_regime'].mean()
+                meta_features.append(volatility_level)
+            else:
+                meta_features.append(0.0)
+            
+            # 2. 추세 강도
+            if 'trend_strength' in recent_features.columns:
+                trend_strength = recent_features['trend_strength'].mean()
+                meta_features.append(trend_strength)
+            else:
+                meta_features.append(0.0)
+            
+            # 3. 모멘텀 다이버전스
+            if 'momentum_divergence' in recent_features.columns:
+                divergence_level = recent_features['momentum_divergence'].mean()
+                meta_features.append(divergence_level)
+            else:
+                meta_features.append(0.0)
+            
+            # 4. 변동성 스큐
+            if 'volatility_skew' in recent_features.columns:
+                skew_level = recent_features['volatility_skew'].mean()
+                meta_features.append(skew_level)
+            else:
+                meta_features.append(0.0)
+            
+            # 5. 지지/저항 강도
+            if 'support_resistance' in recent_features.columns:
+                support_resistance = recent_features['support_resistance'].mean()
+                meta_features.append(support_resistance)
+            else:
+                meta_features.append(0.0)
+            
+            # 6. 시장 미시구조
+            if 'market_microstructure' in recent_features.columns:
+                microstructure = recent_features['market_microstructure'].mean()
+                meta_features.append(microstructure)
+            else:
+                meta_features.append(0.0)
+            
+            # 7. 볼륨-가격 추세
+            if 'volume_price_trend' in recent_features.columns:
+                vpt = recent_features['volume_price_trend'].mean()
+                meta_features.append(vpt)
+            else:
+                meta_features.append(0.0)
+            
+            # 8. 가격-볼륨 오실레이터
+            if 'price_volume_oscillator' in recent_features.columns:
+                pvo = recent_features['price_volume_oscillator'].mean()
+                meta_features.append(pvo)
+            else:
+                meta_features.append(0.0)
+            
+            # 9-12. 시장 체제 원핫 인코딩
+            regime_features = []
+            for regime in ['bullish', 'bearish', 'sideways', 'volatile']:
+                regime_col = f'regime_{regime}'
+                if regime_col in recent_features.columns:
+                    regime_value = recent_features[regime_col].iloc[-1]  # 최신 체제
+                    regime_features.append(regime_value)
+                else:
+                    regime_features.append(0.0)
+            meta_features.extend(regime_features)
+            
+            # 13-20. 기본 기술적 지표 통계
+            technical_indicators = [
+                'dual_momentum', 'volatility_breakout', 'swing_ema', 'swing_rsi',
+                'swing_donchian', 'stoch_donchian', 'whipsaw_prevention', 'swing_macd'
+            ]
+            
+            for indicator in technical_indicators:
+                if indicator in recent_features.columns:
+                    # 최근 값과 과거 평균의 차이
+                    recent_mean = recent_features[indicator].tail(5).mean()
+                    historical_mean = recent_features[indicator].mean()
+                    diff = recent_mean - historical_mean
+                    meta_features.append(diff)
+                else:
+                    meta_features.append(0.0)
+            
+            # 최종 20차원으로 맞추기
+            if len(meta_features) < 20:
+                meta_features.extend([0.0] * (20 - len(meta_features)))
+            elif len(meta_features) > 20:
+                meta_features = meta_features[:20]
+            
+            return np.array(meta_features)
+            
+        except Exception as e:
+            logger.error(f"{symbol} 메타 피처 생성 실패: {e}")
+            return None
 
 
 def main():
@@ -3090,12 +3394,25 @@ def main():
         )
 
         prediction = neural_predictor.predict(features, args.symbol)
+        
+        # 최종 시점 기준 예측 결과 상세 출력
+        current_date = features.index[-1] if hasattr(features, 'index') else "현재"
+        print("\n" + "="*60)
+        print(f"🔮 {args.symbol} 최종 예측 결과 (기준일: {current_date})")
+        print("="*60)
+        
         if isinstance(prediction, dict):
-            print(f"📊 {args.symbol} 예측 결과:")
             for key, value in prediction.items():
-                print(f"   {key}: {value:.4f}")
+                if 'target_22d' in key:
+                    print(f"🎯 22일 후 예상 수익률: {value:.4f} ({value*100:.2f}%)")
+                elif 'target_66d' in key:
+                    print(f"🎯 66일 후 예상 수익률: {value:.4f} ({value*100:.2f}%)")
+                else:
+                    print(f"   {key}: {value:.4f}")
         else:
-            print(f"📊 {args.symbol} 예측 결과: {prediction:.4f}")
+            print(f"🎯 22일 후 예상 수익률: {prediction:.4f} ({prediction*100:.2f}%)")
+        
+        print("="*60 + "\n")
 
     else:
         print("사용법:")
