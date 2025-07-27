@@ -3,11 +3,11 @@
   "description": "스윙 전략 최적화 및 평가",
   
   "data": {
-    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
+    "symbols": ["AAPL", "META", "QQQ", "SPY"],
     "interval": "1d",
-    "lookback_days": 365,
-    "train_ratio": 0.5,
-    "end_date": "2025-07-22"
+    "lookback_days": 360,
+    "train_ratio": 0.6,
+    "end_date": "2025-07-24"
   },
 
   "strategies": [
@@ -42,7 +42,7 @@
   "cleaner": {
     "run_cleaner": true,
     "action": "clean-and-recreate",
-    "folders": ["data/swing", "log", "log/swing", "results", "results/swing", "analysis"]
+    "folders": ["data/swing", "log/swing", "results/swing", "analysis/swing"]
   },
 
   "scrapper": {
@@ -56,7 +56,7 @@
     "optimization_method": "bayesian_optimization",
     "optimization_settings": {
       "bayesian_optimization": {
-        "n_trials": 50,
+        "n_trials": 100,
         "n_startup_trials": 5,
         "early_stopping_patience": 10
       },
@@ -66,11 +66,11 @@
     },
     "evaluation_metrics": {
       "weights": {
-        "total_return": 0.20,
-        "sharpe_ratio": 0.20,
+        "total_return": 0.35,
+        "sharpe_ratio": 0.15,
         "sortino_ratio": 0.20,
         "calmar_ratio": 0.15,
-        "profit_factor": 0.15,
+        "profit_factor": 0.05,
         "win_rate": 0.10
       }
     },
@@ -90,8 +90,8 @@
   },
 
   "portfolio": {
-    "symbols": ["AAPL", "META", "NFLX", "QQQ", "SPY", "NVDA", "TSLA", "MSFT", "PLTR", "NVO", "CONL", "ETHU"],
-    "optimization_method": "risk_parity",
+    "symbols": ["AAPL", "META", "QQQ", "SPY"],
+    "optimization_method": "sortino_maximization",
     "fallback_method": "equal_weight",
     "rebalance_period": 30,
     "risk_free_rate": 0.02,
@@ -131,7 +131,8 @@
     "commission": 0.001,
     "slippage": 0.0005,
     "position_sizing": "fixed",
-    "fixed_position_size": 0.1
+    "fixed_position_size": 0.1,
+    "max_positions": 4
   },
 
   "logging": {
