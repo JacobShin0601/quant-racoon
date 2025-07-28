@@ -1,0 +1,32 @@
+{
+  "session_uuid": "7c9779fc-e9f3-4144-ba06-ec023397425e",
+  "start_date": null,
+  "end_date": null,
+  "created_at": "2025-07-28T15:36:06.802331",
+  "data_sources": [
+    "SPY",
+    "^VIX",
+    "^TNX",
+    "^IRX",
+    "UUP",
+    "GLD",
+    "TLT",
+    "QQQ",
+    "IWM",
+    "TIP",
+    "XRT",
+    "GTX",
+    "XLK",
+    "XLF",
+    "XLE",
+    "XLV",
+    "XLI",
+    "XLP",
+    "XLU",
+    "XLB",
+    "XLRE"
+  ],
+  "spy_rows": 249,
+  "macro_symbols": 12,
+  "sector_symbols": 9
+}

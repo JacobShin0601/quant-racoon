@@ -26,6 +26,7 @@ from .helper import (
     print_subsection_header,
     DEFAULT_CONFIG_PATH,
 )
+from .data_manager import UnifiedDataManager
 
 # 환경 변수 설정 (orchestrator 모드)
 os.environ["ORCHESTRATOR_MODE"] = "true"
@@ -40,11 +41,15 @@ class Orchestrator:
         time_horizon: str = "swing",
         uuid: Optional[str] = None,
         research_config_path: Optional[str] = None,
+        use_cached_data: bool = False,
+        cache_days: int = 1,
     ):
         self.config_path = config_path
         self.time_horizon = time_horizon
         self.uuid = uuid or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.research_config_path = research_config_path or "config/config_research.json"
+        self.use_cached_data = use_cached_data
+        self.cache_days = cache_days
 
         # 설정 로드 - 절대 경로로 변환
         if not os.path.isabs(config_path):
@@ -56,12 +61,22 @@ class Orchestrator:
 
         # 각 단계별 결과 저장
         self.results = {}
+        
+        # 통합 데이터 관리자 초기화
+        self.data_manager = UnifiedDataManager(
+            config_path=config_path,
+            time_horizon=time_horizon,
+            use_cached_data=use_cached_data,
+            cache_days=cache_days,
+            uuid=self.uuid
+        )
 
         print_section_header("🚀 오케스트레이터 초기화")
         print(f"📁 설정 파일: {config_path}")
         print(f"🔬 연구 설정 파일: {self.research_config_path}")
         print(f"⏰ 시간대: {time_horizon}")
         print(f"🆔 실행 UUID: {self.uuid}")
+        print(f"💾 캐시 사용: {use_cached_data}")
 
     def _get_config_for_horizon(self) -> Dict[str, Any]:
         """시간대별 설정 가져오기"""
@@ -138,16 +153,31 @@ class Orchestrator:
 
         try:
             horizon_config = self._get_config_for_horizon()
-
-            # 시간대별 설정 파일 경로 사용
-            horizon_config_path = f"config/config_{self.time_horizon}.json"
-            scrapper = DataScrapper(
-                config_path=horizon_config_path,
-                time_horizon=self.time_horizon,
-                uuid=self.uuid,
+            
+            # 설정에서 심볼과 설정 가져오기
+            data_config = horizon_config.get("data", {})
+            scrapper_config = horizon_config.get("scrapper", {})
+            
+            # 심볼 우선순위: scrapper.symbols > data.symbols
+            symbols = scrapper_config.get("symbols", data_config.get("symbols", []))
+            
+            if not symbols:
+                print("❌ 수집할 심볼이 설정되지 않았습니다.")
+                return False
+            
+            # 공통 설정
+            common_settings = data_config if data_config else scrapper_config
+            
+            # 통합 데이터 관리자를 사용하여 데이터 수집
+            success = self.data_manager.ensure_data_available(
+                data_type="stock",
+                symbols=symbols,
+                interval=common_settings.get("interval", "1d"),
+                start_date=common_settings.get("start_date"),
+                end_date=common_settings.get("end_date"),
+                lookback_days=common_settings.get("lookback_days", 60),
+                target_dir=f"data/{self.time_horizon}"
             )
-
-            success = scrapper.run_scrapper()
 
             if success:
                 print("✅ 데이터 수집 완료")
@@ -158,7 +188,7 @@ class Orchestrator:
             else:
                 print("❌ 데이터 수집 실패")
                 self.results["scrapper"] = {
-                    "status": "failed",
+                    "status": "failed", 
                     "timestamp": datetime.now(),
                 }
 
@@ -592,6 +622,17 @@ def main():
         help="단일 단계만 실행",
     )
     parser.add_argument("--uuid", help="실행 UUID")
+    parser.add_argument(
+        "--use-cached-data",
+        action="store_true",
+        help="캐시된 데이터 사용 (새로 다운로드하지 않음)"
+    )
+    parser.add_argument(
+        "--cache-days",
+        type=int,
+        default=1,
+        help="캐시 유효 기간 (일 단위, 기본값: 1일)"
+    )
 
     args = parser.parse_args()
 
@@ -601,6 +642,8 @@ def main():
         time_horizon=args.time_horizon,
         uuid=args.uuid,
         research_config_path=args.research_config,
+        use_cached_data=args.use_cached_data,
+        cache_days=args.cache_days,
     )
 
     # 실행

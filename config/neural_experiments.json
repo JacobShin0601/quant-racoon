@@ -1,0 +1,107 @@
+{
+  "description": "신경망 구조 실험 설정",
+  "symbols": ["AAPL", "MSFT", "GOOGL", "AMZN", "META"],
+  "experiments": [
+    {
+      "name": "baseline",
+      "description": "기본 모델 (3층, 128-64-32)",
+      "neural_network": {
+        "hidden_sizes": [128, 64, 32],
+        "dropout_rate": 0.2,
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "epochs": 50
+      }
+    },
+    {
+      "name": "deep_narrow",
+      "description": "깊고 좁은 모델 (6층, 64-48-32-24-16-8)",
+      "neural_network": {
+        "hidden_sizes": [64, 48, 32, 24, 16, 8],
+        "dropout_rate": 0.3,
+        "learning_rate": 0.0005,
+        "batch_size": 32,
+        "epochs": 70
+      }
+    },
+    {
+      "name": "wide_shallow",
+      "description": "넓고 얕은 모델 (2층, 512-256)",
+      "neural_network": {
+        "hidden_sizes": [512, 256],
+        "dropout_rate": 0.2,
+        "learning_rate": 0.001,
+        "batch_size": 64,
+        "epochs": 40
+      }
+    },
+    {
+      "name": "pyramid",
+      "description": "피라미드 구조 (4층, 256-128-64-32)",
+      "neural_network": {
+        "hidden_sizes": [256, 128, 64, 32],
+        "dropout_rate": 0.25,
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "epochs": 60
+      }
+    },
+    {
+      "name": "hourglass",
+      "description": "모래시계 구조 (5층, 128-64-32-64-128)",
+      "neural_network": {
+        "hidden_sizes": [128, 64, 32, 64, 128],
+        "dropout_rate": 0.2,
+        "learning_rate": 0.0008,
+        "batch_size": 32,
+        "epochs": 50
+      }
+    },
+    {
+      "name": "lightweight",
+      "description": "경량 모델 (2층, 32-16)",
+      "neural_network": {
+        "hidden_sizes": [32, 16],
+        "dropout_rate": 0.1,
+        "learning_rate": 0.002,
+        "batch_size": 16,
+        "epochs": 30
+      }
+    },
+    {
+      "name": "regularized_deep",
+      "description": "강한 정규화 깊은 모델 (4층, dropout 0.5)",
+      "neural_network": {
+        "hidden_sizes": [128, 96, 64, 32],
+        "dropout_rate": 0.5,
+        "learning_rate": 0.0005,
+        "batch_size": 32,
+        "epochs": 80,
+        "early_stopping_patience": 20
+      }
+    },
+    {
+      "name": "adaptive",
+      "description": "적응형 모델 (3층, 학습률 감소)",
+      "neural_network": {
+        "hidden_sizes": [160, 80, 40],
+        "dropout_rate": 0.3,
+        "learning_rate": 0.002,
+        "batch_size": 48,
+        "epochs": 60,
+        "use_batch_norm": true,
+        "learning_rate_decay": 0.95
+      }
+    }
+  ],
+  "evaluation": {
+    "metrics": ["rmse", "mae", "sharpe_ratio"],
+    "validation_split": 0.2,
+    "test_lookback_days": 22
+  },
+  "output": {
+    "save_best_models": true,
+    "save_all_results": true,
+    "results_dir": "results/neural_experiments"
+  }
+}

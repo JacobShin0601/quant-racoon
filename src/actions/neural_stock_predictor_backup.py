@@ -1613,31 +1613,22 @@ class StockPredictionNetwork:
 
             # 4. 앙상블 가중치 학습기 훈련 (Train set만 사용)
             if self.enable_weight_learning:
-                print("\n" + "="*70)
-                print("⚖️  앙상블 가중치 학습 시작")
-                print("="*70)
+                print("\n" + "="*50)
+                print("⚖️ 앙상블 가중치 학습 시작")
+                print("="*50)
                 logger.info("⚖️ 앙상블 가중치 학습기 훈련 시작...")
                 logger.info(
                     f"   📊 enable_weight_learning: {self.enable_weight_learning}"
                 )
                 logger.info(f"   📈 train_data 종목 수: {len(train_data)}")
                 
-                # 앙상블 모델 구성 정보 출력
-                print("\n📋 앙상블 모델 구성:")
-                print(f"   - Universal 모델: {'✅ 활성화' if self.universal_model else '❌ 비활성화'}")
-                print(f"   - Individual 모델: {'✅ 활성화' if self.enable_individual_models else '❌ 비활성화'}")
-                print(f"   - 가중치 학습기: {'✅ 활성화' if self.enable_weight_learning else '❌ 비활성화'}")
-                print(f"\n📊 초기 앙상블 가중치:")
-                print(f"   - Universal: {self.universal_weight:.1%}")
-                print(f"   - Individual: {self.individual_weight:.1%}")
-                
                 weight_learning_success = self._train_ensemble_weight_learner(train_data)
                 if not weight_learning_success:
-                    print("\n❌ 앙상블 가중치 학습기 훈련 실패")
-                    print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.1%}, Individual {self.individual_weight:.1%}")
+                    print("❌ 앙상블 가중치 학습기 훈련 실패")
+                    print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
                     logger.warning("앙상블 가중치 학습기 훈련 실패")
                 else:
-                    print("\n✅ 앙상블 가중치 학습기 훈련 완료!")
+                    print("✅ 앙상블 가중치 학습기 훈련 완룼!")
                     
                     # 동적 가중치 테스트 (샘플 데이터로)
                     sample_symbol = list(train_data.keys())[0] if train_data else None
@@ -1645,19 +1636,15 @@ class StockPredictionNetwork:
                         sample_features = train_data[sample_symbol]['features'].tail(20)
                         try:
                             dynamic_universal, dynamic_individual = self._update_ensemble_weights(sample_symbol, sample_features)
-                            print(f"\n🎯 동적 가중치 학습 테스트 ({sample_symbol}):")
-                            print(f"   • 동적 가중치: Universal {dynamic_universal:.1%}, Individual {dynamic_individual:.1%}")
-                            print(f"   • 기본 가중치 (백업): Universal {self.universal_weight:.1%}, Individual {self.individual_weight:.1%}")
-                            print(f"   • 가중치 변화: Universal {(dynamic_universal - self.universal_weight)*100:+.1f}%p, Individual {(dynamic_individual - self.individual_weight)*100:+.1f}%p")
+                            print(f"   • 동적 가중치 학습 성공: Universal {dynamic_universal:.3f}, Individual {dynamic_individual:.3f}")
+                            print(f"   • 기본 가중치 (백업용): Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
                         except Exception as e:
-                            print(f"\n⚠️ 동적 가중치 테스트 실패: {e}")
-                            print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.1%}, Individual {self.individual_weight:.1%}")
+                            print(f"   • 동적 가중치 테스트 실패: {e}")
+                            print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
                     else:
-                        print(f"\n📌 기본 가중치 설정:")
-                        print(f"   • Universal: {self.universal_weight:.1%}")
-                        print(f"   • Individual: {self.individual_weight:.1%}")
+                        print(f"   • 기본 가중치: Universal {self.universal_weight:.3f}, Individual {self.individual_weight:.3f}")
                         print(f"   • 동적 가중치는 예측 시 실시간 계산됨")
-                    print("="*70 + "\n")
+                    print("="*50 + "\n")
             else:
                 print("⏩ 앙상블 가중치 학습 건너뛰기 (비활성화)")
                 logger.info(
@@ -1666,56 +1653,21 @@ class StockPredictionNetwork:
 
             # 5. 22일 예측 검증 (Test set 사용)
             if test_data:
-                print("\n" + "="*70)
-                print("🔍 22일 예측 검증 (Test Set)")
-                print("="*70)
                 logger.info("🔍 22일 예측 검증 시작...")
                 logger.info(f"   📊 test_data 종목 수: {len(test_data)}")
                 logger.info(f"   📈 test_data 종목들: {list(test_data.keys())}")
-                
-                # Train/Test 분할 정보 출력
-                print(f"\n📊 Train/Test 분할 정보:")
-                print(f"   - Train 비율: {self.train_ratio:.1%}")
-                print(f"   - Test 비율: {1-self.train_ratio:.1%}")
-                
-                for symbol in list(test_data.keys())[:3]:  # 처음 3개 종목만 출력
-                    if symbol in training_data:
-                        total_len = len(training_data[symbol]['features'])
-                        train_len = len(train_data[symbol]['features']) if symbol in train_data else 0
-                        test_len = len(test_data[symbol]['features'])
-                        print(f"   - {symbol}: 전체 {total_len}일 → Train {train_len}일, Test {test_len}일")
-                
                 validation_results = self._validate_22d_predictions(test_data)
 
                 # 검증 결과 요약
-                print("\n📊 22일 예측 검증 결과:")
-                print("─" * 50)
-                print(f"{'종목':^10} {'RMSE':^10} {'예측수':^10} {'평균오차':^10}")
-                print("─" * 50)
-                
-                all_predictions = []
-                all_actuals = []
-                
+                logger.info("📊 22일 예측 검증 결과 요약:")
                 for symbol, result in validation_results.items():
                     if result["num_predictions"] > 0:
-                        # 평균 오차 계산
-                        predictions = result['predictions']
-                        actuals = result['actual_values']
-                        all_predictions.extend(predictions)
-                        all_actuals.extend(actuals)
-                        
-                        mean_error = np.mean([p - a for p, a in zip(predictions, actuals)])
-                        
-                        print(f"{symbol:^10} {result['rmse']:^10.4f} {result['num_predictions']:^10d} {mean_error:^10.4f}")
                         logger.info(
-                            f"   {symbol}: RMSE = {result['rmse']:.4f} ({result['num_predictions']}개 예측, 평균오차 = {mean_error:.4f})"
+                            f"   {symbol}: RMSE = {result['rmse']:.4f} ({result['num_predictions']}개 예측)"
                         )
                     else:
-                        print(f"{symbol:^10} {'N/A':^10} {0:^10d} {'N/A':^10}")
                         logger.warning(f"   {symbol}: 검증 데이터 부족")
-                
-                print("─" * 50)
-                
+
                 # 전체 평균 RMSE 계산
                 valid_rmses = [
                     result["rmse"]
@@ -1724,21 +1676,9 @@ class StockPredictionNetwork:
                 ]
                 if valid_rmses:
                     avg_rmse = sum(valid_rmses) / len(valid_rmses)
-                    overall_mean_error = np.mean([p - a for p, a in zip(all_predictions, all_actuals)])
-                    overall_mae = np.mean([abs(p - a) for p, a in zip(all_predictions, all_actuals)])
-                    
-                    print(f"\n📊 전체 성능 지표:")
-                    print(f"   - 평균 RMSE: {avg_rmse:.4f}")
-                    print(f"   - 평균 오차 (ME): {overall_mean_error:.4f}")
-                    print(f"   - 평균 절대 오차 (MAE): {overall_mae:.4f}")
-                    print(f"   - 총 예측 수: {len(all_predictions)}개")
-                    
                     logger.info(f"📊 전체 평균 RMSE: {avg_rmse:.4f}")
                 else:
-                    print("\n⚠️ 유효한 RMSE가 없습니다.")
                     logger.warning("⚠️ 유효한 RMSE가 없습니다.")
-                
-                print("="*70 + "\n")
 
             print("\n" + "="*60)
             print("🎉 앙상블 신경망 모델 학습 완료!")
@@ -3144,13 +3084,6 @@ def main():
     )
     parser.add_argument("--predict", action="store_true", help="종목 예측")
     parser.add_argument("--symbol", type=str, help="예측할 종목 코드")
-    parser.add_argument("--experiment", action="store_true", help="다양한 신경망 구조 실험")
-    parser.add_argument(
-        "--experiment-config", 
-        type=str, 
-        default="config/neural_experiments.json", 
-        help="실험 설정 파일"
-    )
 
     args = parser.parse_args()
 
@@ -3481,36 +3414,10 @@ def main():
         
         print("="*60 + "\n")
 
-    elif args.experiment:
-        print("\n" + "="*70)
-        print("🧪 신경망 구조 실험 모드")
-        print("="*70)
-        
-        # 실험을 위한 함수 임포트
-        from .neural_experiment import run_neural_experiments
-        
-        # 실험 실행
-        experiment_results = run_neural_experiments(
-            config_path=args.config,
-            experiment_config_path=args.experiment_config,
-            data_dir=args.data_dir,
-            model_dir=args.model_dir,
-            force_retrain=args.force
-        )
-        
-        # 결과 출력
-        print("\n🏆 실험 결과 요약:")
-        print("="*70)
-        for symbol, results in experiment_results.items():
-            print(f"\n📊 {symbol}:")
-            for model_name, performance in results.items():
-                print(f"   - {model_name}: RMSE = {performance['rmse']:.4f}")
-        
     else:
         print("사용법:")
         print("  --train --data-dir data/trader     # 모델 학습")
         print("  --predict --symbol AAPL            # 종목 예측")
-        print("  --experiment                       # 다양한 신경망 구조 실험")
         print("  --force                            # 강제 재학습")
 
 

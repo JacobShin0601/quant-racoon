@@ -228,17 +228,19 @@
 
   "logging": {
     "level": "INFO",
-    "handlers": {
-      "file": {
-        "enabled": true,
-        "filename": "log/trader.log",
-        "max_size": "10MB",
-        "backup_count": 5
-      },
-      "console": {
-        "enabled": true,
-        "level": "INFO"
-      }
+    "enable_file": true,
+    "enable_console": true,
+    "file_rotation": {
+      "max_size": "10MB",
+      "backup_count": 5
+    },
+    "format": {
+      "console": "colored",
+      "file": "json"
+    },
+    "filters": {
+      "exclude_debug_from_production": true,
+      "min_level_for_file": "INFO"
     },
     "log_components": {
       "hmm_regime": true,
@@ -246,7 +248,10 @@
       "investment_scores": true,
       "trading_signals": true,
       "portfolio_updates": true,
-      "performance_metrics": true
+      "performance_metrics": true,
+      "data_collection": true,
+      "model_training": true,
+      "backtesting": true
     }
   },
 

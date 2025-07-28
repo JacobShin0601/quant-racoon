@@ -3,11 +3,36 @@
 # 스윙 전략 실행 스크립트 (2단계 평가 구조)
 # 일일 데이터 기반 스윙 매매 전략
 
+# 옵션 파싱
+USE_CACHED_DATA=""
+CACHE_DAYS=1
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --use-cached-data)
+            USE_CACHED_DATA="--use-cached-data"
+            shift
+            ;;
+        --cache-days)
+            CACHE_DAYS="$2"
+            shift 2
+            ;;
+        *)
+            echo "알 수 없는 옵션: $1"
+            echo "사용법: $0 [--use-cached-data] [--cache-days N]"
+            exit 1
+            ;;
+    esac
+done
+
 echo "🚀 스윙 전략 최적화 실행 시작..."
 echo "📊 데이터: 일봉, 기간: 365일"
 echo "🎯 전략: 개별 종목별 최적화 + 포트폴리오 평가"
 echo "📁 데이터 디렉토리: data/swing"
 echo "🔧 평가 모드: 2단계 (개별 + 포트폴리오)"
+if [ -n "$USE_CACHED_DATA" ]; then
+    echo "💾 캐시 데이터 사용 모드 (캐시 유효 기간: ${CACHE_DAYS}일)"
+fi
 echo ""
 
 # 환경 설정
@@ -31,7 +56,7 @@ echo "🔄 전체 파이프라인 실행 중..."
 echo "📋 단계: cleaner → scrapper → researcher → portfolio_manager → evaluator"
 echo "📁 데이터 디렉토리: data/swing"
 echo "📁 결과 디렉토리: results/swing"
-python -m src.agent.orchestrator --time-horizon swing --uuid "$UUID"
+python -m src.agent.orchestrator --time-horizon swing --uuid "$UUID" $USE_CACHED_DATA --cache-days "$CACHE_DAYS"
 
 # 실행 결과 확인
 if [ $? -eq 0 ]; then

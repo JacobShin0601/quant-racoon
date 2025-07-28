@@ -1,0 +1,82 @@
+{
+  "eda2d4a4720c5aefafe8f94eed9ecb0d": {
+    "path": "data/macro",
+    "timestamp": "2025-07-28T16:36:08.347133",
+    "metadata": {
+      "files": 24,
+      "symbols": []
+    }
+  },
+  "6f0039a515ed6478a50a5ed9643dd3cb": {
+    "path": "data/trader/AAPL_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:25:33.120544",
+    "metadata": {
+      "symbol": "AAPL",
+      "rows": 40,
+      "columns": 135
+    }
+  },
+  "d456c48c3adce1b0b6b67e05a2e991a9": {
+    "path": "data/trader/META_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:25:35.981996",
+    "metadata": {
+      "symbol": "META",
+      "rows": 40,
+      "columns": 130
+    }
+  },
+  "b6c62a256ee9f3e1664233abe72f9db1": {
+    "path": "data/trader/QQQ_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:25:38.832703",
+    "metadata": {
+      "symbol": "QQQ",
+      "rows": 40,
+      "columns": 55
+    }
+  },
+  "9e0939624050803c11e0096b7bcce669": {
+    "path": "data/trader/SPY_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:25:41.834351",
+    "metadata": {
+      "symbol": "SPY",
+      "rows": 40,
+      "columns": 53
+    }
+  },
+  "02b7de1f8048b6a5a493db6752182b3a": {
+    "path": "data/trader/AAPL_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:36:17.304165",
+    "metadata": {
+      "symbol": "AAPL",
+      "rows": 479,
+      "columns": 135
+    }
+  },
+  "a08ac3bde07605ef063551ab4217a9e4": {
+    "path": "data/trader/META_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:36:21.999502",
+    "metadata": {
+      "symbol": "META",
+      "rows": 479,
+      "columns": 130
+    }
+  },
+  "4d977108cb82e8080fa96220daff865a": {
+    "path": "data/trader/QQQ_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:36:27.120264",
+    "metadata": {
+      "symbol": "QQQ",
+      "rows": 479,
+      "columns": 55
+    }
+  },
+  "405578d3497019ba980dff3e5e8fc7ee": {
+    "path": "data/trader/SPY_daily_auto_auto_20250728.csv",
+    "timestamp": "2025-07-28T16:36:32.338796",
+    "metadata": {
+      "symbol": "SPY",
+      "rows": 479,
+      "columns": 53
+    }
+  }
+}

@@ -564,6 +564,7 @@ class NeuralPortfolioManager:
             position = 0
             entry_price = 0
             total_return = 0
+            cumulative_capital = 1.0  # 초기 자본을 1로 설정 (복리 계산용)
 
             for i, signal in enumerate(signals):
                 try:
@@ -730,7 +731,8 @@ class NeuralPortfolioManager:
                         # 매도
                         position = 0
                         pnl = (current_price - entry_price) / entry_price
-                        total_return += pnl
+                        # 복리 효과 반영: 자본금에 수익률 곱하기
+                        cumulative_capital *= (1 + pnl)
                         trades.append(
                             {
                                 "action": "SELL",
@@ -760,13 +762,26 @@ class NeuralPortfolioManager:
             if position == 1 and not data.empty:
                 final_price = data.iloc[-1]["close"]
                 pnl = (final_price - entry_price) / entry_price
-                total_return += pnl
+                # 복리 효과 반영
+                cumulative_capital *= (1 + pnl)
+                trades.append(
+                    {
+                        "action": "SELL",
+                        "price": final_price,
+                        "date": data.index[-1].strftime("%Y-%m-%d"),
+                        "pnl": pnl,
+                        "signal": {"action": "POSITION_CLOSE"},  # 포지션 청산 표시
+                    }
+                )
                 # logger.info(
-                #     f"🔚 {symbol} 마지막 포지션 청산: 가격 {final_price}, PnL {pnl:.4f}, 최종수익률 {total_return:.4f}"
+                #     f"🔚 {symbol} 마지막 포지션 청산: 가격 {final_price}, PnL {pnl:.4f}, 누적자본 {cumulative_capital:.4f}"
                 # )
 
+            # 최종 누적 수익률 계산 (초기 자본 1에서 시작)
+            total_return = cumulative_capital - 1.0
+
             # logger.info(
-            #     f"✅ {symbol} 백테스팅 완료 - 총 거래: {len(trades)}, 최종 수익률: {total_return:.4f}"
+            #     f"✅ {symbol} 백테스팅 완료 - 총 거래: {len(trades)}, 최종 누적 수익률: {total_return:.4f} ({total_return*100:.2f}%)"
             # )
 
             # 거래수 계산: BUY와 SELL 거래 모두 포함
@@ -806,16 +821,24 @@ class NeuralPortfolioManager:
     ) -> Dict[str, Any]:
         """포트폴리오 백테스팅"""
         try:
-            total_return = 0
+            # 포트폴리오 누적 자본 (복리 계산)
+            portfolio_cumulative_capital = 1.0
             total_trades = 0
 
             # 일일 수익률 시계열 생성
             daily_returns = pd.Series(dtype=float)
+            
+            # 각 종목의 초기 자본 배분
+            symbol_capitals = {symbol: weight for symbol, weight in weights.items()}
 
             for symbol, weight in weights.items():
                 if symbol in individual_performance:
                     symbol_return = individual_performance[symbol]["total_return"]
-                    total_return += weight * symbol_return
+                    # 해당 종목의 최종 자본 = 초기 자본 * (1 + 수익률)
+                    final_capital = weight * (1 + symbol_return)
+                    # 포트폴리오 전체 자본에 누적
+                    portfolio_cumulative_capital += (final_capital - weight)
+                    
                     total_trades += individual_performance[symbol].get(
                         "trade_count", 0
                     )  # 안전하게 접근
@@ -837,6 +860,9 @@ class NeuralPortfolioManager:
                                     daily_returns[trade_date] += weighted_pnl
                                 else:
                                     daily_returns[trade_date] = weighted_pnl
+
+            # 포트폴리오 전체 누적 수익률
+            total_return = portfolio_cumulative_capital - 1.0
 
             # 날짜 순으로 정렬
             if not daily_returns.empty:
@@ -1374,7 +1400,7 @@ class NeuralPortfolioManager:
                         )
                         f.write("-" * 80 + "\n")
 
-                        cumulative_return = 0
+                        cumulative_capital = 1.0  # 복리 계산을 위한 누적 자본
                         for trade in trades:
                             date = trade.get("date", "")
                             action = trade.get("action", "")
@@ -1389,10 +1415,11 @@ class NeuralPortfolioManager:
 
                             if action == "BUY":
                                 f.write(
-                                    f"{date_str:<20} {'매수':<10} ${price:<9.2f} {strength:<10.3f} {'':<10} {'':<12}\n"
+                                    f"{date_str:<20} {'매수':<10} ${price:<9.2f} {strength:<10.3f} {'':<10} {(cumulative_capital-1)*100:<12.2f}%\n"
                                 )
                             elif action == "SELL":
-                                cumulative_return += pnl
+                                cumulative_capital *= (1 + pnl)  # 복리 계산
+                                cumulative_return = cumulative_capital - 1.0
                                 f.write(
                                     f"{date_str:<20} {'매도':<10} ${price:<9.2f} {strength:<10.3f} {pnl*100:<10.2f}% {cumulative_return*100:<12.2f}%\n"
                                 )

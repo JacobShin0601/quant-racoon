@@ -393,6 +393,7 @@ class ThresholdOptimizer:
                     position = 0  # 0: 없음, 1: 매수, -1: 매도
                     entry_price = 0
                     entry_date = None
+                    cumulative_capital = 1.0  # 복리 계산을 위한 누적 자본
 
                     for i in range(len(data)):
                         if i < 50:  # 충분한 데이터가 없으면 건너뛰기
@@ -451,6 +452,7 @@ class ThresholdOptimizer:
                             if position == 1:  # 매수 포지션 청산
                                 exit_price = current_price
                                 pnl = (exit_price - entry_price) / entry_price
+                                cumulative_capital *= (1 + pnl)  # 복리 계산
                                 trades.append(
                                     {
                                         "entry_date": entry_date,
@@ -474,6 +476,7 @@ class ThresholdOptimizer:
 
                         if position == 1:  # 매수 포지션 청산
                             pnl = (last_price - entry_price) / entry_price
+                            cumulative_capital *= (1 + pnl)  # 복리 계산
                             trades.append(
                                 {
                                     "entry_date": entry_date,
@@ -486,6 +489,7 @@ class ThresholdOptimizer:
                             )
                         elif position == -1:  # 매도 포지션 청산
                             pnl = (entry_price - last_price) / entry_price
+                            cumulative_capital *= (1 + pnl)  # 복리 계산
                             trades.append(
                                 {
                                     "entry_date": entry_date,
@@ -498,15 +502,18 @@ class ThresholdOptimizer:
                             )
 
                     trade_count = len(trades)
+                    
+                    # 최종 누적 수익률 계산
+                    total_return = cumulative_capital - 1.0
 
                     # 디버깅: 거래 통계
                     logger.info(f"📈 {symbol} 거래 통계:")
                     logger.info(f"   - 신호 발생 횟수: {signal_count}")
                     logger.info(f"   - 실제 거래 횟수: {trade_count}")
-                    logger.info(f"   - 총 거래 리스트 길이: {len(trades)}")
+                    logger.info(f"   - 누적 수익률: {total_return:.4f} ({total_return*100:.2f}%)")
 
-                    # 성과 계산
-                    performance = self._calculate_performance(trades, data)
+                    # 성과 계산 (누적 수익률 전달)
+                    performance = self._calculate_performance(trades, data, total_return)
 
                     # 디버깅: 성과 통계
                     logger.info(f"📊 {symbol} 성과 통계:")
@@ -709,7 +716,7 @@ class ThresholdOptimizer:
             return []
 
     def _calculate_performance(
-        self, trades: List[Dict], data: pd.DataFrame
+        self, trades: List[Dict], data: pd.DataFrame, total_return: float = None
     ) -> Dict[str, float]:
         """개별 종목 성과 계산"""
         try:
@@ -724,9 +731,10 @@ class ThresholdOptimizer:
                     "total_trades": 0,
                 }
 
-            # 수익률 계산
+            # 수익률 계산 (total_return이 주어지면 사용, 아니면 단순 합계)
             returns = [trade["pnl"] for trade in trades]
-            total_return = sum(returns)
+            if total_return is None:
+                total_return = sum(returns)  # 기존 방식 (단순 합계)
 
             # 승률 계산
             winning_trades = [r for r in returns if r > 0]
