@@ -3,8 +3,8 @@
 set -e
 
 # Conda 환경 활성화
-CONDA_ENV="bedrock_manus"
-PYTHON_PATH="/home/yunchae/anaconda3/envs/${CONDA_ENV}/bin/python3"
+# CONDA_ENV="bedrock_manus"
+# PYTHON_PATH="/home/yunchae/anaconda3/envs/${CONDA_ENV}/bin/python3"
 
 # Python 경로 확인
 if [[ ! -f "$PYTHON_PATH" ]]; then
