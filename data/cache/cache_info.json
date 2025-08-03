@@ -78,5 +78,113 @@
       "rows": 479,
       "columns": 53
     }
+  },
+  "b9f7248212d651916ae9ef86b80aa54b": {
+    "path": "data/swing/SPY_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:38.902836",
+    "metadata": {
+      "symbol": "SPY",
+      "rows": 247,
+      "columns": 53
+    }
+  },
+  "6710d7cc0cf0272d3ff4c532f7d0216c": {
+    "path": "data/swing/SQQQ_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:40.590264",
+    "metadata": {
+      "symbol": "SQQQ",
+      "rows": 247,
+      "columns": 50
+    }
+  },
+  "ffd9602e2bd774e10bae2f5170714ab2": {
+    "path": "data/swing/AAPL_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:43.115860",
+    "metadata": {
+      "symbol": "AAPL",
+      "rows": 247,
+      "columns": 135
+    }
+  },
+  "755af78d763850c74e2af86f286c3fae": {
+    "path": "data/swing/MSFT_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:45.476467",
+    "metadata": {
+      "symbol": "MSFT",
+      "rows": 247,
+      "columns": 137
+    }
+  },
+  "3eb8c8a3ea5d1897e0832ec8bfed60fc": {
+    "path": "data/swing/NVDA_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:47.587647",
+    "metadata": {
+      "symbol": "NVDA",
+      "rows": 247,
+      "columns": 137
+    }
+  },
+  "9b93b41d300fe03fd0f850e30dbb5257": {
+    "path": "data/swing/GOOGL_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:49.504465",
+    "metadata": {
+      "symbol": "GOOGL",
+      "rows": 247,
+      "columns": 135
+    }
+  },
+  "89cc71e4da9198da0db250b0f17dd6f2": {
+    "path": "data/swing/AMZN_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:51.695488",
+    "metadata": {
+      "symbol": "AMZN",
+      "rows": 247,
+      "columns": 131
+    }
+  },
+  "a66ab0bbd5506fba4ecbdcb8e70ab5b6": {
+    "path": "data/swing/TSLA_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:53.697956",
+    "metadata": {
+      "symbol": "TSLA",
+      "rows": 247,
+      "columns": 132
+    }
+  },
+  "1788245d9308b9f48b94dacb6c4e5bb0": {
+    "path": "data/swing/META_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:55.794088",
+    "metadata": {
+      "symbol": "META",
+      "rows": 247,
+      "columns": 130
+    }
+  },
+  "00c43c1e867910926c055459974015ca": {
+    "path": "data/swing/JPM_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:46:58.318637",
+    "metadata": {
+      "symbol": "JPM",
+      "rows": 247,
+      "columns": 117
+    }
+  },
+  "61c04e4bb1e8bd0426b315faa12d5c98": {
+    "path": "data/swing/UNH_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:47:00.834380",
+    "metadata": {
+      "symbol": "UNH",
+      "rows": 247,
+      "columns": 131
+    }
+  },
+  "59a6f844034550fe71220b8d7f3e7ba5": {
+    "path": "data/swing/CONL_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
+    "timestamp": "2025-08-03T09:47:02.342796",
+    "metadata": {
+      "symbol": "CONL",
+      "rows": 247,
+      "columns": 48
+    }
   }
 }

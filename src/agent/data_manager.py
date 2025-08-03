@@ -289,15 +289,25 @@ class UnifiedDataManager:
         if data_type == "stock":
             target_dir = kwargs.get('target_dir', str(self.time_horizon_dir))
             
-            # 이미 존재하는 파일 확인
+            # 이미 존재하는 파일 확인 (캐시 만료 검사 포함)
             existing_files = []
             missing_symbols = []
             
             for symbol in symbols:
                 pattern = f"{symbol}_*.csv"
                 files = list(Path(target_dir).glob(pattern))
+                
                 if files and self.use_cached_data:
-                    existing_files.append(symbol)
+                    # 가장 최근 파일 확인
+                    latest_file = max(files, key=lambda x: x.stat().st_mtime)
+                    file_age_days = (datetime.now().timestamp() - latest_file.stat().st_mtime) / (24 * 3600)
+                    
+                    if file_age_days <= self.cache_days:
+                        existing_files.append(symbol)
+                        self.logger.log_info(f"📂 {symbol}: 캐시 사용 (파일 나이: {file_age_days:.1f}일)")
+                    else:
+                        missing_symbols.append(symbol)
+                        self.logger.log_info(f"⏰ {symbol}: 캐시 만료 (파일 나이: {file_age_days:.1f}일 > {self.cache_days}일)")
                 else:
                     missing_symbols.append(symbol)
             

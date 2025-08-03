@@ -64,7 +64,7 @@ class RLMFRegimeAdaptation:
                 "threshold": 0.027,
                 "symbol": "xlf_sector",
             },  # 금융업
-            "GTX": {"weight": 0.25, "threshold": 0.025, "symbol": "gtx_data"},  # 금광업
+            "GOEX": {"weight": 0.25, "threshold": 0.025, "symbol": "goex_data"},  # 금 탐사업 (GTX→GOEX 변경)
             "VIX": {
                 "weight": 0.16,
                 "threshold": 0.015,

@@ -108,40 +108,90 @@ class DualMomentumStrategy(BaseStrategy):
         # 3. 모멘텀 계산
         df["momentum"] = df["close"].pct_change(self.momentum_period)
 
-        # 4. 신호 생성 (조정된 버전)
-        # Donchian Channel 돌파 + 모멘텀 필터 (적절히 조정)
-        long_condition = (df["close"] > df["donchian_upper"]) & (
-            df["momentum"] > self.momentum_threshold * 0.2  # 임계값을 적절히 조정
-        )
-        short_condition = (df["close"] < df["donchian_lower"]) & (
-            df["momentum"] < -self.momentum_threshold * 0.2  # 임계값을 적절히 조정
-        )
+        # 4. 신호 생성 (상승장 포착 개선)
+        # 더 관대한 조건으로 상승장 포착 개선
+        
+        # 추가: 단순 이동평균 추세 확인
+        df["sma_20"] = df["close"].rolling(20).mean()
+        df["sma_50"] = df["close"].rolling(50).mean()
+        trend_up = df["sma_20"] > df["sma_50"]
+        
+        # Donchian Channel 돌파 (모멘텀 필터 완화)
+        long_condition = (
+            (df["close"] > df["donchian_upper"]) |  # 돌파 조건
+            ((df["close"] > df["close"].shift(1) * 1.02) & trend_up)  # 또는 2% 상승 + 상승추세
+        ) & (df["momentum"] > -0.05)  # 큰 하락만 필터링
+        
+        short_condition = (
+            (df["close"] < df["donchian_lower"]) |  # 하향 돌파
+            ((df["close"] < df["close"].shift(1) * 0.98) & ~trend_up)  # 또는 2% 하락 + 하락추세
+        ) & (df["momentum"] < 0.05)  # 큰 상승만 필터링
 
         df.loc[long_condition, "signal"] = 1
         df.loc[short_condition, "signal"] = -1
 
-        # 5. RSI 기반 평균회귀 신호 (Donchian 내부에서만, 적절히 조정)
-        channel_inside = (df["close"] <= df["donchian_upper"]) & (
-            df["close"] >= df["donchian_lower"]
-        )
+        # 5. RSI 기반 신호 (상승장에서 덜 제한적)
+        # 상승 추세에서는 RSI 과매수 신호 무시
+        
+        # RSI 임계값을 상승장에 맞게 조정
+        rsi_oversold_adjusted = 25  # 더 낮은 과매도 기준
+        rsi_overbought_adjusted = 85  # 더 높은 과매수 기준 (상승장 고려)
 
-        # RSI 임계값을 적절히 조정
-        rsi_oversold_adjusted = min(self.rsi_oversold + 5, 45)  # 적절한 과매도
-        rsi_overbought_adjusted = max(self.rsi_overbought - 5, 55)  # 적절한 과매수
-
-        rsi_long = (
-            channel_inside & (df["rsi"] < rsi_oversold_adjusted) & (df["signal"] == 0)
-        )
-        rsi_short = (
-            channel_inside & (df["rsi"] > rsi_overbought_adjusted) & (df["signal"] == 0)
-        )
+        # 하락 추세에서만 RSI 과매수 매도 신호 활성화
+        rsi_long = (df["rsi"] < rsi_oversold_adjusted) & (df["signal"] == 0)
+        rsi_short = (df["rsi"] > rsi_overbought_adjusted) & ~trend_up & (df["signal"] == 0)  # 하락추세에서만
 
         df.loc[rsi_long, "signal"] = 1
         df.loc[rsi_short, "signal"] = -1
 
-        # 6. 최소 보유 기간 적용
+        # 6. 하락장 방어 로직 추가
+        df = self._add_downside_protection(df)
+
+        # 7. 최소 보유 기간 적용
         df = self._apply_min_holding_period(df)
 
+        return df
+
+    def _add_downside_protection(self, df: pd.DataFrame) -> pd.DataFrame:
+        """하락장 방어 로직"""
+        # 1. 급락 감지 (일일 하락 > 5%)
+        daily_return = df["close"].pct_change()
+        sharp_decline = daily_return < -0.05
+        
+        # 2. 연속 하락 감지 (3일 연속 하락)
+        consecutive_decline = (
+            (daily_return < -0.01) & 
+            (daily_return.shift(1) < -0.01) & 
+            (daily_return.shift(2) < -0.01)
+        )
+        
+        # 3. 변동성 급증 감지 (20일 변동성의 2배)
+        rolling_volatility = daily_return.rolling(20).std()
+        current_volatility = daily_return.rolling(5).std()
+        volatility_spike = current_volatility > (rolling_volatility * 2)
+        
+        # 4. 기술적 약세 신호
+        # - 가격이 SMA 50 아래로 크게 이탈 (5% 이상)
+        price_below_sma = df["close"] < (df["sma_50"] * 0.95)
+        
+        # - RSI가 30 아래로 지속 (과매도 지속)
+        rsi_persistent_oversold = (df["rsi"] < 30) & (df["rsi"].shift(1) < 30)
+        
+        # 5. 종합 위험 신호
+        high_risk_condition = (
+            sharp_decline | consecutive_decline | 
+            (volatility_spike & price_below_sma) |
+            (rsi_persistent_oversold & ~(df["sma_20"] > df["sma_50"]))  # 상승추세가 아닐 때만
+        )
+        
+        # 6. 방어 액션: 롱 포지션 강제 청산 (signal = 0)
+        # 기존 롱 신호를 0으로 변경 (청산)
+        df.loc[high_risk_condition & (df["signal"] == 1), "signal"] = 0
+        
+        # 7. 극도의 위험 상황에서는 숏 포지션도 고려
+        extreme_decline = daily_return < -0.08  # 8% 이상 급락
+        df.loc[extreme_decline, "signal"] = -1
+        
         return df
 
     def _apply_min_holding_period(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -2476,6 +2526,8 @@ def main():
 
     # 전략들 등록
     manager.add_strategy("dual_momentum", DualMomentumStrategy(params))
+    manager.add_strategy("inverse_etf", InverseETFStrategy(params))
+    manager.add_strategy("largecap_growth", LargeCap_GrowthStrategy(params))
     manager.add_strategy(
         "volatility_breakout", VolatilityAdjustedBreakoutStrategy(params)
     )
@@ -2512,6 +2564,12 @@ def main():
         "return_stacking",
         ReturnStackingStrategy(params, ["NVDL", "TSLL", "CONL"], [0.33, 0.33, 0.34]),
     )
+    
+    # 고효율 기술적 전략들 추가
+    manager.add_strategy("multi_timeframe_ma", MultiTimeframeMAStrategy(params))
+    manager.add_strategy("pivot_point", PivotPointStrategy(params))
+    manager.add_strategy("macd_divergence", MACDDivergenceStrategy(params))
+    manager.add_strategy("rsi_bollinger_advanced", RSIBollingerAdvancedStrategy(params))
 
     print("퀀트 전략 클래스가 성공적으로 초기화되었습니다.")
     print("사용 가능한 전략:")
@@ -2539,7 +2597,11 @@ def main():
     print("20. rsi_bollinger - RSI + Bollinger Bands 스켈핑 전략")
     print("21. mean_reversion - Bollinger Band 기반 Mean Reversion(평균회귀) 전략")
     print("22. trend_following_ma200 - 200일 이동평균 돌파/이탈 스위칭 전략")
-    print("23. return_stacking - Return Stacking 전략")
+    print("23. multi_timeframe_ma - 다중 시간대 이동평균 정렬 전략 (20/50/200일 골든크로스)")
+    print("24. pivot_point - 피봇 포인트 지지/저항 기반 전략")
+    print("25. macd_divergence - MACD 다이버전스 감지 전략")
+    print("26. rsi_bollinger_advanced - 고급 RSI + 볼린저밴드 조합 전략")
+    print("27. return_stacking - Return Stacking 전략")
 
 
 # ============================================================================
@@ -5610,4 +5672,580 @@ class DefensiveHedgingStrategy(BaseStrategy):
         """방어적 헤징 신호 생성"""
         df = df.copy()
         df["signal"] = 0
+        return df
+
+
+class InverseETFStrategy(BaseStrategy):
+    """역방향 ETF (SQQQ, TQQQ 등) 전용 전략"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.vix_threshold = getattr(params, "vix_threshold", 25)  # VIX 임계값
+        self.bounce_rsi = getattr(params, "bounce_rsi", 30)  # 반등 RSI
+        self.profit_target = getattr(params, "profit_target", 0.15)  # 15% 수익 목표
+        self.stop_loss = getattr(params, "stop_loss", 0.08)  # 8% 손절
+        self.volume_surge = getattr(params, "volume_surge", 1.5)  # 거래량 급증
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """역방향 ETF 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # 1. 기술적 지표 계산
+        df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], 14)
+        df["sma_10"] = df["close"].rolling(10).mean()
+        df["sma_20"] = df["close"].rolling(20).mean()
+        df["volume_ma"] = df["volume"].rolling(20).mean()
+        
+        # 2. 변동성 및 모멘텀
+        daily_return = df["close"].pct_change()
+        df["volatility"] = daily_return.rolling(10).std()
+        df["momentum_5"] = df["close"].pct_change(5)
+        
+        # 3. 역방향 ETF 매수 신호 (시장 공포/급락 상황)
+        # - RSI 과매도 (30 이하)
+        # - 거래량 급증 (평균의 1.5배)
+        # - 5일 모멘텀이 양수 (반등 시작)
+        # - 최근 변동성 증가
+        
+        buy_conditions = (
+            (df["rsi"] < self.bounce_rsi) &  # 과매도
+            (df["volume"] > df["volume_ma"] * self.volume_surge) &  # 거래량 급증
+            (df["momentum_5"] > 0.02) &  # 2% 이상 5일 반등
+            (df["volatility"] > df["volatility"].rolling(50).mean() * 1.2)  # 변동성 증가
+        )
+        
+        # 4. 매도 신호 (수익 실현 또는 손절)
+        # - RSI 70 이상 (과매수)
+        # - SMA10이 SMA20 위로 (추세 전환)
+        # - 연속 상승 후 피로감
+        
+        sell_conditions = (
+            (df["rsi"] > 70) |  # 과매수
+            (df["sma_10"] > df["sma_20"]) |  # 추세 전환
+            (df["close"] < df["close"].shift(1) * (1 - self.stop_loss))  # 손절
+        )
+        
+        # 5. 신호 적용
+        df.loc[buy_conditions, "signal"] = 1
+        df.loc[sell_conditions, "signal"] = -1
+        
+        # 6. 수익 실현 로직
+        df = self._apply_profit_taking(df)
+        
+        return df
+    
+    def _apply_profit_taking(self, df: pd.DataFrame) -> pd.DataFrame:
+        """수익 실현 로직"""
+        signals = df["signal"].values.copy()
+        prices = df["close"].values
+        
+        entry_price = None
+        
+        for i in range(len(signals)):
+            if signals[i] == 1 and entry_price is None:
+                entry_price = prices[i]
+            elif entry_price is not None:
+                profit = (prices[i] - entry_price) / entry_price
+                
+                # 수익 목표 달성시 매도
+                if profit >= self.profit_target:
+                    signals[i] = -1
+                    entry_price = None
+                # 손절시 매도
+                elif profit <= -self.stop_loss:
+                    signals[i] = -1
+                    entry_price = None
+                # 매도 신호시 포지션 청산
+                elif signals[i] == -1:
+                    entry_price = None
+        
+        df["signal"] = signals
+        return df
+
+
+# ============================================================================
+# 고효율 기술적 전략들 (Technical Analysis Strategies)
+# ============================================================================
+
+class MultiTimeframeMAStrategy(BaseStrategy):
+    """다중 시간대 이동평균 정렬 전략 (20일/50일/200일 골든크로스)"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        # 이동평균 기간
+        self.ma_short = getattr(params, "ma_short", 20)  # 단기 MA
+        self.ma_medium = getattr(params, "ma_medium", 50)  # 중기 MA  
+        self.ma_long = getattr(params, "ma_long", 200)   # 장기 MA
+        # 추세 확인 강도
+        self.trend_strength_threshold = getattr(params, "trend_strength_threshold", 0.02)
+        # 거래량 필터
+        self.volume_multiplier = getattr(params, "volume_multiplier", 1.2)
+        
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """다중 시간대 이동평균 정렬 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # 이동평균 계산
+        df[f"ma_{self.ma_short}"] = df["close"].rolling(window=self.ma_short).mean()
+        df[f"ma_{self.ma_medium}"] = df["close"].rolling(window=self.ma_medium).mean()
+        df[f"ma_{self.ma_long}"] = df["close"].rolling(window=self.ma_long).mean()
+        
+        # 거래량 평균
+        df["volume_ma"] = df["volume"].rolling(window=20).mean()
+        
+        # 1. 완벽한 상승 정렬: 단기 > 중기 > 장기
+        perfect_uptrend = (
+            (df[f"ma_{self.ma_short}"] > df[f"ma_{self.ma_medium}"]) &
+            (df[f"ma_{self.ma_medium}"] > df[f"ma_{self.ma_long}"]) &
+            (df["close"] > df[f"ma_{self.ma_short}"])
+        )
+        
+        # 2. 골든크로스 확인 (50일선이 200일선 상향 돌파)
+        golden_cross = (
+            (df[f"ma_{self.ma_medium}"] > df[f"ma_{self.ma_long}"]) &
+            (df[f"ma_{self.ma_medium}"].shift(1) <= df[f"ma_{self.ma_long}"].shift(1))
+        )
+        
+        # 3. 20일선이 50일선 상향 돌파 (단기 모멘텀)
+        short_cross = (
+            (df[f"ma_{self.ma_short}"] > df[f"ma_{self.ma_medium}"]) &
+            (df[f"ma_{self.ma_short}"].shift(1) <= df[f"ma_{self.ma_medium}"].shift(1))
+        )
+        
+        # 4. 추세 강도 확인 (기울기)
+        ma_slope_long = (df[f"ma_{self.ma_long}"] - df[f"ma_{self.ma_long}"].shift(5)) / df[f"ma_{self.ma_long}"].shift(5)
+        trend_strength = ma_slope_long > self.trend_strength_threshold
+        
+        # 5. 거래량 확인
+        volume_confirmed = df["volume"] > df["volume_ma"] * self.volume_multiplier
+        
+        # 매수 신호: 완벽한 정렬 + 골든크로스 또는 단기 크로스 + 거래량 + 추세 강도
+        buy_signal = (
+            perfect_uptrend & 
+            (golden_cross | short_cross) & 
+            volume_confirmed & 
+            trend_strength
+        )
+        
+        # 매도 신호: 정렬 깨짐 (20일선이 50일선 하향 돌파)
+        death_cross = (
+            (df[f"ma_{self.ma_short}"] < df[f"ma_{self.ma_medium}"]) &
+            (df[f"ma_{self.ma_short}"].shift(1) >= df[f"ma_{self.ma_medium}"].shift(1))
+        )
+        
+        df.loc[buy_signal, "signal"] = 1
+        df.loc[death_cross, "signal"] = -1
+        
+        return df
+
+
+class PivotPointStrategy(BaseStrategy):
+    """피봇 포인트 전략 - 일간/주간 피봇 포인트 기반 지지/저항 매매"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        # 피봇 포인트 계산 기간
+        self.pivot_period = getattr(params, "pivot_period", 1)  # 1일 피봇
+        # 돌파 확인 임계값
+        self.breakout_threshold = getattr(params, "breakout_threshold", 0.005)  # 0.5%
+        # 지지/저항 반응 민감도
+        self.support_resistance_threshold = getattr(params, "support_resistance_threshold", 0.002)  # 0.2%
+        # 거래량 확인
+        self.volume_multiplier = getattr(params, "volume_multiplier", 1.3)
+        
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """피봇 포인트 기반 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # 피봇 포인트 계산 (표준 공식)
+        df["pivot"] = (df["high"].shift(1) + df["low"].shift(1) + df["close"].shift(1)) / 3
+        df["r1"] = 2 * df["pivot"] - df["low"].shift(1)  # Resistance 1
+        df["r2"] = df["pivot"] + (df["high"].shift(1) - df["low"].shift(1))  # Resistance 2
+        df["s1"] = 2 * df["pivot"] - df["high"].shift(1)  # Support 1
+        df["s2"] = df["pivot"] - (df["high"].shift(1) - df["low"].shift(1))  # Support 2
+        
+        # 거래량 평균
+        df["volume_ma"] = df["volume"].rolling(window=20).mean()
+        
+        # 피봇 포인트 상향 돌파 (강세 신호)
+        pivot_breakout_up = (
+            (df["close"] > df["pivot"]) &
+            (df["close"].shift(1) <= df["pivot"].shift(1)) &
+            (df["close"] > df["pivot"] * (1 + self.breakout_threshold))
+        )
+        
+        # R1 저항선 돌파 (추가 상승 신호)  
+        r1_breakout = (
+            (df["close"] > df["r1"]) &
+            (df["close"].shift(1) <= df["r1"].shift(1)) &
+            (df["close"] > df["r1"] * (1 + self.breakout_threshold))
+        )
+        
+        # S1 지지선에서 반등 (매수 기회)
+        s1_bounce = (
+            (df["low"] <= df["s1"] * (1 + self.support_resistance_threshold)) &
+            (df["low"] >= df["s1"] * (1 - self.support_resistance_threshold)) &
+            (df["close"] > df["s1"]) &
+            (df["close"] > df["open"])  # 양봉 확인
+        )
+        
+        # S2 지지선에서 반등 (강력한 매수 기회)
+        s2_bounce = (
+            (df["low"] <= df["s2"] * (1 + self.support_resistance_threshold)) &
+            (df["low"] >= df["s2"] * (1 - self.support_resistance_threshold)) &
+            (df["close"] > df["s2"]) &
+            (df["close"] > df["open"])  # 양봉 확인
+        )
+        
+        # 거래량 확인
+        volume_confirmed = df["volume"] > df["volume_ma"] * self.volume_multiplier
+        
+        # 매수 신호 조합
+        buy_signals = (
+            (pivot_breakout_up | r1_breakout | s1_bounce | s2_bounce) & 
+            volume_confirmed
+        )
+        
+        # 매도 신호: 피봇 포인트 하향 돌파
+        pivot_breakdown = (
+            (df["close"] < df["pivot"]) &
+            (df["close"].shift(1) >= df["pivot"].shift(1)) &
+            (df["close"] < df["pivot"] * (1 - self.breakout_threshold))
+        )
+        
+        df.loc[buy_signals, "signal"] = 1
+        df.loc[pivot_breakdown, "signal"] = -1
+        
+        return df
+
+
+class MACDDivergenceStrategy(BaseStrategy):
+    """MACD 다이버전스 전략 - 히든/레귤러 다이버전스 감지"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        # MACD 파라미터
+        self.macd_fast = getattr(params, "macd_fast", 12)
+        self.macd_slow = getattr(params, "macd_slow", 26)
+        self.macd_signal = getattr(params, "macd_signal", 9)
+        # 다이버전스 감지 기간
+        self.divergence_period = getattr(params, "divergence_period", 20)
+        # 다이버전스 최소 강도
+        self.min_divergence_strength = getattr(params, "min_divergence_strength", 0.02)
+        
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """MACD 다이버전스 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # MACD 계산
+        ema_fast = df["close"].ewm(span=self.macd_fast).mean()
+        ema_slow = df["close"].ewm(span=self.macd_slow).mean()
+        df["macd"] = ema_fast - ema_slow
+        df["macd_signal"] = df["macd"].ewm(span=self.macd_signal).mean()
+        df["macd_histogram"] = df["macd"] - df["macd_signal"]
+        
+        # 가격 고점/저점 찾기
+        df["price_high"] = df["high"].rolling(window=self.divergence_period, center=True).max()
+        df["price_low"] = df["low"].rolling(window=self.divergence_period, center=True).min()
+        df["is_price_high"] = df["high"] == df["price_high"]
+        df["is_price_low"] = df["low"] == df["price_low"]
+        
+        # MACD 고점/저점 찾기
+        df["macd_high"] = df["macd"].rolling(window=self.divergence_period, center=True).max()
+        df["macd_low"] = df["macd"].rolling(window=self.divergence_period, center=True).min()
+        df["is_macd_high"] = df["macd"] == df["macd_high"]
+        df["is_macd_low"] = df["macd"] == df["macd_low"]
+        
+        # 불리시 다이버전스 (가격은 고점 갱신, MACD는 고점 하락)
+        bearish_divergence = self._detect_bearish_divergence(df)
+        
+        # 불리시 다이버전스 (가격은 저점 하락, MACD는 저점 상승)  
+        bullish_divergence = self._detect_bullish_divergence(df)
+        
+        # MACD 크로스오버와 함께 확인
+        macd_cross_up = (
+            (df["macd"] > df["macd_signal"]) &
+            (df["macd"].shift(1) <= df["macd_signal"].shift(1))
+        )
+        
+        macd_cross_down = (
+            (df["macd"] < df["macd_signal"]) &
+            (df["macd"].shift(1) >= df["macd_signal"].shift(1))
+        )
+        
+        # 히스토그램 증가/감소 확인
+        histogram_increasing = df["macd_histogram"] > df["macd_histogram"].shift(1)
+        histogram_decreasing = df["macd_histogram"] < df["macd_histogram"].shift(1)
+        
+        # 매수 신호: 불리시 다이버전스 + MACD 골든크로스
+        buy_signal = (
+            bullish_divergence & 
+            macd_cross_up & 
+            histogram_increasing
+        )
+        
+        # 매도 신호: 베어리시 다이버전스 + MACD 데드크로스
+        sell_signal = (
+            bearish_divergence & 
+            macd_cross_down & 
+            histogram_decreasing
+        )
+        
+        df.loc[buy_signal, "signal"] = 1
+        df.loc[sell_signal, "signal"] = -1
+        
+        return df
+    
+    def _detect_bullish_divergence(self, df: pd.DataFrame) -> pd.Series:
+        """불리시 다이버전스 감지"""
+        divergence = pd.Series(False, index=df.index)
+        
+        for i in range(self.divergence_period, len(df)):
+            # 최근 구간에서 가격 저점들 찾기
+            recent_price_lows = df.iloc[i-self.divergence_period:i+1]
+            price_lows = recent_price_lows[recent_price_lows["is_price_low"]]
+            
+            # 최근 구간에서 MACD 저점들 찾기  
+            macd_lows = recent_price_lows[recent_price_lows["is_macd_low"]]
+            
+            if len(price_lows) >= 2 and len(macd_lows) >= 2:
+                # 가격이 더 낮은 저점을 만들었는지 확인
+                price_trend = price_lows["low"].iloc[-1] < price_lows["low"].iloc[-2]
+                # MACD가 더 높은 저점을 만들었는지 확인
+                macd_trend = macd_lows["macd"].iloc[-1] > macd_lows["macd"].iloc[-2]
+                
+                if price_trend and macd_trend:
+                    divergence.iloc[i] = True
+                    
+        return divergence
+        
+    def _detect_bearish_divergence(self, df: pd.DataFrame) -> pd.Series:
+        """베어리시 다이버전스 감지"""
+        divergence = pd.Series(False, index=df.index)
+        
+        for i in range(self.divergence_period, len(df)):
+            # 최근 구간에서 가격 고점들 찾기
+            recent_price_highs = df.iloc[i-self.divergence_period:i+1]
+            price_highs = recent_price_highs[recent_price_highs["is_price_high"]]
+            
+            # 최근 구간에서 MACD 고점들 찾기
+            macd_highs = recent_price_highs[recent_price_highs["is_macd_high"]]
+            
+            if len(price_highs) >= 2 and len(macd_highs) >= 2:
+                # 가격이 더 높은 고점을 만들었는지 확인
+                price_trend = price_highs["high"].iloc[-1] > price_highs["high"].iloc[-2]
+                # MACD가 더 낮은 고점을 만들었는지 확인  
+                macd_trend = macd_highs["macd"].iloc[-1] < macd_highs["macd"].iloc[-2]
+                
+                if price_trend and macd_trend:
+                    divergence.iloc[i] = True
+                    
+        return divergence
+
+
+class RSIBollingerAdvancedStrategy(BaseStrategy):
+    """고급 RSI + 볼린저밴드 조합 전략"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        # RSI 파라미터
+        self.rsi_period = getattr(params, "rsi_period", 14)
+        self.rsi_oversold = getattr(params, "rsi_oversold", 30)
+        self.rsi_overbought = getattr(params, "rsi_overbought", 70)
+        self.rsi_strong_oversold = getattr(params, "rsi_strong_oversold", 20)
+        self.rsi_strong_overbought = getattr(params, "rsi_strong_overbought", 80)
+        # 볼린저밴드 파라미터
+        self.bb_period = getattr(params, "bb_period", 20)
+        self.bb_std = getattr(params, "bb_std", 2.0)
+        # 거래량 필터
+        self.volume_multiplier = getattr(params, "volume_multiplier", 1.2)
+        
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """고급 RSI + 볼린저밴드 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # RSI 계산 (이미 있는 경우 사용)
+        if "rsi" not in df.columns:
+            df["rsi"] = self._calculate_rsi(df["close"], self.rsi_period)
+            
+        # 볼린저밴드 계산 (이미 있는 경우 사용)
+        if "bollinger_upper" not in df.columns:
+            df = self._calculate_bollinger_bands(df)
+            
+        # 거래량 평균
+        df["volume_ma"] = df["volume"].rolling(window=20).mean()
+        
+        # 1. RSI 과매도 이탈 + 볼린저밴드 하단 터치 후 반등
+        rsi_oversold_exit = (
+            (df["rsi"] > self.rsi_oversold) & 
+            (df["rsi"].shift(1) <= self.rsi_oversold)
+        )
+        
+        bb_lower_bounce = (
+            (df["low"] <= df["bollinger_lower"]) &  # 하단 터치
+            (df["close"] > df["bollinger_lower"]) &  # 종가는 하단 위
+            (df["close"] > df["open"])  # 양봉
+        )
+        
+        # 2. RSI 50선 상향 돌파 (중요한 모멘텀 신호)
+        rsi_momentum_up = (
+            (df["rsi"] > 50) & 
+            (df["rsi"].shift(1) <= 50)
+        )
+        
+        # 3. 볼린저밴드 중심선(20MA) 상향 돌파  
+        bb_center_breakout = (
+            (df["close"] > df["bollinger_center"]) &
+            (df["close"].shift(1) <= df["bollinger_center"])
+        )
+        
+        # 4. 강력한 과매도 상황에서 반등
+        strong_oversold_bounce = (
+            (df["rsi"] > self.rsi_strong_oversold) &
+            (df["rsi"].shift(1) <= self.rsi_strong_oversold) &
+            bb_lower_bounce
+        )
+        
+        # 거래량 확인
+        volume_confirmed = df["volume"] > df["volume_ma"] * self.volume_multiplier
+        
+        # 매수 신호 조합
+        buy_signal = (
+            (
+                (rsi_oversold_exit & bb_lower_bounce) |  # 전통적 과매도 반등
+                (rsi_momentum_up & bb_center_breakout) |  # 모멘텀 + 브레이크아웃
+                strong_oversold_bounce  # 강력한 과매도 반등
+            ) & 
+            volume_confirmed
+        )
+        
+        # 매도 신호: RSI 과매수 + 볼린저밴드 상단 터치
+        rsi_overbought_touch = df["rsi"] > self.rsi_overbought
+        bb_upper_touch = df["close"] >= df["bollinger_upper"]
+        
+        sell_signal = rsi_overbought_touch & bb_upper_touch
+        
+        df.loc[buy_signal, "signal"] = 1
+        df.loc[sell_signal, "signal"] = -1
+        
+        return df
+    
+    def _calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
+        """RSI 계산"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+    
+    def _calculate_bollinger_bands(self, df: pd.DataFrame) -> pd.DataFrame:
+        """볼린저밴드 계산"""
+        df["bollinger_center"] = df["close"].rolling(window=self.bb_period).mean()
+        bb_std = df["close"].rolling(window=self.bb_period).std()
+        df["bollinger_upper"] = df["bollinger_center"] + (bb_std * self.bb_std)
+        df["bollinger_lower"] = df["bollinger_center"] - (bb_std * self.bb_std)
+        return df
+
+
+class LargeCap_GrowthStrategy(BaseStrategy):
+    """대형 성장주 (AAPL, MSFT 등) 전용 전략"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.trend_period = getattr(params, "trend_period", 50)  # 추세 기간
+        self.pullback_threshold = getattr(params, "pullback_threshold", 0.05)  # 5% 조정
+        self.breakout_period = getattr(params, "breakout_period", 30)  # 돌파 기간
+        self.volume_threshold = getattr(params, "volume_threshold", 1.2)  # 거래량 기준
+        self.rsi_entry = getattr(params, "rsi_entry", 45)  # RSI 진입
+        self.rsi_exit = getattr(params, "rsi_exit", 75)  # RSI 청산
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """대형 성장주 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # 1. 기술적 지표 계산
+        df["sma_20"] = df["close"].rolling(20).mean()
+        df["sma_50"] = df["close"].rolling(50).mean()
+        df["sma_200"] = df["close"].rolling(200).mean()
+        df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], 14)
+        df["volume_ma"] = df["volume"].rolling(20).mean()
+        
+        # 2. 추세 확인
+        long_term_trend = df["sma_50"] > df["sma_200"]  # 장기 상승 추세
+        medium_trend = df["sma_20"] > df["sma_50"]  # 중기 상승 추세
+        
+        # 3. 조정 매수 전략 (Pullback Buy)
+        # - 장기 상승 추세 중
+        # - 단기적으로 5% 이상 조정
+        # - RSI 45 이하로 과매도
+        # - 거래량 증가
+        
+        pullback_from_high = (df["close"] - df["close"].rolling(30).max()) / df["close"].rolling(30).max()
+        
+        pullback_buy = (
+            long_term_trend &  # 장기 상승 추세
+            (pullback_from_high < -self.pullback_threshold) &  # 5% 이상 조정
+            (df["rsi"] < self.rsi_entry) &  # RSI 45 이하
+            (df["volume"] > df["volume_ma"] * self.volume_threshold) &  # 거래량 증가
+            (df["close"] > df["sma_200"])  # 200일선 위
+        )
+        
+        # 4. 돌파 매수 전략 (Breakout Buy)
+        # - 30일 고점 돌파
+        # - 상승 추세 중
+        # - 거래량 급증
+        
+        breakout_high = df["close"] > df["high"].rolling(self.breakout_period).max().shift(1)
+        
+        breakout_buy = (
+            breakout_high &  # 30일 고점 돌파
+            medium_trend &  # 중기 상승 추세
+            (df["volume"] > df["volume_ma"] * 1.5) &  # 거래량 급증
+            (df["rsi"] < 70)  # RSI 과열 아님
+        )
+        
+        # 5. 매도 신호
+        # - RSI 75 이상 과매수
+        # - SMA20이 SMA50 아래로 (추세 변화)
+        # - 200일선 이탈
+        
+        sell_conditions = (
+            (df["rsi"] > self.rsi_exit) |  # 과매수
+            (~medium_trend & (df["sma_20"].shift(1) > df["sma_50"].shift(1))) |  # 추세 변화
+            (df["close"] < df["sma_200"] * 0.95)  # 200일선 5% 이탈
+        )
+        
+        # 6. 신호 적용
+        df.loc[pullback_buy | breakout_buy, "signal"] = 1
+        df.loc[sell_conditions, "signal"] = -1
+        
+        # 7. 계절성 필터 (11월 강화, 7월 약화)
+        df = self._apply_seasonal_filter(df)
+        
+        return df
+    
+    def _apply_seasonal_filter(self, df: pd.DataFrame) -> pd.DataFrame:
+        """계절성 필터 적용"""
+        if 'date' not in df.columns and hasattr(df.index, 'month'):
+            df['month'] = df.index.month
+        elif hasattr(df.index, 'to_pydatetime'):
+            df['month'] = df.index.to_pydatetime().month if hasattr(df.index.to_pydatetime(), 'month') else df.index.month
+        else:
+            return df  # 날짜 정보가 없으면 필터링 건너뛰기
+            
+        # 11월: 매수 신호 강화
+        november_boost = df['month'] == 11
+        df.loc[november_boost & (df["signal"] == 0) & (df["rsi"] < 60), "signal"] = 1
+        
+        # 7월: 매수 신호 약화 (보수적)
+        july_caution = df['month'] == 7
+        df.loc[july_caution & (df["signal"] == 1) & (df["rsi"] > 55), "signal"] = 0
+        
         return df

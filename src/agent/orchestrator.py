@@ -112,6 +112,13 @@ class Orchestrator:
                     f"results/{self.time_horizon}",
                 ],
             )
+            
+            # 캐시 데이터 사용 시 데이터 폴더 보존
+            if self.use_cached_data and cleaner_config.get("preserve_data_when_cached", False):
+                data_folder = f"data/{self.time_horizon}"
+                if data_folder in folders:
+                    folders = [f for f in folders if f != data_folder]
+                    print(f"💾 캐시 모드: {data_folder} 폴더 보존")
 
             if action == "clean-and-recreate":
                 success = cleaner.clean_and_recreate_folders(folders)
@@ -169,6 +176,7 @@ class Orchestrator:
             common_settings = data_config if data_config else scrapper_config
             
             # 통합 데이터 관리자를 사용하여 데이터 수집
+            print(f"💾 캐시 사용 설정: {self.use_cached_data} (유효기간: {self.cache_days}일)")
             success = self.data_manager.ensure_data_available(
                 data_type="stock",
                 symbols=symbols,

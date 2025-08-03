@@ -3,15 +3,21 @@
   "description": "스윙 전략 최적화 및 평가",
   
   "data": {
-    "symbols": ["AAPL", "META", "QQQ", "SPY"],
+    "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
     "interval": "1d",
     "lookback_days": 360,
     "train_ratio": 0.6,
-    "end_date": "2025-07-24"
+    "end_date": "2025-08-02"
   },
 
   "strategies": [
     "dual_momentum",
+    "inverse_etf",
+    "largecap_growth",
+    "multi_timeframe_ma",
+    "pivot_point",
+    "macd_divergence",
+    "rsi_bollinger_advanced",
     "volatility_breakout", 
     "swing_ema",
     "swing_rsi",
@@ -42,7 +48,8 @@
   "cleaner": {
     "run_cleaner": true,
     "action": "clean-and-recreate",
-    "folders": ["data/swing", "log/swing", "results/swing", "analysis/swing"]
+    "folders": ["log/swing", "results/swing", "analysis/swing"],
+    "preserve_data_when_cached": true
   },
 
   "scrapper": {
@@ -90,7 +97,7 @@
   },
 
   "portfolio": {
-    "symbols": ["AAPL", "META", "QQQ", "SPY"],
+    "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
     "optimization_method": "sortino_maximization",
     "fallback_method": "equal_weight",
     "rebalance_period": 30,

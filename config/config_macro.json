@@ -207,8 +207,8 @@
         "description": "SPDR S&P Retail ETF",
         "required": false
       },
-      "gtx": {
-        "symbol": "GTX",
+      "goex": {
+        "symbol": "GOEX",
         "description": "Global X Gold Explorers ETF",
         "required": false
       }
