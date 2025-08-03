@@ -1,0 +1,2228 @@
+{
+  "swing_rsi_SPY": {
+    "strategy_name": "swing_rsi",
+    "symbol": "SPY",
+    "best_params": {
+      "rsi_period": 19,
+      "rsi_oversold": 19,
+      "rsi_overbought": 63,
+      "min_holding_days": 4,
+      "max_holding_days": 22,
+      "rsi_momentum_period": 1,
+      "price_momentum_period": 8,
+      "volume_threshold": 0.8546918807249024
+    },
+    "best_score": 27.504812357723896,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 7.128913,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "rsi_period": 19,
+          "rsi_oversold": 19,
+          "rsi_overbought": 63,
+          "min_holding_days": 4,
+          "max_holding_days": 22,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.8546918807249024
+        },
+        "score": 27.504812357723896,
+        "evaluation_time": 0.075105,
+        "combination_index": 63
+      },
+      {
+        "params": {
+          "rsi_period": 19,
+          "rsi_oversold": 18,
+          "rsi_overbought": 63,
+          "min_holding_days": 4,
+          "max_holding_days": 25,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.9291531047438064
+        },
+        "score": 27.504812357723896,
+        "evaluation_time": 0.075256,
+        "combination_index": 65
+      },
+      {
+        "params": {
+          "rsi_period": 16,
+          "rsi_oversold": 22,
+          "rsi_overbought": 63,
+          "min_holding_days": 7,
+          "max_holding_days": 19,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 9,
+          "volume_threshold": 0.5963565386816431
+        },
+        "score": 26.786189198662576,
+        "evaluation_time": 0.072372,
+        "combination_index": 36
+      },
+      {
+        "params": {
+          "rsi_period": 21,
+          "rsi_oversold": 16,
+          "rsi_overbought": 64,
+          "min_holding_days": 2,
+          "max_holding_days": 24,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 1.1932627877837638
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.078331,
+        "combination_index": 79
+      },
+      {
+        "params": {
+          "rsi_period": 20,
+          "rsi_oversold": 16,
+          "rsi_overbought": 64,
+          "min_holding_days": 3,
+          "max_holding_days": 29,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 0.9460952430044592
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.079347,
+        "combination_index": 83
+      },
+      {
+        "params": {
+          "rsi_period": 22,
+          "rsi_oversold": 16,
+          "rsi_overbought": 64,
+          "min_holding_days": 4,
+          "max_holding_days": 27,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 0.9376753719909872
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.077633,
+        "combination_index": 84
+      },
+      {
+        "params": {
+          "rsi_period": 22,
+          "rsi_oversold": 15,
+          "rsi_overbought": 64,
+          "min_holding_days": 4,
+          "max_holding_days": 25,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 0.8779349099907037
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.07683,
+        "combination_index": 85
+      },
+      {
+        "params": {
+          "rsi_period": 18,
+          "rsi_oversold": 18,
+          "rsi_overbought": 64,
+          "min_holding_days": 4,
+          "max_holding_days": 24,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 0.9994574617331471
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.076928,
+        "combination_index": 91
+      },
+      {
+        "params": {
+          "rsi_period": 18,
+          "rsi_oversold": 18,
+          "rsi_overbought": 64,
+          "min_holding_days": 4,
+          "max_holding_days": 23,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 1.266322223001365
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.076675,
+        "combination_index": 92
+      },
+      {
+        "params": {
+          "rsi_period": 18,
+          "rsi_oversold": 18,
+          "rsi_overbought": 64,
+          "min_holding_days": 5,
+          "max_holding_days": 24,
+          "rsi_momentum_period": 1,
+          "price_momentum_period": 5,
+          "volume_threshold": 1.2668397313819546
+        },
+        "score": 26.555994519203246,
+        "evaluation_time": 0.080712,
+        "combination_index": 93
+      }
+    ]
+  },
+  "swing_donchian_SPY": {
+    "strategy_name": "swing_donchian",
+    "symbol": "SPY",
+    "best_params": {
+      "donchian_period": 32,
+      "min_holding_days": 11,
+      "max_holding_days": 16,
+      "volume_threshold": 0.8560030061525947,
+      "volatility_threshold": 0.8689820049194775,
+      "breakout_strength_threshold": 0.0094002801635847
+    },
+    "best_score": 38.425291070519904,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 5.266731,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "donchian_period": 32,
+          "min_holding_days": 11,
+          "max_holding_days": 16,
+          "volume_threshold": 0.8560030061525947,
+          "volatility_threshold": 0.8689820049194775,
+          "breakout_strength_threshold": 0.0094002801635847
+        },
+        "score": 38.425291070519904,
+        "evaluation_time": 0.058495,
+        "combination_index": 25
+      },
+      {
+        "params": {
+          "donchian_period": 30,
+          "min_holding_days": 4,
+          "max_holding_days": 7,
+          "volume_threshold": 0.6766270984933507,
+          "volatility_threshold": 0.8653737576464571,
+          "breakout_strength_threshold": 0.010996157282512208
+        },
+        "score": 38.425291070519904,
+        "evaluation_time": 0.061174,
+        "combination_index": 97
+      },
+      {
+        "params": {
+          "donchian_period": 34,
+          "min_holding_days": 2,
+          "max_holding_days": 13,
+          "volume_threshold": 0.8465057517327299,
+          "volatility_threshold": 0.861892534484251,
+          "breakout_strength_threshold": 0.011087838381869053
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.062345,
+        "combination_index": 84
+      },
+      {
+        "params": {
+          "donchian_period": 31,
+          "min_holding_days": 4,
+          "max_holding_days": 13,
+          "volume_threshold": 0.7584324941490119,
+          "volatility_threshold": 0.8635135696245705,
+          "breakout_strength_threshold": 0.011050433274745248
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.061742,
+        "combination_index": 85
+      },
+      {
+        "params": {
+          "donchian_period": 31,
+          "min_holding_days": 4,
+          "max_holding_days": 13,
+          "volume_threshold": 0.758155322229831,
+          "volatility_threshold": 0.8647244546609486,
+          "breakout_strength_threshold": 0.0110717042801958
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.06234,
+        "combination_index": 86
+      },
+      {
+        "params": {
+          "donchian_period": 34,
+          "min_holding_days": 4,
+          "max_holding_days": 13,
+          "volume_threshold": 0.7099815980234141,
+          "volatility_threshold": 0.8588828228177168,
+          "breakout_strength_threshold": 0.011986262717429341
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.06474,
+        "combination_index": 88
+      },
+      {
+        "params": {
+          "donchian_period": 33,
+          "min_holding_days": 4,
+          "max_holding_days": 10,
+          "volume_threshold": 0.6307310082942972,
+          "volatility_threshold": 0.8577061882331777,
+          "breakout_strength_threshold": 0.01191508479420677
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.064958,
+        "combination_index": 89
+      },
+      {
+        "params": {
+          "donchian_period": 32,
+          "min_holding_days": 3,
+          "max_holding_days": 10,
+          "volume_threshold": 0.7172847001630246,
+          "volatility_threshold": 0.8597444610263737,
+          "breakout_strength_threshold": 0.011467515044573226
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.064772,
+        "combination_index": 92
+      },
+      {
+        "params": {
+          "donchian_period": 31,
+          "min_holding_days": 3,
+          "max_holding_days": 10,
+          "volume_threshold": 0.7021485085722413,
+          "volatility_threshold": 0.8603402206277584,
+          "breakout_strength_threshold": 0.011056098342405844
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.064447,
+        "combination_index": 93
+      },
+      {
+        "params": {
+          "donchian_period": 31,
+          "min_holding_days": 3,
+          "max_holding_days": 10,
+          "volume_threshold": 0.7044898559531739,
+          "volatility_threshold": 0.8644469955356229,
+          "breakout_strength_threshold": 0.01101995475766044
+        },
+        "score": 37.31058042017452,
+        "evaluation_time": 0.062963,
+        "combination_index": 94
+      }
+    ]
+  },
+  "swing_macd_SPY": {
+    "strategy_name": "swing_macd",
+    "symbol": "SPY",
+    "best_params": {
+      "macd_fast": 20,
+      "macd_slow": 40,
+      "macd_signal": 11,
+      "min_holding_days": 7,
+      "max_holding_days": 8,
+      "volume_threshold": 1.5873293690798242,
+      "trend_confirmation": true
+    },
+    "best_score": 42.52985338745117,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 5.912449,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "macd_fast": 20,
+          "macd_slow": 40,
+          "macd_signal": 11,
+          "min_holding_days": 7,
+          "max_holding_days": 8,
+          "volume_threshold": 1.5873293690798242,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.056917,
+        "combination_index": 14
+      },
+      {
+        "params": {
+          "macd_fast": 20,
+          "macd_slow": 40,
+          "macd_signal": 11,
+          "min_holding_days": 5,
+          "max_holding_days": 21,
+          "volume_threshold": 1.5748440430130994,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.056328,
+        "combination_index": 15
+      },
+      {
+        "params": {
+          "macd_fast": 19,
+          "macd_slow": 38,
+          "macd_signal": 12,
+          "min_holding_days": 7,
+          "max_holding_days": 13,
+          "volume_threshold": 1.548504772770111,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.058102,
+        "combination_index": 27
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 5,
+          "max_holding_days": 10,
+          "volume_threshold": 1.5495850788589485,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.058817,
+        "combination_index": 32
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 5,
+          "max_holding_days": 10,
+          "volume_threshold": 1.5542641300565225,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.060899,
+        "combination_index": 33
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 5,
+          "max_holding_days": 10,
+          "volume_threshold": 1.5559447797960688,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.062033,
+        "combination_index": 41
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 5,
+          "max_holding_days": 11,
+          "volume_threshold": 1.5662882419956596,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.063568,
+        "combination_index": 51
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 4,
+          "max_holding_days": 9,
+          "volume_threshold": 1.5475551320175043,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.062396,
+        "combination_index": 74
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 3,
+          "max_holding_days": 14,
+          "volume_threshold": 1.5509571699222486,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.063192,
+        "combination_index": 75
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 40,
+          "macd_signal": 12,
+          "min_holding_days": 5,
+          "max_holding_days": 13,
+          "volume_threshold": 1.4443784962766357,
+          "trend_confirmation": true
+        },
+        "score": 42.52985338745117,
+        "evaluation_time": 0.065661,
+        "combination_index": 99
+      }
+    ]
+  },
+  "swing_rsi_MSFT": {
+    "strategy_name": "swing_rsi",
+    "symbol": "MSFT",
+    "best_params": {
+      "rsi_period": 11,
+      "rsi_oversold": 36,
+      "rsi_overbought": 82,
+      "min_holding_days": 10,
+      "max_holding_days": 14,
+      "rsi_momentum_period": 5,
+      "price_momentum_period": 12,
+      "volume_threshold": 0.6343633575599577
+    },
+    "best_score": 39.87805159681342,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 8.618419,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "rsi_period": 11,
+          "rsi_oversold": 36,
+          "rsi_overbought": 82,
+          "min_holding_days": 10,
+          "max_holding_days": 14,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6343633575599577
+        },
+        "score": 39.87805159681342,
+        "evaluation_time": 0.091515,
+        "combination_index": 70
+      },
+      {
+        "params": {
+          "rsi_period": 13,
+          "rsi_oversold": 36,
+          "rsi_overbought": 82,
+          "min_holding_days": 10,
+          "max_holding_days": 11,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6337246062034415
+        },
+        "score": 39.87805159681342,
+        "evaluation_time": 0.091555,
+        "combination_index": 71
+      },
+      {
+        "params": {
+          "rsi_period": 13,
+          "rsi_oversold": 36,
+          "rsi_overbought": 82,
+          "min_holding_days": 8,
+          "max_holding_days": 12,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6063508956013901
+        },
+        "score": 39.87805159681342,
+        "evaluation_time": 0.092536,
+        "combination_index": 81
+      },
+      {
+        "params": {
+          "rsi_period": 16,
+          "rsi_oversold": 36,
+          "rsi_overbought": 83,
+          "min_holding_days": 9,
+          "max_holding_days": 10,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.687855651436559
+        },
+        "score": 39.87805159681342,
+        "evaluation_time": 0.09304,
+        "combination_index": 83
+      },
+      {
+        "params": {
+          "rsi_period": 12,
+          "rsi_oversold": 36,
+          "rsi_overbought": 82,
+          "min_holding_days": 8,
+          "max_holding_days": 11,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6388249547110972
+        },
+        "score": 39.87805159681342,
+        "evaluation_time": 0.093686,
+        "combination_index": 91
+      },
+      {
+        "params": {
+          "rsi_period": 13,
+          "rsi_oversold": 36,
+          "rsi_overbought": 83,
+          "min_holding_days": 7,
+          "max_holding_days": 11,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6356632192112639
+        },
+        "score": 39.87805159681342,
+        "evaluation_time": 0.092941,
+        "combination_index": 93
+      },
+      {
+        "params": {
+          "rsi_period": 14,
+          "rsi_oversold": 36,
+          "rsi_overbought": 81,
+          "min_holding_days": 9,
+          "max_holding_days": 10,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6105165390000111
+        },
+        "score": 35.324921697041376,
+        "evaluation_time": 0.092951,
+        "combination_index": 79
+      },
+      {
+        "params": {
+          "rsi_period": 11,
+          "rsi_oversold": 36,
+          "rsi_overbought": 79,
+          "min_holding_days": 10,
+          "max_holding_days": 11,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.6393342985799938
+        },
+        "score": 34.27560179643602,
+        "evaluation_time": 0.091603,
+        "combination_index": 72
+      },
+      {
+        "params": {
+          "rsi_period": 13,
+          "rsi_oversold": 37,
+          "rsi_overbought": 84,
+          "min_holding_days": 6,
+          "max_holding_days": 12,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.7413362656507874
+        },
+        "score": 31.50027262869774,
+        "evaluation_time": 0.094261,
+        "combination_index": 95
+      },
+      {
+        "params": {
+          "rsi_period": 15,
+          "rsi_oversold": 37,
+          "rsi_overbought": 84,
+          "min_holding_days": 6,
+          "max_holding_days": 12,
+          "rsi_momentum_period": 5,
+          "price_momentum_period": 12,
+          "volume_threshold": 0.7670593595635443
+        },
+        "score": 31.50027262869774,
+        "evaluation_time": 0.094472,
+        "combination_index": 96
+      }
+    ]
+  },
+  "swing_donchian_MSFT": {
+    "strategy_name": "swing_donchian",
+    "symbol": "MSFT",
+    "best_params": {
+      "donchian_period": 20,
+      "min_holding_days": 6,
+      "max_holding_days": 20,
+      "volume_threshold": 0.8624303015325528,
+      "volatility_threshold": 0.5737137357806684,
+      "breakout_strength_threshold": 0.005880689246936471
+    },
+    "best_score": 19.610537045790107,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 6.482361,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "donchian_period": 20,
+          "min_holding_days": 6,
+          "max_holding_days": 20,
+          "volume_threshold": 0.8624303015325528,
+          "volatility_threshold": 0.5737137357806684,
+          "breakout_strength_threshold": 0.005880689246936471
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.05407,
+        "combination_index": 1
+      },
+      {
+        "params": {
+          "donchian_period": 31,
+          "min_holding_days": 14,
+          "max_holding_days": 6,
+          "volume_threshold": 0.9850002244988311,
+          "volatility_threshold": 0.5860459757283465,
+          "breakout_strength_threshold": 0.005814375846984683
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.054428,
+        "combination_index": 2
+      },
+      {
+        "params": {
+          "donchian_period": 22,
+          "min_holding_days": 8,
+          "max_holding_days": 16,
+          "volume_threshold": 0.7521645928599856,
+          "volatility_threshold": 0.6555830593301641,
+          "breakout_strength_threshold": 0.006752216674398773
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.054244,
+        "combination_index": 5
+      },
+      {
+        "params": {
+          "donchian_period": 22,
+          "min_holding_days": 8,
+          "max_holding_days": 17,
+          "volume_threshold": 0.7405263161600989,
+          "volatility_threshold": 0.6253631362031478,
+          "breakout_strength_threshold": 0.006073458126959389
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.073887,
+        "combination_index": 21
+      },
+      {
+        "params": {
+          "donchian_period": 31,
+          "min_holding_days": 7,
+          "max_holding_days": 14,
+          "volume_threshold": 0.7659158968455956,
+          "volatility_threshold": 0.6729527857822395,
+          "breakout_strength_threshold": 0.00659771901395673
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.075377,
+        "combination_index": 22
+      },
+      {
+        "params": {
+          "donchian_period": 21,
+          "min_holding_days": 6,
+          "max_holding_days": 23,
+          "volume_threshold": 0.954293080413229,
+          "volatility_threshold": 0.620137139953762,
+          "breakout_strength_threshold": 0.0059175596960729885
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.074425,
+        "combination_index": 24
+      },
+      {
+        "params": {
+          "donchian_period": 13,
+          "min_holding_days": 14,
+          "max_holding_days": 8,
+          "volume_threshold": 0.604221612376174,
+          "volatility_threshold": 0.4489834571702293,
+          "breakout_strength_threshold": 0.005007805238927649
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.073831,
+        "combination_index": 27
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 8,
+          "max_holding_days": 17,
+          "volume_threshold": 0.7276341229754487,
+          "volatility_threshold": 0.6254148962965698,
+          "breakout_strength_threshold": 0.00610121215876414
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.075488,
+        "combination_index": 31
+      },
+      {
+        "params": {
+          "donchian_period": 20,
+          "min_holding_days": 8,
+          "max_holding_days": 16,
+          "volume_threshold": 0.8266386202167006,
+          "volatility_threshold": 0.6624372055816075,
+          "breakout_strength_threshold": 0.006189032388924054
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.074962,
+        "combination_index": 32
+      },
+      {
+        "params": {
+          "donchian_period": 33,
+          "min_holding_days": 9,
+          "max_holding_days": 10,
+          "volume_threshold": 0.7540496961651677,
+          "volatility_threshold": 0.49205662611098167,
+          "breakout_strength_threshold": 0.006778818440258447
+        },
+        "score": 19.610537045790107,
+        "evaluation_time": 0.07533,
+        "combination_index": 34
+      }
+    ]
+  },
+  "swing_macd_MSFT": {
+    "strategy_name": "swing_macd",
+    "symbol": "MSFT",
+    "best_params": {
+      "macd_fast": 20,
+      "macd_slow": 35,
+      "macd_signal": 9,
+      "min_holding_days": 14,
+      "max_holding_days": 10,
+      "volume_threshold": 0.7454860872523806,
+      "trend_confirmation": true
+    },
+    "best_score": 15.304543034086109,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 7.354816,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "macd_fast": 20,
+          "macd_slow": 35,
+          "macd_signal": 9,
+          "min_holding_days": 14,
+          "max_holding_days": 10,
+          "volume_threshold": 0.7454860872523806,
+          "trend_confirmation": true
+        },
+        "score": 15.304543034086109,
+        "evaluation_time": 0.077234,
+        "combination_index": 71
+      },
+      {
+        "params": {
+          "macd_fast": 17,
+          "macd_slow": 35,
+          "macd_signal": 12,
+          "min_holding_days": 14,
+          "max_holding_days": 12,
+          "volume_threshold": 0.7077882256596063,
+          "trend_confirmation": true
+        },
+        "score": 15.291465900988657,
+        "evaluation_time": 0.075019,
+        "combination_index": 57
+      },
+      {
+        "params": {
+          "macd_fast": 19,
+          "macd_slow": 35,
+          "macd_signal": 8,
+          "min_holding_days": 11,
+          "max_holding_days": 8,
+          "volume_threshold": 0.7677128621799746,
+          "trend_confirmation": true
+        },
+        "score": 15.253977013880824,
+        "evaluation_time": 0.078817,
+        "combination_index": 99
+      },
+      {
+        "params": {
+          "macd_fast": 18,
+          "macd_slow": 36,
+          "macd_signal": 10,
+          "min_holding_days": 14,
+          "max_holding_days": 9,
+          "volume_threshold": 0.8313226304391358,
+          "trend_confirmation": true
+        },
+        "score": 15.154938961439857,
+        "evaluation_time": 0.076416,
+        "combination_index": 68
+      },
+      {
+        "params": {
+          "macd_fast": 20,
+          "macd_slow": 34,
+          "macd_signal": 9,
+          "min_holding_days": 13,
+          "max_holding_days": 8,
+          "volume_threshold": 0.7581601594896081,
+          "trend_confirmation": true
+        },
+        "score": 15.151967218106082,
+        "evaluation_time": 0.074283,
+        "combination_index": 44
+      },
+      {
+        "params": {
+          "macd_fast": 19,
+          "macd_slow": 36,
+          "macd_signal": 9,
+          "min_holding_days": 13,
+          "max_holding_days": 10,
+          "volume_threshold": 0.800182815864929,
+          "trend_confirmation": true
+        },
+        "score": 15.151967218106082,
+        "evaluation_time": 0.077067,
+        "combination_index": 85
+      },
+      {
+        "params": {
+          "macd_fast": 19,
+          "macd_slow": 34,
+          "macd_signal": 10,
+          "min_holding_days": 13,
+          "max_holding_days": 12,
+          "volume_threshold": 0.7064719142316149,
+          "trend_confirmation": true
+        },
+        "score": 15.026219694509317,
+        "evaluation_time": 0.075829,
+        "combination_index": 61
+      },
+      {
+        "params": {
+          "macd_fast": 20,
+          "macd_slow": 34,
+          "macd_signal": 10,
+          "min_holding_days": 14,
+          "max_holding_days": 9,
+          "volume_threshold": 0.7831823545412568,
+          "trend_confirmation": true
+        },
+        "score": 14.89615520546934,
+        "evaluation_time": 0.073909,
+        "combination_index": 46
+      },
+      {
+        "params": {
+          "macd_fast": 19,
+          "macd_slow": 35,
+          "macd_signal": 10,
+          "min_holding_days": 14,
+          "max_holding_days": 10,
+          "volume_threshold": 0.706315550835305,
+          "trend_confirmation": true
+        },
+        "score": 14.89615520546934,
+        "evaluation_time": 0.074669,
+        "combination_index": 47
+      },
+      {
+        "params": {
+          "macd_fast": 19,
+          "macd_slow": 35,
+          "macd_signal": 10,
+          "min_holding_days": 12,
+          "max_holding_days": 10,
+          "volume_threshold": 0.7022370936036643,
+          "trend_confirmation": true
+        },
+        "score": 14.89615520546934,
+        "evaluation_time": 0.075439,
+        "combination_index": 48
+      }
+    ]
+  },
+  "swing_rsi_TSLA": {
+    "strategy_name": "swing_rsi",
+    "symbol": "TSLA",
+    "best_params": {
+      "rsi_period": 9,
+      "rsi_oversold": 37,
+      "rsi_overbought": 66,
+      "min_holding_days": 11,
+      "max_holding_days": 13,
+      "rsi_momentum_period": 3,
+      "price_momentum_period": 8,
+      "volume_threshold": 0.9596255046581623
+    },
+    "best_score": 22.370333212642805,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 8.599049,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 66,
+          "min_holding_days": 11,
+          "max_holding_days": 13,
+          "rsi_momentum_period": 3,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.9596255046581623
+        },
+        "score": 22.370333212642805,
+        "evaluation_time": 0.09112,
+        "combination_index": 80
+      },
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 63,
+          "min_holding_days": 11,
+          "max_holding_days": 11,
+          "rsi_momentum_period": 3,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.9729294798261758
+        },
+        "score": 20.72664994722583,
+        "evaluation_time": 0.092091,
+        "combination_index": 81
+      },
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 63,
+          "min_holding_days": 10,
+          "max_holding_days": 11,
+          "rsi_momentum_period": 3,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.8899789560607158
+        },
+        "score": 20.72664994722583,
+        "evaluation_time": 0.091443,
+        "combination_index": 82
+      },
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 38,
+          "rsi_overbought": 62,
+          "min_holding_days": 11,
+          "max_holding_days": 6,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.7193869163015129
+        },
+        "score": 20.060956844601492,
+        "evaluation_time": 0.090606,
+        "combination_index": 92
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 38,
+          "rsi_overbought": 62,
+          "min_holding_days": 11,
+          "max_holding_days": 6,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.7165089317348807
+        },
+        "score": 20.060956844601492,
+        "evaluation_time": 0.091519,
+        "combination_index": 93
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 38,
+          "rsi_overbought": 62,
+          "min_holding_days": 12,
+          "max_holding_days": 6,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.7135965788462715
+        },
+        "score": 20.060956844601492,
+        "evaluation_time": 0.090987,
+        "combination_index": 94
+      },
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 63,
+          "min_holding_days": 11,
+          "max_holding_days": 10,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.7667316219048033
+        },
+        "score": 20.024375405225218,
+        "evaluation_time": 0.091818,
+        "combination_index": 83
+      },
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 63,
+          "min_holding_days": 11,
+          "max_holding_days": 8,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.731247082686531
+        },
+        "score": 20.024375405225218,
+        "evaluation_time": 0.092811,
+        "combination_index": 84
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 37,
+          "rsi_overbought": 63,
+          "min_holding_days": 11,
+          "max_holding_days": 7,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.7534201922456001
+        },
+        "score": 20.024375405225218,
+        "evaluation_time": 0.091648,
+        "combination_index": 85
+      },
+      {
+        "params": {
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 63,
+          "min_holding_days": 11,
+          "max_holding_days": 8,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 8,
+          "volume_threshold": 0.7592626611173698
+        },
+        "score": 20.024375405225218,
+        "evaluation_time": 0.092234,
+        "combination_index": 86
+      }
+    ]
+  },
+  "swing_rsi_META": {
+    "strategy_name": "swing_rsi",
+    "symbol": "META",
+    "best_params": {
+      "rsi_period": 11,
+      "rsi_oversold": 31,
+      "rsi_overbought": 74,
+      "min_holding_days": 3,
+      "max_holding_days": 14,
+      "rsi_momentum_period": 2,
+      "price_momentum_period": 10,
+      "volume_threshold": 0.9643842245456685
+    },
+    "best_score": 27.016008397955247,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 8.53338,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "rsi_period": 11,
+          "rsi_oversold": 31,
+          "rsi_overbought": 74,
+          "min_holding_days": 3,
+          "max_holding_days": 14,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.9643842245456685
+        },
+        "score": 27.016008397955247,
+        "evaluation_time": 0.091324,
+        "combination_index": 68
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 31,
+          "rsi_overbought": 79,
+          "min_holding_days": 2,
+          "max_holding_days": 30,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 9,
+          "volume_threshold": 0.8587938056056625
+        },
+        "score": 26.670350416776614,
+        "evaluation_time": 0.091986,
+        "combination_index": 70
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 31,
+          "rsi_overbought": 79,
+          "min_holding_days": 2,
+          "max_holding_days": 30,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 9,
+          "volume_threshold": 0.8624254553942091
+        },
+        "score": 26.670350416776614,
+        "evaluation_time": 0.089331,
+        "combination_index": 71
+      },
+      {
+        "params": {
+          "rsi_period": 16,
+          "rsi_oversold": 31,
+          "rsi_overbought": 85,
+          "min_holding_days": 2,
+          "max_holding_days": 30,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.9317933879195786
+        },
+        "score": 25.67371953154587,
+        "evaluation_time": 0.088769,
+        "combination_index": 61
+      },
+      {
+        "params": {
+          "rsi_period": 15,
+          "rsi_oversold": 31,
+          "rsi_overbought": 82,
+          "min_holding_days": 2,
+          "max_holding_days": 28,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.9917688134563301
+        },
+        "score": 25.67371953154587,
+        "evaluation_time": 0.090393,
+        "combination_index": 62
+      },
+      {
+        "params": {
+          "rsi_period": 13,
+          "rsi_oversold": 31,
+          "rsi_overbought": 85,
+          "min_holding_days": 2,
+          "max_holding_days": 30,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.8957729116808829
+        },
+        "score": 25.67371953154587,
+        "evaluation_time": 0.089215,
+        "combination_index": 63
+      },
+      {
+        "params": {
+          "rsi_period": 19,
+          "rsi_oversold": 30,
+          "rsi_overbought": 75,
+          "min_holding_days": 3,
+          "max_holding_days": 13,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.8086660215598027
+        },
+        "score": 25.252807719385476,
+        "evaluation_time": 0.084789,
+        "combination_index": 31
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 31,
+          "rsi_overbought": 77,
+          "min_holding_days": 3,
+          "max_holding_days": 9,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.8065320909578458
+        },
+        "score": 25.0580882579523,
+        "evaluation_time": 0.094155,
+        "combination_index": 91
+      },
+      {
+        "params": {
+          "rsi_period": 8,
+          "rsi_oversold": 26,
+          "rsi_overbought": 67,
+          "min_holding_days": 4,
+          "max_holding_days": 26,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 13,
+          "volume_threshold": 1.0865926582391219
+        },
+        "score": 25.051961647763733,
+        "evaluation_time": 0.054234,
+        "combination_index": 7
+      },
+      {
+        "params": {
+          "rsi_period": 19,
+          "rsi_oversold": 31,
+          "rsi_overbought": 78,
+          "min_holding_days": 6,
+          "max_holding_days": 14,
+          "rsi_momentum_period": 2,
+          "price_momentum_period": 10,
+          "volume_threshold": 0.7983991925440383
+        },
+        "score": 24.96504910703313,
+        "evaluation_time": 0.083259,
+        "combination_index": 27
+      }
+    ]
+  },
+  "swing_donchian_META": {
+    "strategy_name": "swing_donchian",
+    "symbol": "META",
+    "best_params": {
+      "donchian_period": 20,
+      "min_holding_days": 13,
+      "max_holding_days": 35,
+      "volume_threshold": 0.9600137697218143,
+      "volatility_threshold": 0.8593396377014276,
+      "breakout_strength_threshold": 0.007188858493145378
+    },
+    "best_score": 15.987123787713886,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 6.258414,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "donchian_period": 20,
+          "min_holding_days": 13,
+          "max_holding_days": 35,
+          "volume_threshold": 0.9600137697218143,
+          "volatility_threshold": 0.8593396377014276,
+          "breakout_strength_threshold": 0.007188858493145378
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.072111,
+        "combination_index": 16
+      },
+      {
+        "params": {
+          "donchian_period": 26,
+          "min_holding_days": 12,
+          "max_holding_days": 22,
+          "volume_threshold": 0.7219235215630616,
+          "volatility_threshold": 0.9102855452407067,
+          "breakout_strength_threshold": 0.008084990793816913
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.073059,
+        "combination_index": 28
+      },
+      {
+        "params": {
+          "donchian_period": 16,
+          "min_holding_days": 10,
+          "max_holding_days": 21,
+          "volume_threshold": 0.968740426690063,
+          "volatility_threshold": 0.8692999046298584,
+          "breakout_strength_threshold": 0.008704451505584881
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.074619,
+        "combination_index": 60
+      },
+      {
+        "params": {
+          "donchian_period": 22,
+          "min_holding_days": 14,
+          "max_holding_days": 25,
+          "volume_threshold": 0.9624923905041285,
+          "volatility_threshold": 0.8770249145494972,
+          "breakout_strength_threshold": 0.009117366730857801
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.075951,
+        "combination_index": 65
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 14,
+          "max_holding_days": 22,
+          "volume_threshold": 0.8005425798084588,
+          "volatility_threshold": 0.8308227319820506,
+          "breakout_strength_threshold": 0.009251560741348286
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.07559,
+        "combination_index": 66
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 15,
+          "max_holding_days": 21,
+          "volume_threshold": 0.7324821358838418,
+          "volatility_threshold": 0.822841370497278,
+          "breakout_strength_threshold": 0.009270714409196438
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.075048,
+        "combination_index": 68
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 15,
+          "max_holding_days": 21,
+          "volume_threshold": 0.6928184544941198,
+          "volatility_threshold": 0.8280488129750134,
+          "breakout_strength_threshold": 0.009295013453510435
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.075266,
+        "combination_index": 69
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 14,
+          "max_holding_days": 13,
+          "volume_threshold": 0.6894932499457799,
+          "volatility_threshold": 0.8258916757229967,
+          "breakout_strength_threshold": 0.0093184618126609
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.075228,
+        "combination_index": 70
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 15,
+          "max_holding_days": 9,
+          "volume_threshold": 0.7312990769287533,
+          "volatility_threshold": 0.8264492336300011,
+          "breakout_strength_threshold": 0.010080903287842023
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.076039,
+        "combination_index": 72
+      },
+      {
+        "params": {
+          "donchian_period": 23,
+          "min_holding_days": 14,
+          "max_holding_days": 20,
+          "volume_threshold": 0.646345300032357,
+          "volatility_threshold": 0.8730461427830863,
+          "breakout_strength_threshold": 0.009245938908879158
+        },
+        "score": 15.987123787713886,
+        "evaluation_time": 0.07631,
+        "combination_index": 75
+      }
+    ]
+  },
+  "donchian_rsi_whipsaw_META": {
+    "strategy_name": "donchian_rsi_whipsaw",
+    "symbol": "META",
+    "best_params": {
+      "donchian_period": 14,
+      "rsi_period": 8,
+      "rsi_oversold": 36,
+      "rsi_overbought": 67,
+      "atr_period": 23,
+      "atr_multiplier": 1.7775749002226897
+    },
+    "best_score": 25.07800397338867,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 7.83176,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "donchian_period": 14,
+          "rsi_period": 8,
+          "rsi_oversold": 36,
+          "rsi_overbought": 67,
+          "atr_period": 23,
+          "atr_multiplier": 1.7775749002226897
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.083118,
+        "combination_index": 60
+      },
+      {
+        "params": {
+          "donchian_period": 14,
+          "rsi_period": 8,
+          "rsi_oversold": 37,
+          "rsi_overbought": 67,
+          "atr_period": 23,
+          "atr_multiplier": 1.7443740419162497
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.082689,
+        "combination_index": 61
+      },
+      {
+        "params": {
+          "donchian_period": 13,
+          "rsi_period": 8,
+          "rsi_oversold": 37,
+          "rsi_overbought": 66,
+          "atr_period": 23,
+          "atr_multiplier": 1.6966146862736955
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.082747,
+        "combination_index": 62
+      },
+      {
+        "params": {
+          "donchian_period": 13,
+          "rsi_period": 8,
+          "rsi_oversold": 37,
+          "rsi_overbought": 66,
+          "atr_period": 23,
+          "atr_multiplier": 1.7217582464822705
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.085154,
+        "combination_index": 63
+      },
+      {
+        "params": {
+          "donchian_period": 13,
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 66,
+          "atr_period": 23,
+          "atr_multiplier": 1.7160802398340997
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.086223,
+        "combination_index": 64
+      },
+      {
+        "params": {
+          "donchian_period": 14,
+          "rsi_period": 8,
+          "rsi_oversold": 37,
+          "rsi_overbought": 66,
+          "atr_period": 23,
+          "atr_multiplier": 1.706529085423598
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.081918,
+        "combination_index": 66
+      },
+      {
+        "params": {
+          "donchian_period": 14,
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 67,
+          "atr_period": 22,
+          "atr_multiplier": 1.816336783720659
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.081595,
+        "combination_index": 70
+      },
+      {
+        "params": {
+          "donchian_period": 14,
+          "rsi_period": 9,
+          "rsi_oversold": 37,
+          "rsi_overbought": 67,
+          "atr_period": 23,
+          "atr_multiplier": 1.7944152707627836
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.08106,
+        "combination_index": 71
+      },
+      {
+        "params": {
+          "donchian_period": 12,
+          "rsi_period": 9,
+          "rsi_oversold": 36,
+          "rsi_overbought": 67,
+          "atr_period": 22,
+          "atr_multiplier": 1.8044347965982734
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.080911,
+        "combination_index": 72
+      },
+      {
+        "params": {
+          "donchian_period": 15,
+          "rsi_period": 9,
+          "rsi_oversold": 35,
+          "rsi_overbought": 67,
+          "atr_period": 23,
+          "atr_multiplier": 1.828304805475622
+        },
+        "score": 25.07800397338867,
+        "evaluation_time": 0.080349,
+        "combination_index": 74
+      }
+    ]
+  },
+  "swing_macd_META": {
+    "strategy_name": "swing_macd",
+    "symbol": "META",
+    "best_params": {
+      "macd_fast": 11,
+      "macd_slow": 39,
+      "macd_signal": 15,
+      "min_holding_days": 14,
+      "max_holding_days": 17,
+      "volume_threshold": 1.3114798982827134,
+      "trend_confirmation": true
+    },
+    "best_score": 41.012002834078565,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 7.172138,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 39,
+          "macd_signal": 15,
+          "min_holding_days": 14,
+          "max_holding_days": 17,
+          "volume_threshold": 1.3114798982827134,
+          "trend_confirmation": true
+        },
+        "score": 41.012002834078565,
+        "evaluation_time": 0.07261,
+        "combination_index": 46
+      },
+      {
+        "params": {
+          "macd_fast": 12,
+          "macd_slow": 33,
+          "macd_signal": 12,
+          "min_holding_days": 14,
+          "max_holding_days": 10,
+          "volume_threshold": 1.1177664440899,
+          "trend_confirmation": true
+        },
+        "score": 41.006329793031234,
+        "evaluation_time": 0.071473,
+        "combination_index": 27
+      },
+      {
+        "params": {
+          "macd_fast": 12,
+          "macd_slow": 33,
+          "macd_signal": 12,
+          "min_holding_days": 12,
+          "max_holding_days": 24,
+          "volume_threshold": 1.1321806632534832,
+          "trend_confirmation": true
+        },
+        "score": 41.006329793031234,
+        "evaluation_time": 0.072083,
+        "combination_index": 36
+      },
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 38,
+          "macd_signal": 11,
+          "min_holding_days": 13,
+          "max_holding_days": 9,
+          "volume_threshold": 1.006348045176041,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.070378,
+        "combination_index": 20
+      },
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 40,
+          "macd_signal": 11,
+          "min_holding_days": 13,
+          "max_holding_days": 9,
+          "volume_threshold": 0.9770168679933315,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.069895,
+        "combination_index": 21
+      },
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 37,
+          "macd_signal": 12,
+          "min_holding_days": 12,
+          "max_holding_days": 22,
+          "volume_threshold": 1.154675314369837,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.072842,
+        "combination_index": 42
+      },
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 37,
+          "macd_signal": 12,
+          "min_holding_days": 12,
+          "max_holding_days": 22,
+          "volume_threshold": 1.1473050245719016,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.072805,
+        "combination_index": 43
+      },
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 36,
+          "macd_signal": 12,
+          "min_holding_days": 13,
+          "max_holding_days": 23,
+          "volume_threshold": 1.1803526963929576,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.074803,
+        "combination_index": 52
+      },
+      {
+        "params": {
+          "macd_fast": 12,
+          "macd_slow": 37,
+          "macd_signal": 11,
+          "min_holding_days": 5,
+          "max_holding_days": 13,
+          "volume_threshold": 1.4848992301508086,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.073964,
+        "combination_index": 59
+      },
+      {
+        "params": {
+          "macd_fast": 11,
+          "macd_slow": 37,
+          "macd_signal": 12,
+          "min_holding_days": 12,
+          "max_holding_days": 22,
+          "volume_threshold": 1.1540316913408168,
+          "trend_confirmation": true
+        },
+        "score": 41.005306726951254,
+        "evaluation_time": 0.075326,
+        "combination_index": 61
+      }
+    ]
+  },
+  "swing_rsi_UNH": {
+    "strategy_name": "swing_rsi",
+    "symbol": "UNH",
+    "best_params": {
+      "rsi_period": 24,
+      "rsi_oversold": 19,
+      "rsi_overbought": 67,
+      "min_holding_days": 3,
+      "max_holding_days": 26,
+      "rsi_momentum_period": 4,
+      "price_momentum_period": 12,
+      "volume_threshold": 1.280856916030108
+    },
+    "best_score": 18.7769932890288,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 8.736324,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "rsi_period": 24,
+          "rsi_oversold": 19,
+          "rsi_overbought": 67,
+          "min_holding_days": 3,
+          "max_holding_days": 26,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.280856916030108
+        },
+        "score": 18.7769932890288,
+        "evaluation_time": 0.084679,
+        "combination_index": 25
+      },
+      {
+        "params": {
+          "rsi_period": 26,
+          "rsi_oversold": 24,
+          "rsi_overbought": 67,
+          "min_holding_days": 2,
+          "max_holding_days": 28,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.2185354206867471
+        },
+        "score": 18.7769932890288,
+        "evaluation_time": 0.083778,
+        "combination_index": 26
+      },
+      {
+        "params": {
+          "rsi_period": 27,
+          "rsi_oversold": 20,
+          "rsi_overbought": 66,
+          "min_holding_days": 7,
+          "max_holding_days": 5,
+          "rsi_momentum_period": 3,
+          "price_momentum_period": 14,
+          "volume_threshold": 0.8544053945729191
+        },
+        "score": 18.092733158554037,
+        "evaluation_time": 0.090993,
+        "combination_index": 63
+      },
+      {
+        "params": {
+          "rsi_period": 27,
+          "rsi_oversold": 20,
+          "rsi_overbought": 66,
+          "min_holding_days": 8,
+          "max_holding_days": 9,
+          "rsi_momentum_period": 3,
+          "price_momentum_period": 14,
+          "volume_threshold": 0.7089942974806462
+        },
+        "score": 18.092733158554037,
+        "evaluation_time": 0.111432,
+        "combination_index": 75
+      },
+      {
+        "params": {
+          "rsi_period": 26,
+          "rsi_oversold": 21,
+          "rsi_overbought": 66,
+          "min_holding_days": 6,
+          "max_holding_days": 6,
+          "rsi_momentum_period": 3,
+          "price_momentum_period": 15,
+          "volume_threshold": 0.7922061664158969
+        },
+        "score": 17.977085318387644,
+        "evaluation_time": 0.09906,
+        "combination_index": 80
+      },
+      {
+        "params": {
+          "rsi_period": 24,
+          "rsi_oversold": 22,
+          "rsi_overbought": 64,
+          "min_holding_days": 4,
+          "max_holding_days": 6,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.221306079086181
+        },
+        "score": 17.947783407239914,
+        "evaluation_time": 0.102146,
+        "combination_index": 89
+      },
+      {
+        "params": {
+          "rsi_period": 24,
+          "rsi_oversold": 21,
+          "rsi_overbought": 64,
+          "min_holding_days": 4,
+          "max_holding_days": 6,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.2716429037554169
+        },
+        "score": 17.947783407239914,
+        "evaluation_time": 0.096536,
+        "combination_index": 91
+      },
+      {
+        "params": {
+          "rsi_period": 25,
+          "rsi_oversold": 24,
+          "rsi_overbought": 65,
+          "min_holding_days": 4,
+          "max_holding_days": 5,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.2604014317763306
+        },
+        "score": 17.947783407239914,
+        "evaluation_time": 0.094158,
+        "combination_index": 92
+      },
+      {
+        "params": {
+          "rsi_period": 22,
+          "rsi_oversold": 23,
+          "rsi_overbought": 63,
+          "min_holding_days": 4,
+          "max_holding_days": 5,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.2996967685764054
+        },
+        "score": 17.947783407239914,
+        "evaluation_time": 0.092221,
+        "combination_index": 93
+      },
+      {
+        "params": {
+          "rsi_period": 24,
+          "rsi_oversold": 24,
+          "rsi_overbought": 63,
+          "min_holding_days": 4,
+          "max_holding_days": 9,
+          "rsi_momentum_period": 4,
+          "price_momentum_period": 12,
+          "volume_threshold": 1.2975147225116417
+        },
+        "score": 17.947783407239914,
+        "evaluation_time": 0.09372,
+        "combination_index": 94
+      }
+    ]
+  },
+  "swing_donchian_UNH": {
+    "strategy_name": "swing_donchian",
+    "symbol": "UNH",
+    "best_params": {
+      "donchian_period": 17,
+      "min_holding_days": 4,
+      "max_holding_days": 19,
+      "volume_threshold": 0.828653565398286,
+      "volatility_threshold": 0.7867994373897559,
+      "breakout_strength_threshold": 0.0016926203371220672
+    },
+    "best_score": 13.651880322764912,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 6.692707,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "donchian_period": 17,
+          "min_holding_days": 4,
+          "max_holding_days": 19,
+          "volume_threshold": 0.828653565398286,
+          "volatility_threshold": 0.7867994373897559,
+          "breakout_strength_threshold": 0.0016926203371220672
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.074573,
+        "combination_index": 36
+      },
+      {
+        "params": {
+          "donchian_period": 10,
+          "min_holding_days": 6,
+          "max_holding_days": 18,
+          "volume_threshold": 0.6024182734794628,
+          "volatility_threshold": 0.7544798410295195,
+          "breakout_strength_threshold": 0.001005007459687826
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.07676,
+        "combination_index": 56
+      },
+      {
+        "params": {
+          "donchian_period": 18,
+          "min_holding_days": 10,
+          "max_holding_days": 8,
+          "volume_threshold": 0.6768803116174473,
+          "volatility_threshold": 0.8037520936682564,
+          "breakout_strength_threshold": 0.0012859396281141551
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.078092,
+        "combination_index": 64
+      },
+      {
+        "params": {
+          "donchian_period": 18,
+          "min_holding_days": 11,
+          "max_holding_days": 8,
+          "volume_threshold": 0.678909148746127,
+          "volatility_threshold": 0.8065019535401834,
+          "breakout_strength_threshold": 0.0012758361489567925
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.076293,
+        "combination_index": 65
+      },
+      {
+        "params": {
+          "donchian_period": 18,
+          "min_holding_days": 11,
+          "max_holding_days": 5,
+          "volume_threshold": 0.7246796931125354,
+          "volatility_threshold": 0.861808747399619,
+          "breakout_strength_threshold": 0.0018509695053456395
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.078772,
+        "combination_index": 67
+      },
+      {
+        "params": {
+          "donchian_period": 15,
+          "min_holding_days": 13,
+          "max_holding_days": 8,
+          "volume_threshold": 0.6240488766346435,
+          "volatility_threshold": 0.8452028740962089,
+          "breakout_strength_threshold": 0.0010037853655301475
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.076987,
+        "combination_index": 69
+      },
+      {
+        "params": {
+          "donchian_period": 16,
+          "min_holding_days": 13,
+          "max_holding_days": 6,
+          "volume_threshold": 0.6204554015973356,
+          "volatility_threshold": 0.8354055056946719,
+          "breakout_strength_threshold": 0.0012273245131877455
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.076972,
+        "combination_index": 71
+      },
+      {
+        "params": {
+          "donchian_period": 16,
+          "min_holding_days": 13,
+          "max_holding_days": 6,
+          "volume_threshold": 0.6241423237382745,
+          "volatility_threshold": 0.8335009114704923,
+          "breakout_strength_threshold": 0.0012733336574257848
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.07731,
+        "combination_index": 72
+      },
+      {
+        "params": {
+          "donchian_period": 13,
+          "min_holding_days": 13,
+          "max_holding_days": 5,
+          "volume_threshold": 0.6252430131760157,
+          "volatility_threshold": 0.8494238451292535,
+          "breakout_strength_threshold": 0.0018852836741189054
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.080969,
+        "combination_index": 74
+      },
+      {
+        "params": {
+          "donchian_period": 14,
+          "min_holding_days": 13,
+          "max_holding_days": 7,
+          "volume_threshold": 0.7090794873796584,
+          "volatility_threshold": 0.7937909371550156,
+          "breakout_strength_threshold": 0.0010260016915190095
+        },
+        "score": 13.651880322764912,
+        "evaluation_time": 0.079477,
+        "combination_index": 75
+      }
+    ]
+  },
+  "swing_macd_UNH": {
+    "strategy_name": "swing_macd",
+    "symbol": "UNH",
+    "best_params": {
+      "macd_fast": 6,
+      "macd_slow": 18,
+      "macd_signal": 14,
+      "min_holding_days": 2,
+      "max_holding_days": 19,
+      "volume_threshold": 1.2483532199532394,
+      "trend_confirmation": false
+    },
+    "best_score": 15.172365849685532,
+    "optimization_method": "bayesian_optimization",
+    "execution_time": 7.143091,
+    "n_combinations_tested": 100,
+    "all_results": [
+      {
+        "params": {
+          "macd_fast": 6,
+          "macd_slow": 18,
+          "macd_signal": 14,
+          "min_holding_days": 2,
+          "max_holding_days": 19,
+          "volume_threshold": 1.2483532199532394,
+          "trend_confirmation": false
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.069819,
+        "combination_index": 10
+      },
+      {
+        "params": {
+          "macd_fast": 6,
+          "macd_slow": 18,
+          "macd_signal": 14,
+          "min_holding_days": 2,
+          "max_holding_days": 19,
+          "volume_threshold": 1.2112384513979515,
+          "trend_confirmation": false
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.069892,
+        "combination_index": 11
+      },
+      {
+        "params": {
+          "macd_fast": 6,
+          "macd_slow": 18,
+          "macd_signal": 14,
+          "min_holding_days": 2,
+          "max_holding_days": 19,
+          "volume_threshold": 1.2406882562110242,
+          "trend_confirmation": false
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.069874,
+        "combination_index": 12
+      },
+      {
+        "params": {
+          "macd_fast": 6,
+          "macd_slow": 18,
+          "macd_signal": 14,
+          "min_holding_days": 2,
+          "max_holding_days": 20,
+          "volume_threshold": 1.2356337523011494,
+          "trend_confirmation": false
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.069742,
+        "combination_index": 21
+      },
+      {
+        "params": {
+          "macd_fast": 6,
+          "macd_slow": 18,
+          "macd_signal": 14,
+          "min_holding_days": 2,
+          "max_holding_days": 21,
+          "volume_threshold": 1.1903374780269451,
+          "trend_confirmation": false
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.071634,
+        "combination_index": 31
+      },
+      {
+        "params": {
+          "macd_fast": 7,
+          "macd_slow": 21,
+          "macd_signal": 11,
+          "min_holding_days": 8,
+          "max_holding_days": 37,
+          "volume_threshold": 1.1346048490251144,
+          "trend_confirmation": true
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.077488,
+        "combination_index": 98
+      },
+      {
+        "params": {
+          "macd_fast": 7,
+          "macd_slow": 21,
+          "macd_signal": 11,
+          "min_holding_days": 8,
+          "max_holding_days": 40,
+          "volume_threshold": 1.187406765849153,
+          "trend_confirmation": true
+        },
+        "score": 15.172365849685532,
+        "evaluation_time": 0.077394,
+        "combination_index": 99
+      },
+      {
+        "params": {
+          "macd_fast": 7,
+          "macd_slow": 19,
+          "macd_signal": 11,
+          "min_holding_days": 3,
+          "max_holding_days": 9,
+          "volume_threshold": 1.141301788659101,
+          "trend_confirmation": false
+        },
+        "score": 15.15282951787691,
+        "evaluation_time": 0.074579,
+        "combination_index": 68
+      },
+      {
+        "params": {
+          "macd_fast": 7,
+          "macd_slow": 19,
+          "macd_signal": 11,
+          "min_holding_days": 2,
+          "max_holding_days": 12,
+          "volume_threshold": 0.871455895219302,
+          "trend_confirmation": false
+        },
+        "score": 15.15282951787691,
+        "evaluation_time": 0.074348,
+        "combination_index": 71
+      },
+      {
+        "params": {
+          "macd_fast": 7,
+          "macd_slow": 19,
+          "macd_signal": 11,
+          "min_holding_days": 3,
+          "max_holding_days": 11,
+          "volume_threshold": 1.2293770381021518,
+          "trend_confirmation": false
+        },
+        "score": 15.15282951787691,
+        "evaluation_time": 0.075617,
+        "combination_index": 75
+      }
+    ]
+  }
+}

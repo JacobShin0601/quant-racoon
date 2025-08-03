@@ -283,6 +283,16 @@ class IndividualStrategyResearcher:
             "swing_candle_pattern": SwingCandlePatternStrategy,
             "swing_bollinger_band": SwingBollingerBandStrategy,
             "swing_macd": SwingMACDStrategy,
+            # 특수 전략들 추가
+            "inverse_etf": InverseETFStrategy,
+            "largecap_growth": LargeCap_GrowthStrategy,
+            # 누락된 전략들 추가
+            "multi_timeframe_ma": MultiTimeframeMAStrategy,
+            "pivot_point": PivotPointStrategy,
+            "macd_divergence": MACDDivergenceStrategy,
+            "rsi_bollinger_advanced": RSIBollingerAdvancedStrategy,
+            # AI 메가트렌드 전략
+            "ai_megatrend": AIMegaTrendStrategy,
         }
 
         for name, strategy_class in strategies_to_register.items():

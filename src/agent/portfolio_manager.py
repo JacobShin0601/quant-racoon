@@ -72,10 +72,7 @@ class AdvancedPortfolioManager:
         time_horizon: str = "swing",
         uuid: Optional[str] = None,
     ):
-        print("🔍 PortfolioManager 초기화 시작")
-        print(f"🔍 입력 config_path: {config_path}")
-        print(f"🔍 입력 time_horizon: {time_horizon}")
-        print(f"🔍 입력 uuid: {uuid}")
+        # PortfolioManager 초기화
 
         # 시간대별 설정 파일 경로 사용 (절대 경로로 변환)
         if time_horizon:
@@ -86,19 +83,18 @@ class AdvancedPortfolioManager:
                 current_dir, f"config/config_{time_horizon}.json"
             )
             self.config_path = horizon_config_path
-            print(f"🔍 time_horizon 기반 설정 파일 경로: {self.config_path}")
+            pass  # time_horizon 기반 설정 파일 사용
         else:
             self.config_path = config_path
-            print(f"🔍 직접 지정된 설정 파일 경로: {self.config_path}")
+            pass  # 직접 지정된 설정 파일 사용
 
         self.time_horizon = time_horizon
         self.uuid = uuid or datetime.now().strftime("%Y%m%d_%H%M%S")
-        print(f"🔍 최종 UUID: {self.uuid}")
+        pass  # UUID 설정 완료
 
         # 로거 초기화 (설정 로드 전에)
-        print("🔍 Logger 초기화 시작")
+        pass  # Logger 초기화
         self.logger = Logger()
-        print("🔍 Logger 초기화 완료")
 
         # 로거 설정 (설정 로드 후에)
         try:
@@ -107,7 +103,7 @@ class AdvancedPortfolioManager:
 
             with open(self.config_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)
-            self.logger.log_success(f"✅ 설정 파일 로드 완료")
+            # 설정 파일 로드 완료
 
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
@@ -126,34 +122,27 @@ class AdvancedPortfolioManager:
                 )
 
         except Exception as e:
-            print(f"❌ 설정 파일 로드 실패: {e}")
+            # 설정 파일 로드 실패
             # 기본 로거 설정
             self.logger.setup_logger(
                 strategy="portfolio_optimization", mode="portfolio"
             )
 
-        # 직접 print로도 로깅
-        print(f"🔍 PortfolioManager 초기화 시작")
-        print(f"🔍 설정 파일 경로: {self.config_path}")
-        print(f"🔍 시간대: {self.time_horizon}")
-        print(f"🔍 UUID: {self.uuid}")
+        # 초기화 정보 로깅
 
-        self.logger.log_info(f"🔍 PortfolioManager 초기화 시작")
-        self.logger.log_info(f"🔍 설정 파일 경로: {self.config_path}")
-        self.logger.log_info(f"🔍 시간대: {self.time_horizon}")
-        self.logger.log_info(f"🔍 UUID: {self.uuid}")
+        # 초기화 로깅 완료
 
         # 설정 파일은 이미 위에서 로드됨
 
         try:
             # PortfolioWeightCalculator에 동일한 설정 파일 경로 전달
             self.weight_calculator = PortfolioWeightCalculator(self.config_path)
-            self.logger.log_success(f"✅ PortfolioWeightCalculator 초기화 완료")
+            # PortfolioWeightCalculator 초기화 완뢬
         except Exception as e:
-            self.logger.log_error(f"❌ PortfolioWeightCalculator 초기화 실패: {e}")
+            # PortfolioWeightCalculator 초기화 실패
             import traceback
 
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             raise
 
         self.params = StrategyParams()
@@ -163,24 +152,19 @@ class AdvancedPortfolioManager:
         self.individual_optimization_results = {}
         self.portfolio_optimization_result = None
 
-        self.logger.log_success(f"✅ PortfolioManager 초기화 완료")
+        # PortfolioManager 초기화 완료
 
     def load_individual_optimization_results(
         self, optimization_file_path: str
     ) -> Dict[str, Dict]:
         """개별 종목 최적화 결과 로드"""
         try:
-            print(f"🔍 개별 최적화 결과 파일 읽기 시작: {optimization_file_path}")
+            # 개별 최적화 결과 로드
 
             with open(optimization_file_path, "r", encoding="utf-8") as f:
                 results = json.load(f)
 
-            print(
-                f"🔍 JSON 로드 완료: {type(results)}, 길이: {len(results) if results else 0}"
-            )
-            if results:
-                print(f"🔍 결과 키 예시: {list(results.keys())[:3]}")
-                print(f"🔍 첫 번째 결과 내용: {list(results.items())[:1]}")
+            # JSON 로드 완료
 
             # 실패한 전략 필터링 (-999999 점수 제외)
             filtered_results = {}
@@ -193,29 +177,25 @@ class AdvancedPortfolioManager:
                 else:
                     failed_count += 1
 
-            print(
-                f"🔍 필터링: {len(results)}개 중 {len(filtered_results)}개 성공, {failed_count}개 실패 제외"
-            )
+            # 최적화 결과 필터링 완뢬
 
-            self.logger.log_success(
-                f"개별 최적화 결과 로드 완료: {len(filtered_results)}개 성공 조합 (실패 {failed_count}개 제외)"
-            )
+            # 개별 최적화 결과 로드 완료
             return filtered_results
 
         except Exception as e:
-            print(f"❌ 개별 최적화 결과 로드 실패: {e}")
+            # 개별 최적화 결과 로드 실패
             import traceback
 
-            print(f"상세 오류: {traceback.format_exc()}")
-            self.logger.log_error(f"개별 최적화 결과 로드 실패: {e}")
+            # 상세 오류 생략
+            # 개별 최적화 결과 로드 실패
             return {}
 
     def select_best_strategy_per_symbol(
         self, optimization_results: Dict[str, Dict]
     ) -> Dict[str, Dict]:
         """각 종목별로 최적의 전략 선택"""
-        print("🎯 각 종목별 최적 전략 선택 시작")
-        self.logger.log_info("🎯 각 종목별 최적 전략 선택 시작")
+        # 각 종목별 최적 전략 선택 시작
+        # 각 종목별 최적 전략 선택 시작
 
         # 여러 섹션에서 심볼 찾기 시도
         symbols = (
@@ -224,14 +204,12 @@ class AdvancedPortfolioManager:
             or self.config.get("scrapper", {}).get("symbols", [])
         )
 
-        print(f"🔍 찾은 심볼들: {symbols}")
-        print(f"🔍 최적화 결과 키 수: {len(optimization_results)}")
-        print(f"🔍 최적화 결과 키 예시: {list(optimization_results.keys())[:5]}")
+        # 심볼 검색 및 최적화 결과 키 확인
 
         symbol_best_strategies = {}
 
         for symbol in symbols:
-            print(f"🔍 {symbol} 최적 전략 선택 중...")
+            # {symbol} 최적 전략 선택 중
             best_score = -999999.0
             best_strategy = None
             best_params = {}
@@ -246,11 +224,11 @@ class AdvancedPortfolioManager:
 
                     # 실패한 전략 제외 (-999999 점수)
                     if score <= -999999.0:
-                        print(f"  - {strategy_name}: 실패 (점수: {score:.3f}) - 제외")
+                        # {strategy_name}: 실패 - 제외
                         continue
 
                     # 모든 점수 로그 출력 (디버깅용)
-                    print(f"  - {strategy_name}: 점수 {score:.3f}")
+                    # {strategy_name}: 점수 확인
 
                     # 점수 비교 (성공한 전략만)
                     if score >= best_score:  # >= 로 변경하여 동점도 허용
@@ -265,19 +243,14 @@ class AdvancedPortfolioManager:
                     "score": best_score,
                     "tested_strategies": tested_strategies,
                 }
-                print(
-                    f"✅ {symbol} 최적 전략: {best_strategy} (점수: {best_score:.3f})"
-                )
-                self.logger.log_success(
-                    f"✅ {symbol} 최적 전략: {best_strategy} (점수: {best_score:.3f})"
-                )
+                # {symbol} 최적 전략 선택 완료
+                # 최적 전략 선택 완료
             else:
-                print(f"⚠️ {symbol} 유효한 전략 없음")
-                self.logger.log_warning(f"⚠️ {symbol} 유효한 전략 없음")
+                # {symbol} 유효한 전략 없음
+                # 유효한 전략 없음
+                pass
 
-        self.logger.log_info(
-            f"📊 종목별 최적 전략 선택 완료: {len(symbol_best_strategies)}개 종목"
-        )
+        # 종목별 최적 전략 선택 완료
         return symbol_best_strategies
 
     def create_optimal_portfolio(
@@ -286,8 +259,8 @@ class AdvancedPortfolioManager:
         data_dict: Dict[str, pd.DataFrame],
     ) -> Dict[str, Any]:
         """개별 종목별 최적 전략으로 포트폴리오 구성 (fallback 메커니즘 포함)"""
-        print("🎯 최적 전략 기반 포트폴리오 구성 시작")
-        self.logger.log_info("🎯 최적 전략 기반 포트폴리오 구성 시작")
+        # 최적 전략 기반 포트폴리오 구성 시작
+        # 최적 전략 기반 포트폴리오 구성 시작
 
         # 1. 각 종목의 최적 전략으로 수익률 계산
         symbol_returns = {}
@@ -297,7 +270,7 @@ class AdvancedPortfolioManager:
             strategy_name = strategy_info["strategy"]
             params = strategy_info["params"]
 
-            print(f"🔍 {symbol} ({strategy_name}) 수익률 계산 중...")
+            # {symbol} ({strategy_name}) 수익률 계산
 
             # 최적화된 파라미터로 전략 실행
             returns = self._calculate_strategy_returns(
@@ -307,19 +280,20 @@ class AdvancedPortfolioManager:
             if returns is not None:
                 symbol_returns[symbol] = returns
                 successful_symbols += 1
-                print(f"✅ {symbol} 수익률 계산 성공")
-                self.logger.log_success(f"✅ {symbol} 수익률 계산 성공")
+                # 수익률 계산 성공
+                # {symbol} 수익률 계산 성공
             else:
-                print(f"⚠️ {symbol} 수익률 계산 실패")
-                self.logger.log_warning(f"⚠️ {symbol} 수익률 계산 실패")
+                # {symbol} 수익률 계산 실패
+                # {symbol} 수익률 계산 실패
+                pass
 
         if not symbol_returns:
             self.logger.log_error("❌ 유효한 수익률 데이터가 없습니다")
             return {}
 
         # 2. 포트폴리오 비중 최적화 (메인 방법 시도)
-        print(f"📊 포트폴리오 최적화 시작: {len(symbol_returns)}개 종목")
-        self.logger.log_info(f"📊 포트폴리오 최적화 시작: {len(symbol_returns)}개 종목")
+        # 포트폴리오 최적화 시작
+        # 포트폴리오 최적화 시작
 
         returns_df = pd.DataFrame(symbol_returns).dropna()
 
@@ -327,8 +301,8 @@ class AdvancedPortfolioManager:
             self.logger.log_error("❌ NaN 제거 후 데이터가 없습니다")
             return {}
 
-        print(f"📊 수익률 데이터 형태: {returns_df.shape}")
-        self.logger.log_info(f"📊 수익률 데이터 형태: {returns_df.shape}")
+        # 포트폴리오 수익률 데이터 준비
+        # 수익률 데이터 형태
 
         # 3. 메인 최적화 방법 시도 (portfolio_optimization.py)
         portfolio_result = self._try_main_optimization(
@@ -339,8 +313,8 @@ class AdvancedPortfolioManager:
             return portfolio_result
 
         # 4. Fallback 방법 시도 (portfolio_weight.py)
-        print("🔄 메인 최적화 실패, Fallback 방법 시도 중...")
-        self.logger.log_warning("🔄 메인 최적화 실패, Fallback 방법 시도 중...")
+        # 메인 최적화 실패, Fallback 방법 시도
+        # Fallback 방법 시도
 
         portfolio_result = self._try_fallback_optimization(
             data_dict, symbol_best_strategies
@@ -358,8 +332,8 @@ class AdvancedPortfolioManager:
     ) -> Optional[Dict[str, Any]]:
         """메인 최적화 방법 시도 (portfolio_optimization.py)"""
         try:
-            print("🔍 메인 최적화 방법 시도 중...")
-            self.logger.log_info("🔍 메인 최적화 방법 시도 중...")
+            # 메인 최적화 방법 시도 중
+            # 메인 최적화 방법 시도
 
             portfolio_config = self.get_portfolio_config()
             self.optimizer = PortfolioOptimizer(
@@ -428,7 +402,7 @@ class AdvancedPortfolioManager:
             return portfolio_result
 
         except Exception as e:
-            print(f"❌ 메인 최적화 실패: {e}")
+            # 메인 최적화 실패
             self.logger.log_warning(f"❌ 메인 최적화 실패: {e}")
             import traceback
 
@@ -442,20 +416,20 @@ class AdvancedPortfolioManager:
     ) -> Optional[Dict[str, Any]]:
         """Fallback 최적화 방법 시도 (portfolio_weight.py)"""
         try:
-            print("🔍 Fallback 최적화 방법 시도 중...")
-            self.logger.log_info("🔍 Fallback 최적화 방법 시도 중...")
+            # Fallback 최적화 방법 시도
+            # Fallback 최적화 방법 시도
 
             # Fallback 방법 설정 (설정 파일에서 읽기)
             portfolio_config = self.config.get("portfolio", {})
             fallback_method = portfolio_config.get("fallback_method", "equal_weight")
 
-            print(f"🔍 Fallback 방법: {fallback_method}")
-            self.logger.log_info(f"🔍 Fallback 방법: {fallback_method}")
+            # Fallback 방법 시도
+            # Fallback 방법 사용
 
             # 간단한 동등 비중 계산 (PortfolioWeightCalculator 대신)
             symbols = list(data_dict.keys())
             if not symbols:
-                print("❌ Fallback 최적화 실패: 데이터가 없음")
+                # Fallback 최적화 실패: 데이터가 없음
                 self.logger.log_warning("❌ Fallback 최적화 실패: 데이터가 없음")
                 return None
 
@@ -497,11 +471,11 @@ class AdvancedPortfolioManager:
             return portfolio_result
 
         except Exception as e:
-            print(f"❌ Fallback 최적화 실패: {e}")
+            # Fallback 최적화 실패
             self.logger.log_error(f"❌ Fallback 최적화 실패: {e}")
             import traceback
 
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return None
 
     def prepare_strategy_returns_data(
@@ -523,7 +497,7 @@ class AdvancedPortfolioManager:
     ) -> Optional[pd.Series]:
         """최적화된 파라미터로 전략 수익률 계산"""
         try:
-            print(f"▶️ 전략 인스턴스 생성 시도: {strategy_name}")
+            # 전략 인스턴스 생성 시도
             from actions.strategies import StrategyManager
             from actions.log_pl import TradingSimulator
 
@@ -577,41 +551,34 @@ class AdvancedPortfolioManager:
             }
 
             if strategy_name not in strategy_classes:
-                print(f"❌ 알 수 없는 전략: {strategy_name}")
+                # 알 수 없는 전략
                 self.logger.log_error(f"❌ 알 수 없는 전략: {strategy_name}")
                 return None
 
             # 전략 인스턴스 생성
             strategy = strategy_classes[strategy_name](StrategyParams())
-            print(f"✅ 전략 인스턴스 생성 성공: {strategy}")
+            # 전략 인스턴스 생성 성공
 
             # 최적화된 파라미터 적용 (전략별 유효한 파라미터만)
             valid_params = {}
             for param_name, param_value in params.items():
-                print(f"  - 파라미터 적용: {param_name} = {param_value}")
                 if hasattr(strategy, param_name):
                     setattr(strategy, param_name, param_value)
                     valid_params[param_name] = param_value
                     self.logger.log_info(
                         f"  - 파라미터 설정: {param_name} = {param_value}"
                     )
-                else:
-                    print(f"  ⚠️ 전략에 없는 파라미터: {param_name} (무시됨)")
 
-            print(f"  - 적용된 유효 파라미터: {list(valid_params.keys())}")
+            # 파라미터 적용 완료
 
             # 신호 생성
-            print(f"  - 신호 생성 시작")
             signals = strategy.generate_signals(data)
-            print(
-                f"  - 신호 생성 결과: {type(signals)}, shape: {getattr(signals, 'shape', None)}"
-            )
             if signals is None or signals.empty:
-                print(f"⚠️ {strategy_name}: 신호 생성 실패")
+                # {strategy_name}: 신호 생성 실패
                 self.logger.log_warning(f"⚠️ {strategy_name}: 신호 생성 실패")
                 return None
 
-            print(f"  - 신호 생성 완료: {signals.shape}")
+            # 신호 생성 완료
 
             # 거래 시뮬레이션 전, datetime 컬럼 보장
             if "datetime" not in data.columns:
@@ -626,25 +593,20 @@ class AdvancedPortfolioManager:
                     signals["datetime"] = data["datetime"].values
 
             # 거래 시뮬레이션
-            print(f"  - 거래 시뮬레이션 시작")
             simulator = TradingSimulator(self.config_path)
             result = simulator.simulate_trading(data, signals, strategy_name)
-            print(
-                f"  - 시뮬레이션 결과: {type(result)}, keys: {list(result.keys()) if result else None}"
-            )
 
             if not result:
-                print(f"⚠️ {strategy_name}: 거래 시뮬레이션 실패")
+                # {strategy_name}: 거래 시뮬레이션 실패
                 self.logger.log_warning(f"⚠️ {strategy_name}: 거래 시뮬레이션 실패")
                 return None
 
-            print(f"  - 거래 시뮬레이션 완료")
+            # 시뮬레이션 완료
 
             # 수익률 반환
             returns = result.get("returns", [])
-            print(f"  - 수익률 길이: {len(returns)}")
             if returns:
-                print(f"  - 수익률 데이터 생성 완료: {len(returns)}개 포인트")
+                print(f"  수익률 생성 완료: {len(returns)}개 포인트")
                 return pd.Series(returns, index=data.index[-len(returns) :])
             else:
                 print(f"⚠️ {strategy_name}: 수익률 데이터 없음")
@@ -655,9 +617,9 @@ class AdvancedPortfolioManager:
             print(f"❌ 전략 수익률 계산 실패: {strategy_name} - {e}")
             import traceback
 
-            print(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             self.logger.log_error(f"❌ 전략 수익률 계산 실패: {strategy_name} - {e}")
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return None
 
     def optimize_portfolio_with_individual_results(
@@ -703,7 +665,7 @@ class AdvancedPortfolioManager:
             print(f"  - 데이터 종목 수: {len(data_dict)}")
             print(f"  - 최적화 결과 조합 수: {len(optimization_results)}")
             print(f"  - 최적화 방법: {method.value}")
-            self.logger.log_info(f"🔍 입력 데이터 검증:")
+            # 입력 데이터 검증
             self.logger.log_info(f"  - 데이터 종목 수: {len(data_dict)}")
             self.logger.log_info(
                 f"  - 최적화 결과 조합 수: {len(optimization_results)}"
@@ -760,18 +722,15 @@ class AdvancedPortfolioManager:
             print(f"❌ 포트폴리오 최적화 실패: {e}")
             import traceback
 
-            print(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             self.logger.log_error(f"포트폴리오 최적화 실패: {e}")
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return {}
 
     def load_portfolio_data(self, data_dir: str) -> Dict[str, pd.DataFrame]:
         """포트폴리오 데이터 로드"""
         try:
-            print(f"🔍 load_portfolio_data 시작 - 데이터 디렉토리: {data_dir}")
-            print(f"🔍 UUID: {self.uuid}")
-            self.logger.log_info(f"🔍 데이터 디렉토리: {data_dir}")
-            self.logger.log_info(f"🔍 UUID: {self.uuid}")
+            # 데이터 로드 시작
 
             data_dict = {}
             # 여러 섹션에서 심볼 찾기 시도
@@ -780,14 +739,11 @@ class AdvancedPortfolioManager:
                 or self.config.get("portfolio", {}).get("symbols", [])
                 or self.config.get("scrapper", {}).get("symbols", [])
             )
-            print(f"🔍 설정된 심볼들: {symbols}")
-            self.logger.log_info(f"🔍 설정된 심볼들: {symbols}")
+            # 심볼 로드
 
             if not symbols:
-                print("❌ 설정 파일에서 심볼을 찾을 수 없습니다")
-                self.logger.log_error("설정 파일에서 심볼을 찾을 수 없습니다")
-                print(f"🔍 config 섹션들: {list(self.config.keys())}")
-                self.logger.log_info(f"🔍 config 섹션들: {list(self.config.keys())}")
+                print("❌ 심볼 설정 없음")
+                self.logger.log_error("심볼 설정 없음")
                 return {}
 
             # time_horizon을 고려한 데이터 경로 구성
@@ -799,36 +755,25 @@ class AdvancedPortfolioManager:
             else:
                 data_path = Path(data_dir)
 
-            print(f"🔍 time_horizon 기반 데이터 경로: {data_path}")
-            self.logger.log_info(f"🔍 time_horizon 기반 데이터 경로: {data_path}")
+            # 데이터 경로 설정
 
             # data_path가 존재하는지 확인
             if not data_path.exists():
-                print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
-                self.logger.log_error(
-                    f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}"
-                )
+                print(f"❌ 데이터 디렉토리 없음: {data_path}")
+                self.logger.log_error(f"데이터 디렉토리 없음: {data_path}")
                 return {}
 
-            print(f"🔍 최종 검색 경로: {data_path}")
-            self.logger.log_info(f"🔍 최종 검색 경로: {data_path}")
+            # 데이터 검색 시작
 
             for symbol in symbols:
-                self.logger.log_info(f"🔍 {symbol} 데이터 파일 검색 중...")
-                # 파일명 패턴 수정 - 실제 파일명 형식에 맞게
+                # {symbol} 데이터 파일 검색
                 pattern = f"{symbol}_*.csv"
-                self.logger.log_info(f"🔍 검색 패턴: {pattern}")
-                self.logger.log_info(f"🔍 검색 경로: {data_path}")
-
                 files = list(data_path.glob(pattern))
-                self.logger.log_info(
-                    f"🔍 {symbol}에 대한 매칭 파일: {[f.name for f in files]}"
-                )
 
                 if files:
                     # 가장 최신 파일 선택 (파일명의 타임스탬프 기준)
                     latest_file = max(files, key=lambda x: x.stat().st_mtime)
-                    self.logger.log_info(f"🔍 {symbol} 파일 로드: {latest_file}")
+                    # {symbol} 파일 로드
                     df = pd.read_csv(latest_file)
 
                     # datetime 컬럼 처리
@@ -843,11 +788,9 @@ class AdvancedPortfolioManager:
                         df.index = pd.to_datetime(df.index)
 
                     data_dict[symbol] = df
-                    self.logger.log_info(
-                        f"✅ {symbol} 데이터 로드: {latest_file.name} (행: {len(df)})"
-                    )
+                    # 데이터 로드 성공
                 else:
-                    self.logger.log_warning(f"⚠️ {symbol} 데이터 파일을 찾을 수 없음")
+                    self.logger.log_warning(f"⚠️ {symbol} 데이터 없음")
 
             self.logger.log_success(
                 f"포트폴리오 데이터 로드 완료: {len(data_dict)}개 종목"
@@ -858,7 +801,7 @@ class AdvancedPortfolioManager:
             self.logger.log_error(f"포트폴리오 데이터 로드 실패: {e}")
             import traceback
 
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return {}
 
     def _select_best_strategy(self, portfolio_results: Dict[str, Any]) -> str:
@@ -998,6 +941,11 @@ class AdvancedPortfolioManager:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(serializable_result, f, indent=2, ensure_ascii=False)
 
+            # 포트폴리오 비중만 별도로 저장 (evaluator에서 사용)
+            weights_output_path = output_path.replace("portfolio_optimization_", "portfolio_weights_")
+            with open(weights_output_path, "w", encoding="utf-8") as f:
+                json.dump(self.portfolio_optimization_result["portfolio_weights"], f, indent=2, ensure_ascii=False)
+
             self.logger.log_success(f"포트폴리오 최적화 결과 저장: {output_path}")
             return output_path
 
@@ -1005,7 +953,7 @@ class AdvancedPortfolioManager:
             self.logger.log_error(f"포트폴리오 최적화 결과 저장 실패: {e}")
             import traceback
 
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return None
 
     def generate_portfolio_report(self) -> str:
@@ -1115,47 +1063,35 @@ class AdvancedPortfolioManager:
         optimization_file_path: Optional[str] = None,
     ) -> bool:
         """포트폴리오 최적화 실행"""
-        print("=" * 80)
-        print("⚖️ 포트폴리오 최적화 시작")
-        print("=" * 80)
+        # 포트폴리오 최적화 시작
+        # 포트폴리오 최적화 시작
+        # 포트폴리오 최적화 시작
         print_subsection_header("⚖️ 포트폴리오 최적화")
 
-        print(f"🔍 포트폴리오 최적화 시작 - 데이터 디렉토리: {data_dir}")
-        print(f"🔍 설정 파일 경로: {self.config_path}")
-        print(f"🔍 UUID: {self.uuid}")
-        print(f"🔍 현재 작업 디렉토리: {os.getcwd()}")
-        print(f"🔍 optimization_file_path: {optimization_file_path}")
+        # 포트폴리오 최적화 시작
+        # 설정 파일 경로 확인
+        # UUID 확인
+        # 현재 작업 디렉토리 확인
+        # optimization_file_path 확인
 
-        self.logger.log_info(f"🔍 포트폴리오 최적화 시작 - 데이터 디렉토리: {data_dir}")
-        self.logger.log_info(f"🔍 설정 파일 경로: {self.config_path}")
-        self.logger.log_info(f"🔍 UUID: {self.uuid}")
-        self.logger.log_info(f"🔍 현재 작업 디렉토리: {os.getcwd()}")
+        # 포트폴리오 최적화 로깅 시작
 
         try:
             # 1. 데이터 로드
-            print("📊 1단계: 포트폴리오 데이터 로드 시작")
-            self.logger.log_info("📊 1단계: 포트폴리오 데이터 로드 시작")
+            # 데이터 로드
 
-            print(f"🔍 데이터 디렉토리 존재 여부: {os.path.exists(data_dir)}")
-            self.logger.log_info(
-                f"🔍 데이터 디렉토리 존재 여부: {os.path.exists(data_dir)}"
-            )
+            # 데이터 디렉토리 확인
 
             if os.path.exists(data_dir):
                 dir_contents = os.listdir(data_dir)
-                print(f"🔍 데이터 디렉토리 내용: {dir_contents}")
-                self.logger.log_info(f"🔍 데이터 디렉토리 내용: {dir_contents}")
+                # 데이터 디렉토리 내용 확인
             else:
-                print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_dir}")
-                self.logger.log_error(
-                    f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_dir}"
-                )
+                # 데이터 디렉토리 없음
+                self.logger.log_error(f"데이터 디렉토리 없음: {data_dir}")
 
-            print("🔍 load_portfolio_data 호출 시작")
+            # 데이터 로드 시작
             data_dict = self.load_portfolio_data(data_dir)
-            print(
-                f"🔍 load_portfolio_data 결과: {type(data_dict)}, 길이: {len(data_dict) if data_dict else 0}"
-            )
+            # 데이터 로드 완룜
 
             if not data_dict:
                 print("❌ 데이터 로드 실패")
@@ -1175,8 +1111,8 @@ class AdvancedPortfolioManager:
                 f"Train/Test 분할 완료: Train {len(train_data_dict)}개 종목, Test {len(test_data_dict)}개 종목"
             )
 
-            print(f"✅ 데이터 로드 완료: {len(data_dict)}개 종목")
-            print(f"🔍 로드된 종목들: {list(data_dict.keys())}")
+            # 데이터 로드 완료
+            # 로드된 종목들 확인
             self.logger.log_success(f"✅ 데이터 로드 완료: {len(data_dict)}개 종목")
             self.logger.log_info(f"🔍 로드된 종목들: {list(data_dict.keys())}")
 
@@ -1185,8 +1121,8 @@ class AdvancedPortfolioManager:
             self.logger.log_info("📊 2단계: 개별 최적화 결과 로드 시작")
 
             if optimization_file_path:
-                print(f"🔍 지정된 최적화 파일: {optimization_file_path}")
-                print(f"🔍 파일 존재 여부: {os.path.exists(optimization_file_path)}")
+                # 지정된 최적화 파일
+                # 파일 존재 여부 확인
                 self.logger.log_info(f"🔍 지정된 최적화 파일: {optimization_file_path}")
                 self.logger.log_info(
                     f"🔍 파일 존재 여부: {os.path.exists(optimization_file_path)}"
@@ -1210,8 +1146,8 @@ class AdvancedPortfolioManager:
                 self.logger.log_error("개별 최적화 결과를 찾을 수 없습니다")
                 return False
 
-            print(f"✅ 개별 최적화 결과 로드 완료: {len(optimization_results)}개 조합")
-            print(f"🔍 최적화 결과 키 예시: {list(optimization_results.keys())[:5]}")
+            # 개별 최적화 결과 로드 완료
+            # 최적화 결과 키 예시
             self.logger.log_success(
                 f"✅ 개별 최적화 결과 로드 완료: {len(optimization_results)}개 조합"
             )
@@ -1222,8 +1158,8 @@ class AdvancedPortfolioManager:
             # 3. 포트폴리오 최적화 실행
             print("📊 3단계: 포트폴리오 최적화 실행 시작")
             self.logger.log_info("📊 3단계: 포트폴리오 최적화 실행 시작")
-            print(f"🔍 데이터 종목 수: {len(data_dict)}")
-            print(f"🔍 최적화 결과 조합 수: {len(optimization_results)}")
+            # 데이터 종목 수
+            # 최적화 결과 조합 수
             self.logger.log_info(f"🔍 데이터 종목 수: {len(data_dict)}")
             self.logger.log_info(f"🔍 최적화 결과 조합 수: {len(optimization_results)}")
 
@@ -1236,7 +1172,7 @@ class AdvancedPortfolioManager:
             )
 
             if not result:
-                print("❌ 포트폴리오 최적화 실패")
+                # 포트폴리오 최적화 실패
                 self.logger.log_error("포트폴리오 최적화 실패")
                 return False
             print("✅ 포트폴리오 최적화 실행 완료")
@@ -1263,7 +1199,7 @@ class AdvancedPortfolioManager:
             self.logger.log_error(f"포트폴리오 최적화 실행 중 오류: {e}")
             import traceback
 
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return False
 
     def _find_latest_optimization_results(self) -> Dict[str, Dict]:
@@ -1304,7 +1240,7 @@ class AdvancedPortfolioManager:
             self.logger.log_error(f"최신 최적화 결과 파일 찾기 실패: {e}")
             import traceback
 
-            self.logger.log_error(f"상세 오류: {traceback.format_exc()}")
+            # 상세 오류 생략
             return {}
 
 
@@ -1338,9 +1274,10 @@ def main():
             print(
                 f"⚠️ UUID {args.uuid}의 하이퍼파라미터 최적화 결과 파일을 찾을 수 없습니다: {optimization_file}"
             )
-            print(f"🔍 사용 가능한 파일들:")
+            # 사용 가능한 파일들
             for file in results_dir.glob("hyperparam_optimization_*.json"):
-                print(f"  - {file.name}")
+                # 파일 목록
+                pass
 
     # 포트폴리오 매니저 초기화
     portfolio_manager = AdvancedPortfolioManager(
@@ -1356,7 +1293,8 @@ def main():
     if success:
         print("✅ 포트폴리오 최적화 완료")
     else:
-        print("❌ 포트폴리오 최적화 실패")
+        # 포트폴리오 최적화 실패
+        pass
 
 
 if __name__ == "__main__":

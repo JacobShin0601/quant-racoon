@@ -2838,6 +2838,11 @@ class SwingMACDStrategy(BaseStrategy):
         self.macd_signal = getattr(params, "macd_signal", 9)
         self.histogram_threshold = getattr(params, "histogram_threshold", 0.001)
         self.confirmation_period = getattr(params, "confirmation_period", 3)
+        # 추가 파라미터들 (최적화에서 사용되는 파라미터들)
+        self.min_holding_days = getattr(params, "min_holding_days", 3)
+        self.max_holding_days = getattr(params, "max_holding_days", 21)
+        self.volume_threshold = getattr(params, "volume_threshold", 1.0)
+        self.trend_confirmation = getattr(params, "trend_confirmation", False)
 
     def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
         """MACD 신호 생성"""
@@ -6249,3 +6254,214 @@ class LargeCap_GrowthStrategy(BaseStrategy):
         df.loc[july_caution & (df["signal"] == 1) & (df["rsi"] > 55), "signal"] = 0
         
         return df
+
+
+# ============================================================================
+# AI 메가트렌드 전략 (AI MegaTrend Strategies)
+# ============================================================================
+
+
+class AIMegaTrendStrategy(BaseStrategy):
+    """AI 메가트렌드 상승 포착 전략 - NVDA, 기술주 급상승 전용"""
+
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.strategy_type = "single_asset"
+        
+        # 메가트렌드 감지 파라미터
+        self.momentum_lookback = getattr(params, "momentum_lookback", 20)  # 모멘텀 계산 기간
+        self.breakout_period = getattr(params, "breakout_period", 50)      # 돌파 기준 기간
+        self.volume_surge_multiplier = getattr(params, "volume_surge_multiplier", 1.8)  # 거래량 급증 기준
+        self.price_surge_threshold = getattr(params, "price_surge_threshold", 0.03)     # 가격 급등 기준
+        
+        # 트렌드 강도 파라미터
+        self.ema_short = getattr(params, "ema_short", 9)   # 단기 EMA
+        self.ema_long = getattr(params, "ema_long", 21)    # 장기 EMA
+        self.atr_period = getattr(params, "atr_period", 14)
+        
+        # 진입/청산 파라미터
+        self.rsi_entry_max = getattr(params, "rsi_entry_max", 85)    # RSI 과열 제한 (더 관대)
+        self.consecutive_gain_trigger = getattr(params, "consecutive_gain_trigger", 2)  # 연속 상승 필요 일수
+        self.profit_target = getattr(params, "profit_target", 0.15)  # 15% 수익 목표
+        self.stop_loss = getattr(params, "stop_loss", 0.08)         # 8% 손절
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """AI 메가트렌드 신호 생성"""
+        df = df.copy()
+        df["signal"] = 0
+        
+        # 기본 지표 계산
+        df = self._calculate_indicators(df)
+        
+        # 1. 메가트렌드 감지 조건
+        megatrend_conditions = self._detect_megatrend(df)
+        
+        # 2. 급상승 모멘텀 감지
+        surge_momentum = self._detect_surge_momentum(df)
+        
+        # 3. 연속 상승 패턴 감지
+        consecutive_gains = self._detect_consecutive_gains(df)
+        
+        # 4. 포지션 크기 조정을 위한 트렌드 강도 계산
+        trend_strength = self._calculate_trend_strength(df)
+        
+        # 5. 매수 신호 (조건 완화: OR 로직 추가)
+        # 강한 신호: 모든 조건 만족
+        strong_signal = (
+            megatrend_conditions &
+            surge_momentum &
+            consecutive_gains &
+            (df["rsi"] < self.rsi_entry_max)
+        )
+        
+        # 중간 신호: 메가트렌드 + 모멘텀만
+        moderate_signal = (
+            megatrend_conditions &
+            surge_momentum &
+            (df["rsi"] < self.rsi_entry_max) &
+            (trend_strength > 0.3)  # 트렌드 강도 완화
+        )
+        
+        buy_conditions = strong_signal | moderate_signal
+        
+        # 6. 매도 신호 (수익 실현 + 손절)
+        sell_conditions = self._generate_exit_signals(df)
+        
+        # 신호 적용
+        df.loc[buy_conditions, "signal"] = 1
+        df.loc[sell_conditions, "signal"] = -1
+        
+        # 7. 포지션 크기 조정 (트렌드 강도에 따라)
+        df["position_size"] = np.where(
+            df["signal"] == 1,
+            np.minimum(trend_strength * 1.5, 2.0),  # 최대 2배 레버리지
+            1.0
+        )
+        
+        return df
+    
+    def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """기본 기술적 지표 계산"""
+        # EMA 계산
+        df["ema_short"] = df["close"].ewm(span=self.ema_short).mean()
+        df["ema_long"] = df["close"].ewm(span=self.ema_long).mean()
+        
+        # ATR 계산
+        if "atr" not in df.columns:
+            df["atr"] = TechnicalIndicators.calculate_atr(df, self.atr_period)
+        
+        # RSI 계산
+        if "rsi" not in df.columns:
+            df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], 14)
+        
+        # 가격 변화율
+        df["price_change"] = df["close"].pct_change()
+        df["price_change_5d"] = df["close"].pct_change(periods=5)
+        
+        # 거래량 평균
+        df["volume_ma"] = df["volume"].rolling(window=20).mean()
+        
+        # 최고가 돌파 체크
+        df["highest_high"] = df["high"].rolling(window=self.breakout_period).max()
+        df["is_new_high"] = df["high"] >= df["highest_high"].shift(1)
+        
+        return df
+    
+    def _detect_megatrend(self, df: pd.DataFrame) -> pd.Series:
+        """메가트렌드 감지 - 장기 상승 추세 + 신고점 돌파"""
+        # 1. EMA 배열 (단기 > 장기)
+        ema_bullish = df["ema_short"] > df["ema_long"]
+        
+        # 2. 상승 기울기 확인
+        ema_rising = df["ema_short"] > df["ema_short"].shift(3)
+        
+        # 3. 신고점 돌파
+        new_high_breakout = df["is_new_high"]
+        
+        # 4. 월간 모멘텀 (20일 기준 5%+ 상승으로 완화)
+        monthly_momentum = df["close"] > df["close"].shift(20) * 1.05
+        
+        return ema_bullish & ema_rising & new_high_breakout & monthly_momentum
+    
+    def _detect_surge_momentum(self, df: pd.DataFrame) -> pd.Series:
+        """급상승 모멘텀 감지"""
+        # 1. 일일 급등 (2%+로 완화)
+        daily_surge = df["price_change"] > max(self.price_surge_threshold, 0.02)
+        
+        # 2. 거래량 급증
+        volume_surge = df["volume"] > df["volume_ma"] * self.volume_surge_multiplier
+        
+        # 3. 5일 누적 상승률 (5%+로 완화)
+        five_day_surge = df["price_change_5d"] > 0.05
+        
+        # 거래량 데이터에 문제가 있을 수 있으므로 대안 조건 추가
+        return daily_surge | five_day_surge | volume_surge
+    
+    def _detect_consecutive_gains(self, df: pd.DataFrame) -> pd.Series:
+        """연속 상승 패턴 감지"""
+        # 연속 상승일 계산
+        positive_days = (df["price_change"] > 0).astype(int)
+        consecutive_count = positive_days.groupby(
+            (positive_days != positive_days.shift()).cumsum()
+        ).cumsum()
+        
+        # 연속 하락 후 반전 체크
+        negative_days = (df["price_change"] < 0).astype(int)
+        consecutive_down = negative_days.groupby(
+            (negative_days != negative_days.shift()).cumsum()
+        ).cumsum()
+        
+        # 조건: 2일+ 연속 상승 OR 연속 하락 후 강한 반등
+        strong_momentum = (
+            (consecutive_count >= self.consecutive_gain_trigger) |
+            ((consecutive_down.shift(1) >= 2) & (df["price_change"] > 0.02))
+        )
+        
+        return strong_momentum.fillna(False)
+    
+    def _calculate_trend_strength(self, df: pd.DataFrame) -> pd.Series:
+        """트렌드 강도 계산 (0~1)"""
+        # 1. EMA 스프레드
+        ema_spread = (df["ema_short"] - df["ema_long"]) / df["ema_long"]
+        ema_strength = np.clip(ema_spread * 10, 0, 1)
+        
+        # 2. ATR 대비 가격 변화
+        atr_ratio = np.abs(df["price_change"]) / (df["atr"] / df["close"])
+        atr_strength = np.clip(atr_ratio / 2, 0, 1)
+        
+        # 3. 거래량 강도
+        volume_ratio = df["volume"] / df["volume_ma"]
+        volume_strength = np.clip((volume_ratio - 1) / 2, 0, 1)
+        
+        # 가중 평균
+        trend_strength = (
+            ema_strength * 0.4 +
+            atr_strength * 0.3 +
+            volume_strength * 0.3
+        )
+        
+        return trend_strength.fillna(0)
+    
+    def _generate_exit_signals(self, df: pd.DataFrame) -> pd.Series:
+        """청산 신호 생성"""
+        # 1. 이익 실현 (15% 수익)
+        profit_target_hit = df["close"] > df["close"].shift(1) * (1 + self.profit_target)
+        
+        # 2. 손절 (8% 손실)
+        stop_loss_hit = df["close"] < df["close"].shift(1) * (1 - self.stop_loss)
+        
+        # 3. 모멘텀 소실
+        momentum_fading = (
+            (df["ema_short"] < df["ema_long"]) |  # EMA 역배열
+            (df["rsi"] < 30) |                   # 과매도
+            (df["price_change"] < -0.05)         # 5% 급락
+        )
+        
+        # 4. 연속 하락 (3일)
+        negative_streak = (
+            (df["price_change"] < 0) &
+            (df["price_change"].shift(1) < 0) &
+            (df["price_change"].shift(2) < 0)
+        )
+        
+        return profit_target_hit | stop_loss_hit | momentum_fading | negative_streak

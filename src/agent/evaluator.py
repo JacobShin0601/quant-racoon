@@ -48,7 +48,15 @@ from src.actions.strategies import (
     VWAPMACDScalpingStrategy,
     KeltnerRSIScalpingStrategy,
     AbsorptionScalpingStrategy,
+    # 고효율 기술적 전략들 추가
+    MultiTimeframeMAStrategy,
+    PivotPointStrategy,
+    MACDDivergenceStrategy,
+    RSIBollingerAdvancedStrategy,
     RSIBollingerScalpingStrategy,
+    # 특수 전략들 추가
+    InverseETFStrategy,
+    LargeCap_GrowthStrategy,
     MeanReversionStrategy,
     # 실전형 전략들 추가
     FixedWeightRebalanceStrategy,
@@ -64,6 +72,8 @@ from src.actions.strategies import (
     # 포트폴리오 전략들 추가
     DynamicAssetAllocationStrategy,
     SectorRotationStrategy,
+    # AI 메가트렌드 전략
+    AIMegaTrendStrategy,
 )
 from src.actions.calculate_index import StrategyParams
 from src.actions.log_pl import TradingSimulator
@@ -166,6 +176,16 @@ class TrainTestEvaluator:
             "swing_candle_pattern": SwingCandlePatternStrategy,
             "swing_bollinger_band": SwingBollingerBandStrategy,
             "swing_macd": SwingMACDStrategy,
+            # 고효율 기술적 전략들 추가
+            "multi_timeframe_ma": MultiTimeframeMAStrategy,
+            "pivot_point": PivotPointStrategy,
+            "macd_divergence": MACDDivergenceStrategy,
+            "rsi_bollinger_advanced": RSIBollingerAdvancedStrategy,
+            # 특수 전략들 추가
+            "inverse_etf": InverseETFStrategy,
+            "largecap_growth": LargeCap_GrowthStrategy,
+            # AI 메가트렌드 전략
+            "ai_megatrend": AIMegaTrendStrategy,
         }
 
         for name, strategy_class in strategies_to_register.items():
@@ -180,24 +200,20 @@ class TrainTestEvaluator:
         if not symbols:
             symbols = self.config.get("data", {}).get("symbols", [])
 
-        print(f"🔍 데이터 로드 시작 - data_dir: {self.data_dir}")
-        print(f"🔍 심볼: {symbols}")
+        # 데이터 로드
 
         # data_dir 인자를 직접 사용
         data_path = Path(self.data_dir)
 
         # data_dir이 존재하는지 확인
         if not data_path.exists():
-            print(f"❌ 데이터 디렉토리가 존재하지 않습니다: {data_path}")
+            # 데이터 디렉토리가 존재하지 않음
             return {}, {}
 
-        print(f"🔍 데이터 디렉토리 사용: {data_path}")
-
-        print(f"🔍 최종 검색 경로: {data_path}")
+        # 데이터 디렉토리 확인
 
         data_dict = {}
         for symbol in symbols:
-            print(f"🔍 {symbol} 데이터 파일 검색 중...")
             # 파일명 패턴 찾기
             pattern = f"{symbol}_*.csv"
             files = list(data_path.glob(pattern))
@@ -205,20 +221,19 @@ class TrainTestEvaluator:
             if files:
                 # 가장 최신 파일 선택
                 latest_file = max(files, key=lambda x: x.stat().st_mtime)
-                print(f"🔍 {symbol} 파일 로드: {latest_file}")
                 df = pd.read_csv(latest_file)
                 df["datetime"] = pd.to_datetime(df["datetime"])
                 df.set_index("datetime", inplace=True)
                 data_dict[symbol] = df
-                print(f"✅ {symbol} 데이터 로드: {latest_file.name} (행: {len(df)})")
             else:
-                print(f"⚠️ {symbol} 데이터 파일을 찾을 수 없음")
+                # {symbol} 데이터 없음
+                pass
 
         if not data_dict:
             self.logger.log_error(f"데이터를 로드할 수 없습니다: {data_path}")
             return {}, {}
 
-        print(f"✅ 데이터 로드 완료: {len(data_dict)}개 종목")
+        # 데이터 로드 완룼
 
         # Train/Test 분할
         train_data_dict, test_data_dict = split_data_train_test(
@@ -426,56 +441,48 @@ class TrainTestEvaluator:
         results = {}
 
         try:
-            print(f"🔍 전략 평가 시작: {strategy_name}")
-            print(f"🔍 데이터 종목: {list(data_dict.keys())}")
-            print(f"🔍 파라미터: {optimized_params}")
+            # 전략 평가
 
             # 전략 인스턴스 생성
             strategy = self.strategy_manager.strategies.get(strategy_name)
             if not strategy:
-                print(f"❌ 전략을 찾을 수 없습니다: {strategy_name}")
+                # 전략을 찾을 수 없음
                 self.logger.log_error(f"전략을 찾을 수 없습니다: {strategy_name}")
                 return {}
 
-            print(f"✅ 전략 인스턴스 생성 성공: {strategy}")
+            # 전략 인스턴스 생성 성공
 
             # 최적화된 파라미터 적용
             for param_name, param_value in optimized_params.items():
                 if hasattr(strategy, param_name):
                     setattr(strategy, param_name, param_value)
-                    print(f"  - 파라미터 설정: {param_name} = {param_value}")
+                    # 파라미터 설정
 
             # 각 종목에 대해 전략 실행
             for symbol, data in data_dict.items():
                 try:
-                    print(f"  🔍 {symbol} 신호 생성 시작")
+                    # {symbol} 신호 생성
                     signals = strategy.generate_signals(data)
-                    print(
-                        f"  🔍 {symbol} 신호 생성 결과: {type(signals)}, shape: {getattr(signals, 'shape', None) if signals is not None else None}"
-                    )
+                    # {symbol} 신호 생성 결과 확인
 
                     if signals is not None and not signals.empty:
-                        print(f"  ✅ {symbol} 신호 생성 성공")
+                        # {symbol} 신호 생성 성공
                         # 거래 시뮬레이션
-                        print(f"  🔍 {symbol} 거래 시뮬레이션 시작")
+                        # {symbol} 거래 시뮬레이션
                         result = self.simulator.simulate_trading(
                             data, signals, strategy_name
                         )
-                        print(
-                            f"  🔍 {symbol} 시뮬레이션 결과: {type(result)}, keys: {list(result.keys()) if result else None}"
-                        )
+                        # {symbol} 시뮬레이션 결과 확인
 
                         # 시뮬레이션 결과 요약만 출력
                         if result:
-                            print(f"  ✅ {symbol} 시뮬레이션 성공")
+                            # {symbol} 시뮬레이션 성공
                             # 성과 지표 계산 - simulate_trading 결과 구조에 맞게 수정
                             results_data = result.get("results", {})
                             total_return = results_data.get("total_return", 0.0)
                             total_trades = results_data.get("total_trades", 0)
 
-                            print(f"  🔍 {symbol} 결과 데이터: {results_data}")
-                            print(f"  🔍 {symbol} 총 수익률: {total_return}")
-                            print(f"  🔍 {symbol} 총 거래 수: {total_trades}")
+                            # {symbol} 성과 계산 완료
 
                             # 샤프 비율 계산
                             returns = result.get("returns", [])
@@ -611,9 +618,9 @@ class TrainTestEvaluator:
         all_results["buy_hold_train"] = calculate_buy_hold_returns(train_data_dict)
         all_results["buy_hold_test"] = calculate_buy_hold_returns(test_data_dict)
 
-        print(f"🔍 Buy & Hold 데이터 생성:")
-        print(f"  - TRAIN: {len(all_results['buy_hold_train'])}개 종목")
-        print(f"  - TEST: {len(all_results['buy_hold_test'])}개 종목")
+        # Buy & Hold 기준 생성
+        # TRAIN 종목 수
+        # TEST 종목 수
         if all_results["buy_hold_train"]:
             sample_symbol = list(all_results["buy_hold_train"].keys())[0]
             sample_data = all_results["buy_hold_train"][sample_symbol]
@@ -625,19 +632,18 @@ class TrainTestEvaluator:
         symbols = list(train_data_dict.keys())
         strategy_scores = []  # 전략별 점수 저장
 
-        print(f"🔍 최적화 결과 분석:")
-        print(f"  - 최적화 결과 키 수: {len(optimization_results)}")
-        print(f"  - 최적화 결과 키 예시: {list(optimization_results.keys())[:5]}")
+        # 최적화 결과 분석
+        # 최적화 결과 키 수
+        # 최적화 결과 키 예시
 
         if portfolio_results:
-            print(f"  - 포트폴리오 결과 키: {list(portfolio_results.keys())}")
+            # 포트폴리오 결과 키
             if "symbol_strategies" in portfolio_results:
                 symbol_strategies = portfolio_results["symbol_strategies"]
-                print(
-                    f"  - 포트폴리오 symbol_strategies: {list(symbol_strategies.keys())}"
-                )
+                # 포트폴리오 symbol_strategies
             else:
-                print(f"  - 포트폴리오에 symbol_strategies 없음")
+                # 포트폴리오에 symbol_strategies 없음
+                pass
 
         for symbol in symbols:
             # 해당 종목의 최적 전략 찾기
@@ -650,7 +656,7 @@ class TrainTestEvaluator:
                 if symbol in symbol_strategies:
                     best_strategy = symbol_strategies[symbol].get("strategy")
                     best_params = symbol_strategies[symbol].get("params", {})
-                    print(f"🔍 {symbol} 전략 발견 (포트폴리오): {best_strategy}")
+                    # {symbol} 전략 발견: {best_strategy}
 
             # 2. 최적화 결과에서 해당 종목의 최적 전략 찾기 (fallback)
             if not best_strategy:
@@ -683,7 +689,7 @@ class TrainTestEvaluator:
                     )
                 else:
                     # 성공한 전략이 없으면 패턴 매칭으로 fallback
-                    print(f"🔍 {symbol} 성공한 전략 없음, 패턴 매칭 시도...")
+                    # {symbol} 패턴 매칭 시도
 
                     # 패턴 1: "strategy_symbol" 형태
                     for key, result in optimization_results.items():
@@ -691,7 +697,7 @@ class TrainTestEvaluator:
                             best_strategy = result.get("strategy_name")
                             best_params = result.get("best_params", {})
                             found = True
-                            print(f"🔍 {symbol} 전략 발견 (패턴1): {best_strategy}")
+                            # {symbol} 전략 발견 (1): {best_strategy}
                             break
 
                     # 패턴 2: 키에 symbol이 포함된 경우
@@ -701,16 +707,16 @@ class TrainTestEvaluator:
                                 best_strategy = result.get("strategy_name")
                                 best_params = result.get("best_params", {})
                                 found = True
-                                print(f"🔍 {symbol} 전략 발견 (패턴2): {best_strategy}")
+                                # {symbol} 전략 발견 (2): {best_strategy}
                                 break
 
             if not best_strategy:
-                print(f"⚠️ {symbol}의 최적 전략을 찾을 수 없습니다")
+                # {symbol}의 최적 전략을 찾을 수 없음
                 # 디버깅을 위해 해당 symbol과 관련된 키들 출력
                 related_keys = [
                     key for key in optimization_results.keys() if symbol in key
                 ]
-                print(f"  - 관련 키들: {related_keys[:5]}")  # 최대 5개만 출력
+                # 관련 키들 확인
                 continue
 
             # Train 데이터에서 평가
@@ -1659,39 +1665,37 @@ class TrainTestEvaluator:
         save_results: bool = True,
     ) -> Dict[str, Any]:
         """Train/Test 평가 실행"""
-        print("=" * 80)
-        print("📊 Train/Test 평가 시스템")
-        print("=" * 80)
+        # Train/Test 평가 시스템
 
         try:
             # 1. 데이터 로드 및 분할
-            print("🔍 1단계: 데이터 로드 및 분할 시작")
+            # 데이터 로드
             train_data_dict, test_data_dict = self.load_data_and_split(symbols)
             print(
-                f"🔍 데이터 로드 결과: train={len(train_data_dict) if train_data_dict else 0}, test={len(test_data_dict) if test_data_dict else 0}"
+                f"📊 Train/Test 분할: train={len(train_data_dict) if train_data_dict else 0}, test={len(test_data_dict) if test_data_dict else 0}"
             )
             if not train_data_dict or not test_data_dict:
-                print("❌ 데이터 로드 실패")
+                # 데이터 로드 실패
                 return {}
 
                 # 2. 최적화 결과 로드
-            print("🔍 2단계: 최적화 결과 로드 시작")
+            # 최적화 결과 로드
             optimization_results = self.load_optimization_results()
             print(
-                f"🔍 최적화 결과 로드: {len(optimization_results) if optimization_results else 0}개"
+                f"📈 최적화 결과: {len(optimization_results) if optimization_results else 0}개"
             )
             if not optimization_results:
-                print("❌ 최적화 결과를 찾을 수 없습니다.")
+                # 최적화 결과를 찾을 수 없음
                 return {}
 
             # 3. 포트폴리오 결과 로드
-            print("🔍 3단계: 포트폴리오 결과 로드 시작")
+            # 포트폴리오 결과 로드
             portfolio_results = self.load_portfolio_results()
             print(
                 f"🔍 포트폴리오 결과 로드: {len(portfolio_results) if portfolio_results else 0}개 키"
             )
             if not portfolio_results:
-                print("⚠️ 포트폴리오 결과를 찾을 수 없어 기본값 사용")
+                # 포트폴리오 결과를 찾을 수 없어 기본값 사용
                 portfolio_results = {
                     "portfolio_weights": {},
                     "portfolio_performance": {},
@@ -1803,9 +1807,7 @@ class TrainTestEvaluator:
         self._print_data_period_info(train_data_dict, test_data_dict)
 
         # TRAIN 포트폴리오 리스크 지표 테이블
-        print("\n" + "=" * 100)
-        print("📊 TRAIN 포트폴리오 리스크 지표")
-        print("=" * 100)
+        # TRAIN 포트폴리오 리스크 지표
         self._print_portfolio_risk_table(
             "TRAIN",
             portfolio_performance,
@@ -1813,9 +1815,7 @@ class TrainTestEvaluator:
         )
 
         # TRAIN 종목별 성과 테이블
-        print("\n" + "=" * 100)
-        print("📊 TRAIN 종목별 성과")
-        print("=" * 100)
+        # TRAIN 종목별 성과
         self._print_individual_performance_table(
             "TRAIN",
             individual_results,
@@ -1826,9 +1826,7 @@ class TrainTestEvaluator:
         )
 
         # TEST 포트폴리오 리스크 지표 테이블
-        print("\n" + "=" * 100)
-        print("📊 TEST 포트폴리오 리스크 지표")
-        print("=" * 100)
+        # TEST 포트폴리오 리스크 지표
         self._print_portfolio_risk_table(
             "TEST",
             portfolio_performance,
@@ -1836,9 +1834,7 @@ class TrainTestEvaluator:
         )
 
         # TEST 종목별 성과 테이블
-        print("\n" + "=" * 100)
-        print("📊 TEST 종목별 성과")
-        print("=" * 100)
+        # TEST 종목별 성과
         self._print_individual_performance_table(
             "TEST",
             individual_results,
@@ -2031,11 +2027,12 @@ class TrainTestEvaluator:
                 print(
                     f"📊 TRAIN 기간: {train_start.strftime('%Y-%m-%d %H:%M')} ~ {train_end.strftime('%Y-%m-%d %H:%M')}"
                 )
-                print(f"📊 TRAIN 종목 수: {len(train_symbols)}개")
-                print(f"📊 TRAIN 종목: {', '.join(train_symbols)}")
+                # TRAIN 종목 수
+                # TRAIN 종목 목록
             else:
-                print(f"📊 TRAIN 종목 수: {len(train_data_dict)}개")
-                print(f"📊 TRAIN 종목: {', '.join(list(train_data_dict.keys()))}")
+                # TRAIN 데이터 종목 수
+                # TRAIN 데이터 종목 목록
+                pass
 
         if test_data_dict:
             test_start = None
@@ -2059,11 +2056,12 @@ class TrainTestEvaluator:
                 print(
                     f"📊 TEST 기간: {test_start.strftime('%Y-%m-%d %H:%M')} ~ {test_end.strftime('%Y-%m-%d %H:%M')}"
                 )
-                print(f"📊 TEST 종목 수: {len(test_symbols)}개")
-                print(f"📊 TEST 종목: {', '.join(test_symbols)}")
+                # TEST 종목 수
+                # TEST 종목 목록
             else:
-                print(f"📊 TEST 종목 수: {len(test_data_dict)}개")
-                print(f"📊 TEST 종목: {', '.join(list(test_data_dict.keys()))}")
+                # TEST 데이터 종목 수
+                # TEST 데이터 종목 목록
+                pass
 
         print("=" * 100)
 

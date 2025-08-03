@@ -438,8 +438,8 @@ class Orchestrator:
                 "cleaner",
                 "scrapper",
                 "researcher",
-                "portfolio_manager",
                 "evaluator",
+                "portfolio_manager",
             ]
 
         print(f"📋 실행 단계: {' → '.join(stages)}")

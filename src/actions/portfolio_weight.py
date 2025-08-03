@@ -24,23 +24,23 @@ class PortfolioWeightCalculator:
     """포트폴리오 비중 계산 클래스"""
 
     def __init__(self, config_path: Optional[str] = None):
-        print(f"🔍 PortfolioWeightCalculator 초기화 시작 - config_path: {config_path}")
+        # PortfolioWeightCalculator 초기화
 
         self.config = self._load_config(config_path)
-        print(f"🔍 설정 로드 완료: {type(self.config)}")
+        # 설정 로드 완료
 
         self.portfolio_config = self.config["portfolio"]
-        print(f"🔍 포트폴리오 설정: {self.portfolio_config}")
+        # 포트폴리오 설정 로드
 
         # 새로운 설정 구조에 맞게 수정
         self.rebalance_period = self.portfolio_config.get("rebalance_period", 20)
-        print(f"🔍 리밸런싱 주기: {self.rebalance_period}")
+        # 리밸런싱 주기 설정
 
         # optimization_method 사용 (기존 weight_calculation_method 대신)
         self.method = self.portfolio_config.get(
             "optimization_method", "sharpe_maximization"
         )
-        print(f"🔍 선택된 최적화 방법: {self.method}")
+        # 최적화 방법 선택
 
         # fallback 현황 기록
         self.fallback_stats = {
@@ -54,7 +54,7 @@ class PortfolioWeightCalculator:
         # AdvancedPortfolioManager import (lazy loading)
         self.advanced_manager = None
 
-        print("✅ PortfolioWeightCalculator 초기화 완료")
+        # 초기화 완료
 
     def _load_config(self, config_path: Optional[str] = None) -> Dict:
         """설정 파일 로드"""

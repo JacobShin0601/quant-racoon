@@ -227,6 +227,83 @@
         "volume_threshold": [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
         "trend_confirmation": [true, false]
       }
+    },
+    "multi_timeframe_ma": {
+      "description": "다중 시간대 이동평균 정렬 전략 (20/50/200일 골든크로스)",
+      "param_ranges": {
+        "ma_short": [15, 18, 20, 22, 25, 28, 30],
+        "ma_medium": [40, 45, 50, 55, 60, 65, 70],
+        "ma_long": [150, 180, 200, 220, 250, 280, 300],
+        "trend_strength_threshold": [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04],
+        "volume_multiplier": [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5]
+      }
+    },
+    "pivot_point": {
+      "description": "피봇 포인트 지지/저항 기반 전략",
+      "param_ranges": {
+        "pivot_period": [1, 2, 3, 5, 7],
+        "breakout_threshold": [0.002, 0.003, 0.005, 0.007, 0.01, 0.012, 0.015, 0.018, 0.02],
+        "support_resistance_threshold": [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.008, 0.01],
+        "volume_multiplier": [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2]
+      }
+    },
+    "macd_divergence": {
+      "description": "MACD 다이버전스 감지 전략",
+      "param_ranges": {
+        "macd_fast": [8, 10, 12, 14, 16, 18, 20],
+        "macd_slow": [20, 22, 24, 26, 28, 30, 32, 35],
+        "macd_signal": [7, 8, 9, 10, 11, 12, 14, 15],
+        "divergence_period": [15, 18, 20, 22, 25, 28, 30, 35, 40],
+        "min_divergence_strength": [0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.05]
+      }
+    },
+    "rsi_bollinger_advanced": {
+      "description": "고급 RSI + 볼린저밴드 조합 전략",
+      "param_ranges": {
+        "rsi_period": [8, 10, 12, 14, 16, 18, 20, 22, 25],
+        "rsi_oversold": [15, 18, 20, 22, 25, 27, 30, 32, 35],
+        "rsi_overbought": [65, 68, 70, 72, 75, 77, 80, 82, 85],
+        "rsi_strong_oversold": [10, 12, 15, 18, 20, 22, 25],
+        "rsi_strong_overbought": [75, 78, 80, 82, 85, 88, 90],
+        "bb_period": [15, 18, 20, 22, 25, 28, 30, 35, 40],
+        "bb_std": [1.5, 1.8, 2.0, 2.2, 2.5, 2.8, 3.0, 3.2],
+        "volume_multiplier": [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2]
+      }
+    },
+    "inverse_etf": {
+      "description": "인버스 ETF (SQQQ) 전용 전략",
+      "param_ranges": {
+        "bounce_rsi": [15, 18, 20, 22, 25, 27, 30, 32, 35],
+        "volume_surge": [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5, 2.8, 3.0],
+        "momentum_threshold": [0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.05],
+        "volatility_threshold": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0]
+      }
+    },
+    "largecap_growth": {
+      "description": "대형 성장주 (AAPL, MSFT 등) 전용 전략",
+      "param_ranges": {
+        "rsi_entry": [25, 28, 30, 32, 35, 37, 40, 42, 45],
+        "rsi_exit": [70, 72, 75, 77, 80, 82, 85],
+        "pullback_threshold": [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.12],
+        "volume_threshold": [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8],
+        "breakout_period": [20, 25, 30, 35, 40, 45, 50, 60],
+        "trend_period": [50, 60, 70, 80, 90, 100, 120, 150]
+      }
+    },
+    "ai_megatrend": {
+      "description": "AI 메가트렌드 상승 포착 전략 - NVDA, 기술주 급상승 전용",
+      "param_ranges": {
+        "momentum_lookback": [15, 18, 20, 22, 25, 28, 30],
+        "breakout_period": [30, 35, 40, 45, 50, 55, 60, 70],
+        "volume_surge_multiplier": [1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.5],
+        "price_surge_threshold": [0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05],
+        "ema_short": [6, 8, 9, 10, 12, 15],
+        "ema_long": [18, 20, 21, 24, 26, 30],
+        "rsi_entry_max": [75, 78, 80, 82, 85, 87, 90],
+        "consecutive_gain_trigger": [1, 2, 3],
+        "profit_target": [0.10, 0.12, 0.15, 0.18, 0.20, 0.25],
+        "stop_loss": [0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.12]
+      }
     }
   },
 

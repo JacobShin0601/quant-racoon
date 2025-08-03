@@ -9,7 +9,11 @@
       "Bash(find:*)",
       "Bash(/usr/bin/python3:*)",
       "Bash(pip install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(timeout:*)",
+      "Bash(cp:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
