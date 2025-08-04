@@ -932,12 +932,14 @@ def main():
             end_date = args.end_date
 
         collector = YahooFinanceDataCollector()
-        print(f"{symbol} 주식 데이터를 수집합니다...")
+        # 주식 데이터 수집 시작
         try:
             info = collector.get_stock_info(symbol)
-            print(f"주식 정보: {info['name']} ({info['sector']})")
+            # 주식 정보 확인
         except:
-            print(f"{symbol} 종목 정보를 가져올 수 없습니다.")
+            # 종목 정보 오류
+            pass
+        
         filepath = collector.collect_and_save(
             symbol=symbol,
             interval=interval,
@@ -945,9 +947,9 @@ def main():
             end_date=end_date,
             days_back=days_back,
         )
-        print(f"데이터가 성공적으로 저장되었습니다: {filepath}")
+        # 데이터 저장 완료
     except Exception as e:
-        print(f"오류 발생: {e}")
+        print(f"오류: {e}")
 
 
 if __name__ == "__main__":

@@ -396,9 +396,9 @@ if [[ "$QUIET_MODE" == false ]]; then
 fi
 
 if [[ "$QUIET_MODE" == true ]]; then
-    $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --run-analysis > /dev/null 2>&1
+    $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --full-process > /dev/null 2>&1
 else
-    $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --run-analysis
+    $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --full-process
 fi
 
 if [[ $? -eq 0 ]]; then
