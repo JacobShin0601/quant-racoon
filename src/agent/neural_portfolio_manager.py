@@ -433,7 +433,7 @@ class NeuralPortfolioManager:
 
             # 백테스팅 기간 추출
             start_date, end_date = self._get_backtest_period(historical_data)
-            logger.info(f"📅 백테스팅 기간: {start_date} ~ {end_date}")
+            logger.debug(f"📅 백테스팅 기간: {start_date} ~ {end_date}")
 
             # 개별 종목 백테스팅
             individual_performance = {}
@@ -1519,14 +1519,14 @@ class NeuralPortfolioManager:
     ) -> str:
         """Buy & Hold 벤치마크와 성과 비교"""
         try:
-            logger.info("🔍 벤치마크 비교 시작")
-            logger.info(f"📅 백테스팅 기간: {start_date} ~ {end_date}")
-            logger.info(f"📊 historical_data 종목 수: {len(historical_data)}")
-            logger.info(f"📊 backtest_result 키: {list(backtest_result.keys())}")
+            logger.debug("🔍 벤치마크 비교 시작")
+            logger.debug(f"📅 백테스팅 기간: {start_date} ~ {end_date}")
+            logger.debug(f"📊 historical_data 종목 수: {len(historical_data)}")
+            logger.debug(f"📊 backtest_result 키: {list(backtest_result.keys())}")
 
             # 전략 수익률 계산
             strategy_returns = self._extract_strategy_returns(backtest_result)
-            logger.info(
+            logger.debug(
                 f"📊 전략 수익률 시계열: {len(strategy_returns)}일, 비어있음: {strategy_returns.empty}"
             )
 
@@ -1534,7 +1534,7 @@ class NeuralPortfolioManager:
             benchmark_returns = self._calculate_portfolio_benchmark_returns(
                 historical_data, backtest_result, start_date, end_date
             )
-            logger.info(
+            logger.debug(
                 f"📊 벤치마크 수익률 시계열: {len(benchmark_returns)}일, 비어있음: {benchmark_returns.empty}"
             )
 
@@ -1660,7 +1660,7 @@ class NeuralPortfolioManager:
         try:
             # logger.info("🔍 Buy & Hold 벤치마크 계산 시작")
             logger.info(f"📊 historical_data 종목: {list(historical_data.keys())}")
-            logger.info(f"📅 백테스팅 기간: {start_date} ~ {end_date}")
+            logger.debug(f"📅 백테스팅 기간: {start_date} ~ {end_date}")
 
             portfolio_weights = backtest_result.get("portfolio_performance", {}).get(
                 "weights", {}

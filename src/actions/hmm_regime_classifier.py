@@ -1,8 +1,8 @@
 """
 HMM 기반 시장 체제 분류기
 Hidden Markov Models를 사용하여 시장을 4가지 체제로 분류
-- BULLISH: 상승 추세
-- BEARISH: 하락 추세
+- TRENDING_UP: 상승 추세
+- TRENDING_DOWN: 하락 추세
 - SIDEWAYS: 횡보
 - VOLATILE: 고변동성
 """
@@ -555,9 +555,9 @@ class MarketRegimeHMM:
                     regime = "VOLATILE"
                 # 2차: 모멘텀 기준 (더 보수적 임계값)
                 elif momentum > 0.015:
-                    regime = "BULLISH"
+                    regime = "TRENDING_UP"
                 elif momentum < -0.015:
-                    regime = "BEARISH"
+                    regime = "TRENDING_DOWN"
                 # 3차: 복합 지표 고려
                 else:
                     # 신용 스프레드나 기타 스트레스 지표 확인

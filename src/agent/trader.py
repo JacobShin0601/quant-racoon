@@ -44,12 +44,19 @@ def print_results_summary(results: Dict) -> None:
     # 시장 체제 정보
     if "analysis_results" in results and "market_regime" in results["analysis_results"]:
         regime_info = results["analysis_results"]["market_regime"]
-        regime = regime_info.get("current", "UNKNOWN")
-        confidence = regime_info.get("confidence", 0) * 100
+        current_regime = regime_info.get("current_regime", regime_info.get("current", "UNKNOWN"))
+        predicted_regime = regime_info.get("regime", "UNKNOWN")
+        current_confidence = regime_info.get("current_confidence", regime_info.get("confidence", 0)) * 100
+        predicted_confidence = regime_info.get("confidence", 0) * 100
+        regime_change_expected = regime_info.get("regime_change_expected", False)
         
-        print(f"\n📊 시장 체제 분석 (22일 후 예측)")
-        print(f"   현재 체제: {regime}")
-        print(f"   신뢰도: {confidence:.1f}%")
+        print(f"\n📊 시장 체제 분석")
+        print(f"   현재 체제: {current_regime} (신뢰도: {current_confidence:.1f}%)")
+        print(f"   22일 후 예측: {predicted_regime} (신뢰도: {predicted_confidence:.1f}%)")
+        if regime_change_expected:
+            print(f"   ⚡ 체제 변화 예상: {current_regime} → {predicted_regime}")
+        else:
+            print(f"   🔄 체제 유지 예상")
     
     # 포트폴리오 추천
     if "portfolio_results" in results:
@@ -406,7 +413,7 @@ class HybridTrader:
             if self.analysis_mode:
                 last_results = self._load_last_results()
                 if last_results and use_cached_data:
-                    self.logger.data_info("기존 데이터 활용")
+                    self.logger.debug("기존 데이터 활용")
                     return last_results
 
             results = {}
@@ -688,7 +695,7 @@ class HybridTrader:
                 "weights_used": weights
             }
             
-            self.logger.info(f"백테스팅 완료: {len(common_dates)}일, 수익률 {total_return:.2%}")
+            self.logger.debug(f"백테스팅 완료: {len(common_dates)}일, 수익률 {total_return:.2%}")
             return results
             
         except Exception as e:
@@ -720,7 +727,7 @@ class HybridTrader:
             signals = analysis_results.get("trading_signals", {})
 
             # 1. 포트폴리오 최적화
-            self.logger.portfolio_info("포트폴리오 최적화 실행 중")
+            self.logger.info("💼 포트폴리오 최적화 실행 중")
             try:
                 # 포트폴리오 매니저로 최적화 실행
                 # individual_results를 투자 점수로 구성
@@ -732,7 +739,7 @@ class HybridTrader:
                 )
 
                 if optimization_results and "weights" in optimization_results:
-                    self.logger.portfolio_info("최적 포트폴리오 비중:")
+                    self.logger.info("💼 최적 포트폴리오 비중:")
                     for symbol, weight in optimization_results["weights"].items():
                         self.logger.info(f"  {symbol}: {weight:.1%}")
                 else:
@@ -744,7 +751,7 @@ class HybridTrader:
                 optimization_results = {"weights": {s: 1.0 / len(symbols) for s in symbols}}
 
             # 2. 백테스팅
-            self.logger.info("백테스팅 실행 중...")
+            self.logger.debug("백테스팅 실행 중...")
             try:
                 if optimization_results and "weights" in optimization_results:
                     backtest_results = self._run_simple_backtest(
@@ -771,7 +778,7 @@ class HybridTrader:
             }
 
             # 4. 결과 저장
-            self.logger.info("결과 저장 중...")
+            self.logger.debug("결과 저장 중...")
             results_file = self._save_results(portfolio_results)
             self.logger.success(f"결과 파일 저장 완료: {results_file}")
 
@@ -789,7 +796,7 @@ class HybridTrader:
     def _generate_summary_report(self, results: Dict):
         """결과 요약 레포트 생성"""
         try:
-            self.logger.info("결과 요약 레포트 생성 중...")
+            self.logger.debug("결과 요약 레포트 생성 중...")
 
             # 주요 지표 추출
             backtest_results = results.get("backtest", {})
@@ -803,16 +810,16 @@ class HybridTrader:
             self.logger.info(f"- 최대 낙폭: {metrics.get('max_drawdown', 0):.2%}")
 
             # 포트폴리오 비중
-            self.logger.info("\n포트폴리오 비중:")
+            self.logger.debug("\n포트폴리오 비중:")
             for symbol, weight in weights.items():
-                self.logger.info(f"- {symbol}: {weight:.1%}")
+                self.logger.debug(f"- {symbol}: {weight:.1%}")
 
             # 추천 행동
-            self.logger.info("\n추천 행동:")
+            self.logger.debug("\n추천 행동:")
             for symbol, signal in signals.items():
                 action = signal.get("action", "HOLD")
                 confidence = signal.get("confidence", 0)
-                self.logger.info(f"- {symbol}: {action} (신뢰도: {confidence:.1%})")
+                self.logger.debug(f"- {symbol}: {action} (신뢰도: {confidence:.1%})")
 
         except Exception as e:
             self.logger.error(f"요약 레포트 생성 실패: {e}")
@@ -848,17 +855,17 @@ class HybridTrader:
             # 매크로 데이터 확인
             macro_data_exists = os.path.exists("data/macro") and len(os.listdir("data/macro")) > 10
             if macro_data_exists:
-                self.logger.data_info("기존 매크로 데이터 사용 (수집 건너뛰기)")
+                self.logger.debug("기존 매크로 데이터 사용 (수집 건너뛰기)")
             else:
-                self.logger.data_info("시장 매크로 데이터 수집 중")
+                self.logger.debug("시장 매크로 데이터 수집 중")
                 self.macro_collector.collect_all_data()
 
             # 개별 종목 데이터 확인
             trader_data_exists = os.path.exists("data/trader") and len(os.listdir("data/trader")) > 5
             if trader_data_exists:
-                self.logger.data_info("기존 개별종목 데이터 사용 (수집 건너뛰기)")
+                self.logger.debug("기존 개별종목 데이터 사용 (수집 건너뛰기)")
             else:
-                self.logger.data_info("개별 종목 데이터 수집 중")
+                self.logger.debug("개별 종목 데이터 수집 중")
                 symbols = self.config["data"]["symbols"]
                 lookback_days = self.config["data"]["lookback_days"]
 
@@ -877,7 +884,7 @@ class HybridTrader:
         """모델 로드 (이미 학습된 모델 사용)"""
         try:
             # HMM 모델 로드
-            self.logger.model_info("HMM 모델 로드 중")
+            self.logger.debug("HMM 모델 로드 중")
             hmm_model_path = "models/trader/hmm_regime_model.pkl"
             if os.path.exists(hmm_model_path):
                 if not self.regime_classifier.load_model(hmm_model_path):
@@ -886,7 +893,7 @@ class HybridTrader:
                 self.logger.warning(f"HMM 모델 파일 없음: {hmm_model_path}")
 
             # 신경망 모델 로드
-            self.logger.model_info("신경망 모델 로드 중")
+            self.logger.debug("신경망 모델 로드 중")
             neural_model_path = "models/trader/neural_predictor"
             if os.path.exists(f"{neural_model_path}_meta.pkl"):
                 if not self.neural_predictor.load_model(neural_model_path):

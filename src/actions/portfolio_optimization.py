@@ -104,7 +104,7 @@ class PortfolioOptimizer:
         # 로거 설정
         self.logger = logging.getLogger(__name__)
 
-        print("✅ PortfolioOptimizer 초기화 완료")
+        self.logger.debug("✅ PortfolioOptimizer 초기화 완료")
 
     def calculate_performance_metrics(self, weights: np.ndarray) -> Dict[str, float]:
         """포트폴리오 성과 지표 계산"""
@@ -328,10 +328,10 @@ class PortfolioOptimizer:
         self.logger.debug("리스크 패리티 최적화 실행 중...")
         
         # 데이터 품질 검증
-        print(f"🔍 수익률 데이터 형태: {self.returns.shape}")
+        self.logger.debug(f"🔍 수익률 데이터 형태: {self.returns.shape}")
         if self.returns.shape[0] < 10:
-            print(f"⚠️ 수익률 데이터가 부족합니다: {self.returns.shape[0]}개 행")
-            print("⚠️ 동등 가중치로 대체합니다")
+            self.logger.warning(f"⚠️ 수익률 데이터가 부족합니다: {self.returns.shape[0]}개 행")
+            self.logger.warning("⚠️ 동등 가중치로 대체합니다")
             
             # 동등 가중치 반환
             equal_weights = np.ones(self.n_assets) / self.n_assets
@@ -361,15 +361,15 @@ class PortfolioOptimizer:
         diag_elements = np.diag(cov_matrix)
         min_variance = 1e-8
         if np.any(diag_elements < min_variance):
-            print(f"⚠️ 공분산 행렬 대각선 요소 조정: 최소값 {min_variance}")
+            self.logger.debug(f"⚠️ 공분산 행렬 대각선 요소 조정: 최소값 {min_variance}")
             np.fill_diagonal(cov_matrix, np.maximum(diag_elements, min_variance))
 
         # 조건수 확인
         condition_number = np.linalg.cond(cov_matrix)
-        print(f"🔍 공분산 행렬 조건수: {condition_number:.2e}")
+        self.logger.debug(f"🔍 공분산 행렬 조건수: {condition_number:.2e}")
         
         if condition_number > 1e12:
-            print("⚠️ 공분산 행렬이 불안정합니다. 정규화를 적용합니다.")
+            self.logger.warning("⚠️ 공분산 행렬이 불안정합니다. 정규화를 적용합니다.")
             # 정규화 적용
             cov_matrix = cov_matrix / np.trace(cov_matrix)
 
@@ -394,7 +394,7 @@ class PortfolioOptimizer:
                 return sum_squared_errors
                 
             except Exception as e:
-                print(f"❌ 목적함수 계산 오류: {e}")
+                self.logger.error(f"❌ 목적함수 계산 오류: {e}")
                 return 1e6
 
         def risk_parity_constraint(weights):
@@ -410,18 +410,18 @@ class PortfolioOptimizer:
                 return asset_contributions - target_contribution
                 
             except Exception as e:
-                print(f"❌ 제약조건 계산 오류: {e}")
+                self.logger.error(f"❌ 제약조건 계산 오류: {e}")
                 return np.ones(self.n_assets)
 
         # 제약조건 검증 및 조정
         total_min_weight = constraints.min_weight * self.n_assets
         total_max_weight = constraints.max_weight * self.n_assets
         
-        print(f"🔍 Risk Parity 제약조건 검증:")
-        print(f"  - 종목 수: {self.n_assets}")
-        print(f"  - 최소 비중: {constraints.min_weight} (총 {total_min_weight:.2f})")
-        print(f"  - 최대 비중: {constraints.max_weight} (총 {total_max_weight:.2f})")
-        print(f"  - 목표 총 비중: {1 - constraints.cash_weight:.2f}")
+        self.logger.debug(f"🔍 Risk Parity 제약조건 검증:")
+        self.logger.debug(f"  - 종목 수: {self.n_assets}")
+        self.logger.debug(f"  - 최소 비중: {constraints.min_weight} (총 {total_min_weight:.2f})")
+        self.logger.debug(f"  - 최대 비중: {constraints.max_weight} (총 {total_max_weight:.2f})")
+        self.logger.debug(f"  - 목표 총 뺄중: {1 - constraints.cash_weight:.2f}")
 
         # 제약조건이 너무 엄격한 경우 조정
         adjusted_min_weight = constraints.min_weight
@@ -429,11 +429,11 @@ class PortfolioOptimizer:
         
         if total_min_weight > (1 - constraints.cash_weight):
             adjusted_min_weight = (1 - constraints.cash_weight) / self.n_assets
-            print(f"⚠️ 최소 비중 조정: {constraints.min_weight} → {adjusted_min_weight:.4f}")
+            self.logger.debug(f"⚠️ 최소 비중 조정: {constraints.min_weight} → {adjusted_min_weight:.4f}")
         
         if total_max_weight < (1 - constraints.cash_weight):
             adjusted_max_weight = (1 - constraints.cash_weight) / self.n_assets
-            print(f"⚠️ 최대 비중 조정: {constraints.max_weight} → {adjusted_max_weight:.4f}")
+            self.logger.debug(f"⚠️ 최대 비중 조정: {constraints.max_weight} → {adjusted_max_weight:.4f}")
 
         # 여러 초기값 시도
         initial_guesses = [
@@ -447,7 +447,7 @@ class PortfolioOptimizer:
             inverse_vol_weights = 1.0 / asset_vols
             inverse_vol_weights = inverse_vol_weights / np.sum(inverse_vol_weights)
             initial_guesses.append(inverse_vol_weights)
-            print(f"🔍 변동성 역수 기반 초기 가중치 추가")
+            self.logger.debug(f"🔍 변동성 역수 기반 초기 가중치 추가")
 
         best_result = None
         best_objective = float('inf')
@@ -456,11 +456,11 @@ class PortfolioOptimizer:
         methods = ["SLSQP", "trust-constr", "L-BFGS-B"]
         
         for i, initial_weights in enumerate(initial_guesses):
-            print(f"🔍 초기값 {i+1}/{len(initial_guesses)} 시도")
+            self.logger.debug(f"🔍 초기값 {i+1}/{len(initial_guesses)} 시도")
             
             for method in methods:
                 try:
-                    print(f"  - {method} 최적화 시도")
+                    self.logger.debug(f"  - {method} 최적화 시도")
                     
                     # 제약조건
                     bounds = [(adjusted_min_weight, adjusted_max_weight)] * self.n_assets
@@ -494,36 +494,36 @@ class PortfolioOptimizer:
                     if result.success and result.fun < best_objective:
                         best_result = result
                         best_objective = result.fun
-                        print(f"  ✅ {method} 성공 (목적함수: {result.fun:.6f})")
+                        self.logger.debug(f"  ✅ {method} 성공 (목적함수: {result.fun:.6f})")
                         break
                     elif result.success:
-                        print(f"  ⚠️ {method} 성공했지만 더 나은 해가 있음 (목적함수: {result.fun:.6f})")
+                        self.logger.debug(f"  ⚠️ {method} 성공했지만 더 나은 해가 있음 (목적함수: {result.fun:.6f})")
                     else:
-                        print(f"  ❌ {method} 실패: {result.message}")
+                        self.logger.debug(f"  ❌ {method} 실패: {result.message}")
                         
                 except Exception as e:
-                    print(f"  ❌ {method} 예외: {e}")
+                    self.logger.error(f"  ❌ {method} 예외: {e}")
                     continue
 
         if best_result is None:
-            print(f"❌ 모든 Risk Parity 최적화 방법 실패")
-            print(f"🔍 Fallback: 동일 가중치 사용")
+            self.logger.warning(f"❌ 모든 Risk Parity 최적화 방법 실패")
+            self.logger.warning(f"🔍 Fallback: 동일 가중치 사용")
             weights = np.ones(self.n_assets) / self.n_assets
             weights = weights * (1 - constraints.cash_weight)
         else:
             weights = best_result.x
-            print(f"✅ Risk Parity 최적화 성공 (최종 목적함수: {best_objective:.6f})")
+            self.logger.debug(f"✅ Risk Parity 최적화 성공 (최종 목적함수: {best_objective:.6f})")
 
         # 결과 검증
         portfolio_risk = np.sqrt(weights.T @ cov_matrix @ weights)
         asset_contributions = (weights * (cov_matrix @ weights)) / portfolio_risk
         target_contribution = portfolio_risk / self.n_assets
         
-        print(f"🔍 최종 결과 검증:")
-        print(f"  - 포트폴리오 리스크: {portfolio_risk:.6f}")
-        print(f"  - 목표 리스크 기여도: {target_contribution:.6f}")
-        print(f"  - 자산별 리스크 기여도: {asset_contributions}")
-        print(f"  - 기여도 표준편차: {np.std(asset_contributions):.6f}")
+        self.logger.debug(f"🔍 최종 결과 검증:")
+        self.logger.debug(f"  - 포트폴리오 리스크: {portfolio_risk:.6f}")
+        self.logger.debug(f"  - 목표 리스크 기여도: {target_contribution:.6f}")
+        self.logger.debug(f"  - 자산별 리스크 기여도: {asset_contributions}")
+        self.logger.debug(f"  - 기여도 표준편차: {np.std(asset_contributions):.6f}")
 
         metrics = self.calculate_performance_metrics(weights)
 
@@ -791,10 +791,10 @@ class PortfolioOptimizer:
                 # Debug: KELLY_CRITERION 최적화
                 return self.kelly_criterion_optimization(constraints)
             else:
-                print(f"❌ 지원하지 않는 최적화 방법: {method}")
+                self.logger.error(f"❌ 지원하지 않는 최적화 방법: {method}")
                 raise ValueError(f"지원하지 않는 최적화 방법: {method}")
         except Exception as e:
-            print(f"❌ 포트폴리오 최적화 실패: {e}")
+            self.logger.error(f"❌ 포트폴리오 최적화 실패: {e}")
             raise
 
     def compare_methods(

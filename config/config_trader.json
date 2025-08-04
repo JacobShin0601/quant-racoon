@@ -27,7 +27,7 @@
 
   "hmm_regime": {
     "n_states": 4,
-    "state_names": ["BULLISH", "BEARISH", "SIDEWAYS", "VOLATILE"],
+    "state_names": ["TRENDING_UP", "TRENDING_DOWN", "SIDEWAYS", "VOLATILE"],
     "covariance_type": "diag",
     "n_iter": 1000,
     "random_state": 42,
@@ -95,8 +95,8 @@
   
   "scoring": {
     "regime_multipliers": {
-      "BULLISH": 1.2,
-      "BEARISH": 0.3,
+      "TRENDING_UP": 1.2,
+      "TRENDING_DOWN": 0.3,
       "SIDEWAYS": 0.8,
       "VOLATILE": 0.6
     },

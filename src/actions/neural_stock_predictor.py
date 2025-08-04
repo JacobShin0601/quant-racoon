@@ -843,7 +843,7 @@ class StockPredictionNetwork:
 
             # 시장 체제 피처
             regime_features = pd.DataFrame(index=stock_data.index)
-            regimes = ["BULLISH", "BEARISH", "SIDEWAYS", "VOLATILE"]
+            regimes = ["TRENDING_UP", "TRENDING_DOWN", "SIDEWAYS", "VOLATILE"]
             current_regime = market_regime.get("current_regime", "SIDEWAYS")
 
             for regime in regimes:
@@ -1639,21 +1639,31 @@ class StockPredictionNetwork:
                 else:
                     print("\n✅ 앙상블 가중치 학습기 훈련 완료!")
                     
-                    # 동적 가중치 테스트 (샘플 데이터로)
-                    sample_symbol = list(train_data.keys())[0] if train_data else None
-                    if sample_symbol and len(train_data[sample_symbol]['features']) > 20:
-                        sample_features = train_data[sample_symbol]['features'].tail(20)
-                        try:
-                            dynamic_universal, dynamic_individual = self._update_ensemble_weights(sample_symbol, sample_features)
-                            print(f"\n🎯 동적 가중치 학습 테스트 ({sample_symbol}):")
-                            print(f"   • 동적 가중치: Universal {dynamic_universal:.1%}, Individual {dynamic_individual:.1%}")
-                            print(f"   • 기본 가중치 (백업): Universal {self.universal_weight:.1%}, Individual {self.individual_weight:.1%}")
-                            print(f"   • 가중치 변화: Universal {(dynamic_universal - self.universal_weight)*100:+.1f}%p, Individual {(dynamic_individual - self.individual_weight)*100:+.1f}%p")
-                        except Exception as e:
-                            print(f"\n⚠️ 동적 가중치 테스트 실패: {e}")
-                            print(f"   → 기본 가중치 사용: Universal {self.universal_weight:.1%}, Individual {self.individual_weight:.1%}")
-                    else:
-                        print(f"\n📌 기본 가중치 설정:")
+                    # 동적 가중치 테스트 (전체 종목)
+                    print(f"\n🎯 전체 종목 앙상블 가중치:")
+                    print("─" * 80)
+                    print(f"{'종목':^8} {'Universal':^12} {'Individual':^12} {'Universal 변화':^15} {'Individual 변화':^15}")
+                    print("─" * 80)
+                    
+                    weights_calculated = False
+                    for symbol in train_data.keys():
+                        if len(train_data[symbol]['features']) > 20:
+                            symbol_features = train_data[symbol]['features'].tail(20)
+                            try:
+                                dynamic_universal, dynamic_individual = self._update_ensemble_weights(symbol, symbol_features)
+                                universal_change = (dynamic_universal - self.universal_weight) * 100
+                                individual_change = (dynamic_individual - self.individual_weight) * 100
+                                
+                                print(f"{symbol:^8} {dynamic_universal:^11.1%} {dynamic_individual:^11.1%} {universal_change:^14.1f}%p {individual_change:^14.1f}%p")
+                                weights_calculated = True
+                            except Exception as e:
+                                print(f"{symbol:^8} {'오류':^11} {'오류':^11} {'N/A':^14} {'N/A':^14}")
+                    
+                    print("─" * 80)
+                    print(f"📌 기본 가중치: Universal {self.universal_weight:.1%}, Individual {self.individual_weight:.1%}")
+                    
+                    if not weights_calculated:
+                        print(f"\n⚠️ 동적 가중치 계산 실패 - 기본 가중치 사용")
                         print(f"   • Universal: {self.universal_weight:.1%}")
                         print(f"   • Individual: {self.individual_weight:.1%}")
                         print(f"   • 동적 가중치는 예측 시 실시간 계산됨")

@@ -3,7 +3,8 @@
 set -e
 
 # Conda 환경 활성화
-CONDA_ENV="quant"
+# CONDA_ENV="quant"
+CONDA_ENV="bedrock_manus"
 PYTHON_PATH="python3"
 
 # Conda 환경 활성화
