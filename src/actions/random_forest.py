@@ -134,10 +134,20 @@ class MarketRegimeRF:
         
         self._print(f"데이터 디렉토리: {data_dir}")
         
-        # SPY 데이터 로드
-        spy_path = os.path.join(data_dir, "spy_data.csv")
-        if not os.path.exists(spy_path):
-            raise ValueError(f"SPY 데이터 파일이 없습니다: {spy_path}")
+        # SPY 데이터 로드 (여러 파일명 시도)
+        spy_paths = [
+            os.path.join(data_dir, "spy_data.csv"),
+            os.path.join(data_dir, "SPY.csv")
+        ]
+        
+        spy_path = None
+        for path in spy_paths:
+            if os.path.exists(path):
+                spy_path = path
+                break
+        
+        if spy_path is None:
+            raise ValueError(f"SPY 데이터 파일이 없습니다. 확인한 경로: {spy_paths}")
         
         spy_data = pd.read_csv(spy_path, index_col=0, parse_dates=False)
         

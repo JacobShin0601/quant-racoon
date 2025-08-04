@@ -277,9 +277,7 @@ class TrainTestEvaluator:
                 else:
                     failed_count += 1
 
-            print(
-                f"🔍 필터링: {len(results)}개 중 {len(filtered_results)}개 성공, {failed_count}개 실패 제외"
-            )
+            # Debug: 필터링 결과 (간소화)
 
             self.logger.log_success(
                 f"최적화 결과 로드 완료: {len(filtered_results)}개 성공 조합 (실패 {failed_count}개 제외)"
@@ -622,11 +620,8 @@ class TrainTestEvaluator:
         # TRAIN 종목 수
         # TEST 종목 수
         if all_results["buy_hold_train"]:
-            sample_symbol = list(all_results["buy_hold_train"].keys())[0]
-            sample_data = all_results["buy_hold_train"][sample_symbol]
-            print(
-                f"  - 샘플 ({sample_symbol}): {sample_data.get('total_return', 0)*100:.2f}%"
-            )
+            # Debug: 샘플 데이터 확인 (간소화)
+            pass
 
         # 최적화된 전략들 평가
         symbols = list(train_data_dict.keys())
@@ -677,9 +672,7 @@ class TrainTestEvaluator:
                             best_strategy_candidate = strategy_name
                             best_params_candidate = result.get("best_params", {})
                             found = True
-                            print(
-                                f"🔍 {symbol} 성공한 전략 발견: {strategy_name} (점수: {score:.3f})"
-                            )
+                            # Debug: 성공한 전략 발견 (간소화)
 
                 if found:
                     best_strategy = best_strategy_candidate
@@ -1048,7 +1041,7 @@ class TrainTestEvaluator:
         self, train_results: Dict[str, Any], test_results: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
         """최종 필터링 및 순위 결정"""
-        self.logger.log_section("🔍 최종 필터링 및 순위 결정")
+        self.logger.log_section("최종 필터링 및 순위 결정")
 
         # 설정에서 필터링 기준 로드
         evaluator_config = self.config.get("evaluator", {})
@@ -1691,9 +1684,7 @@ class TrainTestEvaluator:
             # 3. 포트폴리오 결과 로드
             # 포트폴리오 결과 로드
             portfolio_results = self.load_portfolio_results()
-            print(
-                f"🔍 포트폴리오 결과 로드: {len(portfolio_results) if portfolio_results else 0}개 키"
-            )
+            # Debug: 포트폴리오 결과 로드 (간소화)
             if not portfolio_results:
                 # 포트폴리오 결과를 찾을 수 없어 기본값 사용
                 portfolio_results = {

@@ -171,6 +171,24 @@ class StrategyParams:
 
     # Fibonacci 레벨 파라미터
     fibonacci_levels: List[float] = None
+    
+    # Bull Market Momentum 전략 파라미터
+    acceleration_threshold: float = 0.015
+    volume_threshold: float = 1.5
+    rsi_min: int = 40
+    rsi_max: int = 80
+    adx_threshold: int = 25
+    trend_period: int = 50
+    
+    # AI Tech Mega Trend 전략 파라미터
+    momentum_lookback: int = 20
+    breakout_period: int = 50
+    volume_surge_multiplier: float = 1.5
+    price_surge_threshold: float = 0.03
+    rsi_entry_max: int = 80
+    consecutive_gain_trigger: int = 2
+    profit_target: float = 0.15
+    stop_loss: float = 0.08
 
     def __post_init__(self):
         """초기화 후 실행되는 메서드"""

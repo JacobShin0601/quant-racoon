@@ -57,9 +57,9 @@ echo "📋 단계: cleaner → scrapper → researcher → portfolio_manager →
 echo "📁 데이터 디렉토리: data/swing"
 echo "📁 결과 디렉토리: results/swing"
 if [ -n "$USE_CACHED_DATA" ]; then
-    python -m src.agent.orchestrator --time-horizon swing --uuid "$UUID" $USE_CACHED_DATA --cache-days "$CACHE_DAYS"
+    python3 -m src.agent.orchestrator --time-horizon swing --uuid "$UUID" $USE_CACHED_DATA --cache-days "$CACHE_DAYS"
 else
-    python -m src.agent.orchestrator --time-horizon swing --uuid "$UUID"
+    python3 -m src.agent.orchestrator --time-horizon swing --uuid "$UUID"
 fi
 
 # 실행 결과 확인

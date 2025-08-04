@@ -169,25 +169,20 @@ class Logger:
         # 기존 핸들러 정리 (파일 핸들러 닫기 포함)
         self._cleanup_handlers(self.logger)
 
-        # 콘솔 핸들러
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-
         # 포맷터
         formatter = logging.Formatter(
             "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
-        console_handler.setFormatter(formatter)
 
-        # 콘솔 핸들러 추가
-        self.logger.addHandler(console_handler)
-
-        # 🔥 핵심 수정: 파일 핸들러를 직접 추가하고 유지
+        # 파일 핸들러만 사용 (중복 출력 방지)
         file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
         self._file_handlers.append(file_handler)
+        
+        # 상위 로거로의 전파 방지 (중복 출력 완전 차단)
+        self.logger.propagate = False
 
         self.log_file = log_path
         print(f"[Logger] 로그 파일 생성: {log_path}")

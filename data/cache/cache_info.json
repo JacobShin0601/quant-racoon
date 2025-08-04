@@ -1,9 +1,9 @@
 {
   "eda2d4a4720c5aefafe8f94eed9ecb0d": {
     "path": "data/macro",
-    "timestamp": "2025-07-28T16:36:08.347133",
+    "timestamp": "2025-08-04T17:03:16.025772",
     "metadata": {
-      "files": 24,
+      "files": 21,
       "symbols": []
     }
   },
@@ -44,8 +44,8 @@
     }
   },
   "02b7de1f8048b6a5a493db6752182b3a": {
-    "path": "data/trader/AAPL_daily_auto_auto_20250728.csv",
-    "timestamp": "2025-07-28T16:36:17.304165",
+    "path": "data/trader/AAPL_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:32.683345",
     "metadata": {
       "symbol": "AAPL",
       "rows": 479,
@@ -53,8 +53,8 @@
     }
   },
   "a08ac3bde07605ef063551ab4217a9e4": {
-    "path": "data/trader/META_daily_auto_auto_20250728.csv",
-    "timestamp": "2025-07-28T16:36:21.999502",
+    "path": "data/trader/META_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:04:01.274394",
     "metadata": {
       "symbol": "META",
       "rows": 479,
@@ -71,8 +71,8 @@
     }
   },
   "405578d3497019ba980dff3e5e8fc7ee": {
-    "path": "data/trader/SPY_daily_auto_auto_20250728.csv",
-    "timestamp": "2025-07-28T16:36:32.338796",
+    "path": "data/trader/SPY_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:22.943779",
     "metadata": {
       "symbol": "SPY",
       "rows": 479,
@@ -80,8 +80,8 @@
     }
   },
   "b9f7248212d651916ae9ef86b80aa54b": {
-    "path": "data/swing/SPY_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:38.902836",
+    "path": "data/swing/SPY_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:26:56.148379",
     "metadata": {
       "symbol": "SPY",
       "rows": 247,
@@ -89,8 +89,8 @@
     }
   },
   "6710d7cc0cf0272d3ff4c532f7d0216c": {
-    "path": "data/swing/SQQQ_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:40.590264",
+    "path": "data/swing/SQQQ_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:07.662160",
     "metadata": {
       "symbol": "SQQQ",
       "rows": 247,
@@ -98,8 +98,8 @@
     }
   },
   "ffd9602e2bd774e10bae2f5170714ab2": {
-    "path": "data/swing/AAPL_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:43.115860",
+    "path": "data/swing/AAPL_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:11.966421",
     "metadata": {
       "symbol": "AAPL",
       "rows": 247,
@@ -107,8 +107,8 @@
     }
   },
   "755af78d763850c74e2af86f286c3fae": {
-    "path": "data/swing/MSFT_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:45.476467",
+    "path": "data/swing/MSFT_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:18.369534",
     "metadata": {
       "symbol": "MSFT",
       "rows": 247,
@@ -116,8 +116,8 @@
     }
   },
   "3eb8c8a3ea5d1897e0832ec8bfed60fc": {
-    "path": "data/swing/NVDA_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:47.587647",
+    "path": "data/swing/NVDA_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:22.695393",
     "metadata": {
       "symbol": "NVDA",
       "rows": 247,
@@ -125,8 +125,8 @@
     }
   },
   "9b93b41d300fe03fd0f850e30dbb5257": {
-    "path": "data/swing/GOOGL_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:49.504465",
+    "path": "data/swing/GOOGL_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:28.219530",
     "metadata": {
       "symbol": "GOOGL",
       "rows": 247,
@@ -134,8 +134,8 @@
     }
   },
   "89cc71e4da9198da0db250b0f17dd6f2": {
-    "path": "data/swing/AMZN_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:51.695488",
+    "path": "data/swing/AMZN_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:33.616021",
     "metadata": {
       "symbol": "AMZN",
       "rows": 247,
@@ -143,8 +143,8 @@
     }
   },
   "a66ab0bbd5506fba4ecbdcb8e70ab5b6": {
-    "path": "data/swing/TSLA_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:53.697956",
+    "path": "data/swing/TSLA_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:37.982538",
     "metadata": {
       "symbol": "TSLA",
       "rows": 247,
@@ -152,8 +152,8 @@
     }
   },
   "1788245d9308b9f48b94dacb6c4e5bb0": {
-    "path": "data/swing/META_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:55.794088",
+    "path": "data/swing/META_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:42.155360",
     "metadata": {
       "symbol": "META",
       "rows": 247,
@@ -161,8 +161,8 @@
     }
   },
   "00c43c1e867910926c055459974015ca": {
-    "path": "data/swing/JPM_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:46:58.318637",
+    "path": "data/swing/JPM_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:47.418792",
     "metadata": {
       "symbol": "JPM",
       "rows": 247,
@@ -170,8 +170,8 @@
     }
   },
   "61c04e4bb1e8bd0426b315faa12d5c98": {
-    "path": "data/swing/UNH_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:47:00.834380",
+    "path": "data/swing/UNH_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:52.129001",
     "metadata": {
       "symbol": "UNH",
       "rows": 247,
@@ -179,11 +179,92 @@
     }
   },
   "59a6f844034550fe71220b8d7f3e7ba5": {
-    "path": "data/swing/CONL_daily_auto_2025-08-02_20250803_094634_9FDB4383.csv",
-    "timestamp": "2025-08-03T09:47:02.342796",
+    "path": "data/swing/CONL_daily_auto_2025-08-02_20250804_092645_2a1e7afa.csv",
+    "timestamp": "2025-08-04T09:27:55.931716",
     "metadata": {
       "symbol": "CONL",
       "rows": 247,
+      "columns": 48
+    }
+  },
+  "2a7da5217832d8b2ada911134de3e512": {
+    "path": "data/trader/SQQQ_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:27.228019",
+    "metadata": {
+      "symbol": "SQQQ",
+      "rows": 479,
+      "columns": 50
+    }
+  },
+  "a5ae1f3d805c744e542176aacf39bfdf": {
+    "path": "data/trader/MSFT_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:37.231706",
+    "metadata": {
+      "symbol": "MSFT",
+      "rows": 479,
+      "columns": 137
+    }
+  },
+  "0352a2ed488bb6c5d2a573d8f643e2af": {
+    "path": "data/trader/NVDA_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:41.639372",
+    "metadata": {
+      "symbol": "NVDA",
+      "rows": 479,
+      "columns": 137
+    }
+  },
+  "de0f8607f5b2ccc12f41101382fd0282": {
+    "path": "data/trader/GOOGL_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:46.864192",
+    "metadata": {
+      "symbol": "GOOGL",
+      "rows": 479,
+      "columns": 135
+    }
+  },
+  "f797f9408b02b9667edddb3e34c66ec5": {
+    "path": "data/trader/AMZN_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:52.472774",
+    "metadata": {
+      "symbol": "AMZN",
+      "rows": 479,
+      "columns": 131
+    }
+  },
+  "aa88bc75cb24dd880f52eeef55680cda": {
+    "path": "data/trader/TSLA_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:03:56.955166",
+    "metadata": {
+      "symbol": "TSLA",
+      "rows": 479,
+      "columns": 132
+    }
+  },
+  "7ed95d673b2511aef76d832e0e438088": {
+    "path": "data/trader/JPM_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:04:05.836808",
+    "metadata": {
+      "symbol": "JPM",
+      "rows": 479,
+      "columns": 117
+    }
+  },
+  "23531fca3f9a60e097eaf392ab21ebb5": {
+    "path": "data/trader/UNH_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:04:11.894894",
+    "metadata": {
+      "symbol": "UNH",
+      "rows": 479,
+      "columns": 131
+    }
+  },
+  "1e2626704fd7bb4daf1f5df9e1b763bb": {
+    "path": "data/trader/CONL_daily_auto_auto_20250804.csv",
+    "timestamp": "2025-08-04T17:04:15.642255",
+    "metadata": {
+      "symbol": "CONL",
+      "rows": 479,
       "columns": 48
     }
   }

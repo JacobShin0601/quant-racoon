@@ -3,8 +3,8 @@
 set -e
 
 # Conda 환경 활성화
-# CONDA_ENV="bedrock_manus"
-# PYTHON_PATH="/home/yunchae/anaconda3/envs/${CONDA_ENV}/bin/python3"
+CONDA_ENV="bedrock_manus"
+PYTHON_PATH="/home/yunchae/anaconda3/envs/${CONDA_ENV}/bin/python3"
 
 # Python 경로 확인
 if [[ ! -f "$PYTHON_PATH" ]]; then
@@ -12,10 +12,6 @@ if [[ ! -f "$PYTHON_PATH" ]]; then
     echo "Please ensure conda environment '${CONDA_ENV}' is properly installed"
     exit 1
 fi
-
-# 시작 메시지
-debug "Python path: $PYTHON_PATH"
-debug "Log level: $LOG_LEVEL"
 
 # 로깅 설정
 LOG_LEVEL=${LOG_LEVEL:-INFO}  # 환경변수로 로그 레벨 설정 가능

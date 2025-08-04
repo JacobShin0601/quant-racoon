@@ -293,6 +293,9 @@ class IndividualStrategyResearcher:
             "rsi_bollinger_advanced": RSIBollingerAdvancedStrategy,
             # AI 메가트렌드 전략
             "ai_megatrend": AIMegaTrendStrategy,
+            # 누락된 전략들 추가
+            "bull_market_momentum": BullMarketMomentumStrategy,
+            "ai_tech_mega_trend": AITechMegaTrendStrategy,
         }
 
         for name, strategy_class in strategies_to_register.items():

@@ -80,26 +80,26 @@ class PortfolioOptimizer:
             returns: 수익률 데이터 (T x N)
             risk_free_rate: 무위험 수익률
         """
-        print(f"🔍 PortfolioOptimizer 초기화 시작")
-        print(f"🔍 returns 형태: {returns.shape}")
-        print(f"🔍 returns 컬럼: {list(returns.columns)}")
-        print(f"🔍 risk_free_rate: {risk_free_rate}")
+        # Debug: PortfolioOptimizer 초기화
+        # Debug: returns 형태 확인
+        # Debug: returns 컬럼 확인
+        # Debug: risk_free_rate 확인
 
         self.returns = returns
         self.risk_free_rate = risk_free_rate
         self.n_assets = returns.shape[1]
         self.asset_names = returns.columns.tolist()
 
-        print(f"🔍 자산 수: {self.n_assets}")
-        print(f"🔍 자산 이름: {self.asset_names}")
+        # Debug: 자산 수 확인
+        # Debug: 자산 이름 확인
 
         # 기본 통계량 계산
         self.mean_returns = returns.mean()
         self.cov_matrix = returns.cov()
         self.correlation_matrix = returns.corr()
 
-        print(f"🔍 평균 수익률 계산 완료")
-        print(f"🔍 공분산 행렬 형태: {self.cov_matrix.shape}")
+        # Debug: 평균 수익률 계산 완료
+        # Debug: 공분산 행렬 형태 확인
 
         # 로거 설정
         self.logger = logging.getLogger(__name__)
@@ -762,35 +762,33 @@ class PortfolioOptimizer:
         self, method: OptimizationMethod, constraints: OptimizationConstraints, **kwargs
     ) -> OptimizationResult:
         """포트폴리오 최적화 실행"""
-        print(f"🔍 optimize_portfolio 시작 - 방법: {method.value}")
-        print(
-            f"🔍 제약조건: min_weight={constraints.min_weight}, max_weight={constraints.max_weight}"
-        )
+        # Debug: optimize_portfolio 시작
+        # Debug: 제약조건 확인
 
         try:
             if method == OptimizationMethod.MEAN_VARIANCE:
-                print("🔍 MEAN_VARIANCE 최적화 실행")
+                # Debug: MEAN_VARIANCE 최적화
                 return self.mean_variance_optimization(constraints)
             elif method == OptimizationMethod.SHARPE_MAXIMIZATION:
-                print("🔍 SHARPE_MAXIMIZATION 최적화 실행")
+                # Debug: SHARPE_MAXIMIZATION 최적화
                 return self.sharpe_maximization(constraints)
             elif method == OptimizationMethod.SORTINO_MAXIMIZATION:
-                print("🔍 SORTINO_MAXIMIZATION 최적화 실행")
+                # Debug: SORTINO_MAXIMIZATION 최적화
                 return self.sortino_maximization(constraints)
             elif method == OptimizationMethod.RISK_PARITY:
-                print("🔍 RISK_PARITY 최적화 실행")
+                # Debug: RISK_PARITY 최적화
                 return self.risk_parity_optimization(constraints)
             elif method == OptimizationMethod.MINIMUM_VARIANCE:
-                print("🔍 MINIMUM_VARIANCE 최적화 실행")
+                # Debug: MINIMUM_VARIANCE 최적화
                 return self.minimum_variance_optimization(constraints)
             elif method == OptimizationMethod.MAXIMUM_DIVERSIFICATION:
-                print("🔍 MAXIMUM_DIVERSIFICATION 최적화 실행")
+                # Debug: MAXIMUM_DIVERSIFICATION 최적화
                 return self.maximum_diversification_optimization(constraints)
             elif method == OptimizationMethod.BLACK_LITTERMAN:
-                print("🔍 BLACK_LITTERMAN 최적화 실행")
+                # Debug: BLACK_LITTERMAN 최적화
                 return self.black_litterman_optimization(constraints, **kwargs)
             elif method == OptimizationMethod.KELLY_CRITERION:
-                print("🔍 KELLY_CRITERION 최적화 실행")
+                # Debug: KELLY_CRITERION 최적화
                 return self.kelly_criterion_optimization(constraints)
             else:
                 print(f"❌ 지원하지 않는 최적화 방법: {method}")

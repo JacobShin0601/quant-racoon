@@ -13,7 +13,9 @@
       "Bash(timeout:*)",
       "Bash(cp:*)",
       "Bash(grep:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(cat:*)",
+      "Bash(./run_market_analysis.sh:*)"
     ],
     "deny": []
   }

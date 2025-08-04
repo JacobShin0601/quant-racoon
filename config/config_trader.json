@@ -4,10 +4,10 @@
   "version": "1.0.0",
 
   "data": {
-    "symbols": ["AAPL", "META", "QQQ", "SPY"],
+    "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
     "interval": "1d",
     "lookback_days": 700,
-    "end_date": "2025-07-24",
+    "end_date": "2025-08-04",
     "train_ratio": 0.6,
     "min_data_points": 50
   },
@@ -128,7 +128,7 @@
   },
 
   "portfolio": {
-    "symbols": ["AAPL", "META", "QQQ", "SPY"],
+    "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
     "max_positions": 4,
     "max_total_exposure": 0.95,
     "cash_reserve": 0.05,

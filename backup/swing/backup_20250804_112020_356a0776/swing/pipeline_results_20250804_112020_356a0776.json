@@ -1,0 +1,30 @@
+{
+  "uuid": "20250804_112020_356a0776",
+  "time_horizon": "swing",
+  "start_time": "2025-08-04T11:20:20.850257",
+  "end_time": "2025-08-04T11:20:20.921691",
+  "total_stages": 4,
+  "successful_stages": 2,
+  "results": {
+    "cleaner": {
+      "status": "success",
+      "timestamp": "2025-08-04T11:20:20.851048",
+      "error": null
+    },
+    "scrapper": {
+      "status": "success",
+      "timestamp": "2025-08-04T11:20:20.851983",
+      "error": null
+    },
+    "researcher": {
+      "status": "error",
+      "timestamp": "2025-08-04T11:20:20.852731",
+      "error": "'StrategyParams' object has no attribute 'acceleration_threshold'"
+    },
+    "portfolio_manager": {
+      "status": "failed",
+      "timestamp": "2025-08-04T11:20:20.921388",
+      "error": null
+    }
+  }
+}

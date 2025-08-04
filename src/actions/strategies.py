@@ -119,8 +119,8 @@ class DualMomentumStrategy(BaseStrategy):
         # Donchian Channel 돌파 (모멘텀 필터 완화)
         long_condition = (
             (df["close"] > df["donchian_upper"]) |  # 돌파 조건
-            ((df["close"] > df["close"].shift(1) * 1.02) & trend_up)  # 또는 2% 상승 + 상승추세
-        ) & (df["momentum"] > -0.05)  # 큰 하락만 필터링
+            ((df["close"] > df["close"].shift(1) * 1.01) & trend_up)  # 또는 1% 상승 + 상승추세
+        ) & (df["momentum"] > -0.02)  # 더 완화된 필터링
         
         short_condition = (
             (df["close"] < df["donchian_lower"]) |  # 하향 돌파
@@ -6465,3 +6465,170 @@ class AIMegaTrendStrategy(BaseStrategy):
         )
         
         return profit_target_hit | stop_loss_hit | momentum_fading | negative_streak
+
+
+class BullMarketMomentumStrategy(BaseStrategy):
+    """강세장 모멘텀 전략 - 상승장에서 모멘텀 가속 포착"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_period = params.momentum_period
+        self.acceleration_threshold = params.acceleration_threshold
+        self.volume_threshold = params.volume_threshold
+        self.rsi_min = params.rsi_min
+        self.rsi_max = params.rsi_max
+        self.adx_threshold = params.adx_threshold
+        self.trend_period = params.trend_period
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """모멘텀 가속 신호 생성"""
+        df["signal"] = 0
+        
+        # 기술적 지표 계산
+        df = self._calculate_indicators(df)
+        
+        # 모멘텀 계산
+        df["momentum"] = df["close"].pct_change(self.momentum_period)
+        df["momentum_acc"] = df["momentum"] - df["momentum"].shift(1)
+        
+        # 거래량 평균
+        df["volume_ma"] = df["volume"].rolling(window=20).mean()
+        df["volume_ratio"] = df["volume"] / df["volume_ma"]
+        
+        # RSI
+        df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], period=14)
+        
+        # ADX
+        df["adx"] = TechnicalIndicators.calculate_adx(df, period=14)
+        
+        # 트렌드 확인 (SMA)
+        df["sma_short"] = df["close"].rolling(window=20).mean()
+        df["sma_long"] = df["close"].rolling(window=self.trend_period).mean()
+        
+        # 매수 조건
+        buy_conditions = (
+            (df["momentum"] > 0) &  # 양의 모멘텀
+            (df["momentum_acc"] > self.acceleration_threshold) &  # 모멘텀 가속
+            (df["volume_ratio"] > self.volume_threshold) &  # 거래량 증가
+            (df["rsi"] > self.rsi_min) & (df["rsi"] < self.rsi_max) &  # RSI 범위
+            (df["adx"] > self.adx_threshold) &  # 트렌드 강도
+            (df["close"] > df["sma_short"]) &  # 단기 이평선 위
+            (df["sma_short"] > df["sma_long"])  # 상승 트렌드
+        )
+        
+        # 매도 조건
+        sell_conditions = (
+            (df["momentum"] < 0) |  # 음의 모멘텀
+            (df["momentum_acc"] < -self.acceleration_threshold) |  # 모멘텀 감속
+            (df["rsi"] > 80) |  # 과매수
+            (df["rsi"] < 20) |  # 과매도
+            (df["close"] < df["sma_short"])  # 단기 이평선 하향 돌파
+        )
+        
+        df.loc[buy_conditions, "signal"] = 1
+        df.loc[sell_conditions, "signal"] = -1
+        
+        return df
+    
+    def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """기본 기술적 지표 계산"""
+        return df
+
+
+class AITechMegaTrendStrategy(BaseStrategy):
+    """AI/기술주 메가트렌드 전략 - 상승장 특화"""
+    
+    def __init__(self, params: StrategyParams):
+        super().__init__(params)
+        self.momentum_lookback = params.momentum_lookback
+        self.breakout_period = params.breakout_period
+        self.volume_surge_multiplier = params.volume_surge_multiplier
+        self.price_surge_threshold = params.price_surge_threshold
+        self.ema_short = params.ema_short
+        self.ema_long = params.ema_long
+        self.rsi_entry_max = params.rsi_entry_max
+        self.consecutive_gain_trigger = params.consecutive_gain_trigger
+        self.profit_target = params.profit_target
+        self.stop_loss = params.stop_loss
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        """AI/기술주 메가트렌드 신호 생성"""
+        df["signal"] = 0
+        
+        # 기술적 지표 계산
+        df = self._calculate_indicators(df)
+        
+        # 모멘텀 계산
+        df["momentum"] = df["close"].pct_change(self.momentum_lookback)
+        
+        # 돌파 신호
+        df["high_max"] = df["high"].rolling(window=self.breakout_period).max()
+        df["breakout"] = df["close"] > df["high_max"].shift(1)
+        
+        # 거래량 급증
+        df["volume_ma"] = df["volume"].rolling(window=20).mean()
+        df["volume_surge"] = df["volume"] > (df["volume_ma"] * self.volume_surge_multiplier)
+        
+        # 가격 급등
+        df["price_change"] = df["close"].pct_change()
+        df["price_surge"] = df["price_change"] > self.price_surge_threshold
+        
+        # EMA
+        df["ema_short"] = df["close"].ewm(span=self.ema_short).mean()
+        df["ema_long"] = df["close"].ewm(span=self.ema_long).mean()
+        
+        # RSI
+        df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], period=14)
+        
+        # 연속 상승 감지
+        df["consecutive_gains"] = self._detect_consecutive_gains(df)
+        
+        # 매수 조건
+        buy_conditions = (
+            (df["momentum"] > 0) &  # 양의 모멘텀
+            (df["breakout"] | df["price_surge"]) &  # 돌파 또는 급등
+            (df["volume_surge"]) &  # 거래량 급증
+            (df["ema_short"] > df["ema_long"]) &  # EMA 정배열
+            (df["rsi"] < self.rsi_entry_max) &  # RSI 과매수 아님
+            (df["consecutive_gains"])  # 연속 상승 패턴
+        )
+        
+        # 매도 조건
+        sell_conditions = self._generate_exit_signals(df)
+        
+        df.loc[buy_conditions, "signal"] = 1
+        df.loc[sell_conditions, "signal"] = -1
+        
+        return df
+    
+    def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """기본 기술적 지표 계산"""
+        # ATR 계산
+        df["atr"] = TechnicalIndicators.calculate_atr(df)
+        return df
+    
+    def _detect_consecutive_gains(self, df: pd.DataFrame) -> pd.Series:
+        """연속 상승 패턴 감지"""
+        positive_days = (df["price_change"] > 0).astype(int)
+        consecutive_count = positive_days.groupby(
+            (positive_days != positive_days.shift()).cumsum()
+        ).cumsum()
+        
+        return consecutive_count >= self.consecutive_gain_trigger
+    
+    def _generate_exit_signals(self, df: pd.DataFrame) -> pd.Series:
+        """청산 신호 생성"""
+        # 이익 실현
+        profit_target_hit = df["close"] > df["close"].shift(1) * (1 + self.profit_target)
+        
+        # 손절
+        stop_loss_hit = df["close"] < df["close"].shift(1) * (1 - self.stop_loss)
+        
+        # 모멘텀 소실
+        momentum_fading = (
+            (df["ema_short"] < df["ema_long"]) |  # EMA 역배열
+            (df["rsi"] < 30) |  # 과매도
+            (df["momentum"] < -0.05)  # 큰 하락
+        )
+        
+        return profit_target_hit | stop_loss_hit | momentum_fading

@@ -153,16 +153,16 @@ class UnifiedDataManager:
                 if self.use_cached_data and self.cache_manager.is_cache_valid(cache_key, self.cache_days):
                     cached_path = self.cache_manager.get_cache_path(cache_key)
                     if cached_path:
-                        self.logger.log_info(f"📂 {symbol} 캐시 데이터 사용: {cached_path}")
+                        # 캐시 사용 - 로그 생략
                         downloaded_files[symbol] = str(cached_path)
                         continue
                 
                 # 새로운 데이터 다운로드
-                self.logger.log_info(f"📊 {symbol} 데이터 다운로드 중...")
+                # 데이터 다운로드 시작
                 
                 # 종목 정보 가져오기
                 info = self.yahoo_collector.get_stock_info(symbol)
-                self.logger.log_info(f"  📋 {info.get('name', 'Unknown')} ({info.get('sector', 'Unknown')})")
+                # 종목 정보 확인됨
                 
                 # 데이터 수집
                 df = self.yahoo_collector.get_candle_data(
@@ -194,7 +194,7 @@ class UnifiedDataManager:
                         uuid=self.uuid
                     )
                     
-                    self.logger.log_info(f"  ✅ {symbol} 저장 완료: {filepath}")
+                    # 저장 완료
                     downloaded_files[symbol] = filepath
                     
                     # 캐시 정보 저장
@@ -242,14 +242,14 @@ class UnifiedDataManager:
             # 매크로 데이터는 여러 파일로 저장되므로 디렉토리 확인
             macro_files = list(self.macro_dir.glob("*.csv"))
             if macro_files:
-                self.logger.log_info(f"📂 매크로 데이터 캐시 사용: {len(macro_files)}개 파일")
+                # 매크로 데이터 캐시 사용 (로그 생략)
                 for file in macro_files:
                     symbol = file.stem.split('_')[0]
                     downloaded_files[symbol] = str(file)
                 return downloaded_files
         
         # 새로운 데이터 다운로드
-        self.logger.log_info("📈 매크로 데이터 다운로드 중...")
+        self.logger.log_info("📈 매크로 데이터 다운로드...")
         
         # global_macro.py의 collect 모드 실행
         import subprocess
@@ -260,7 +260,7 @@ class UnifiedDataManager:
         )
         
         if result.returncode == 0:
-            self.logger.log_info("✅ 매크로 데이터 다운로드 완료")
+            # 매크로 데이터 다운로드 완료
             
             # 다운로드된 파일 확인
             macro_files = list(self.macro_dir.glob("*.csv"))
@@ -304,18 +304,18 @@ class UnifiedDataManager:
                     
                     if file_age_days <= self.cache_days:
                         existing_files.append(symbol)
-                        self.logger.log_info(f"📂 {symbol}: 캐시 사용 (파일 나이: {file_age_days:.1f}일)")
+                        # 캐시 사용 (로그 생략)
                     else:
                         missing_symbols.append(symbol)
-                        self.logger.log_info(f"⏰ {symbol}: 캐시 만료 (파일 나이: {file_age_days:.1f}일 > {self.cache_days}일)")
+                        # 캐시 만료
                 else:
                     missing_symbols.append(symbol)
             
             if existing_files:
-                self.logger.log_info(f"📂 기존 데이터 사용: {', '.join(existing_files)}")
+                # 기존 데이터 사용 (로그 생략)
             
             if missing_symbols:
-                self.logger.log_info(f"📊 새로운 데이터 필요: {', '.join(missing_symbols)}")
+                self.logger.log_info(f"📊 다운로드 대상: {', '.join(missing_symbols)}")
                 downloaded = self.download_stock_data(
                     missing_symbols,
                     interval=kwargs.get('interval', '1d'),
@@ -333,7 +333,7 @@ class UnifiedDataManager:
             macro_files = list(self.macro_dir.glob("*.csv"))
             
             if macro_files and self.use_cached_data:
-                self.logger.log_info(f"📂 기존 매크로 데이터 사용: {len(macro_files)}개 파일")
+                # 기존 매크로 데이터 사용 (로그 생략)
                 return True
             else:
                 downloaded = self.download_macro_data(symbols=symbols, **kwargs)

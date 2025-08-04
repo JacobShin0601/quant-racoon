@@ -61,7 +61,12 @@ class MarketRegimeHMM:
 
     def extract_macro_features(self, macro_data: pd.DataFrame) -> pd.DataFrame:
         """
-        매크로 데이터에서 HMM 피처 추출
+        매크로 데이터에서 HMM 피처 추출 (개선된 버전)
+        
+        새로운 기능:
+        - 동적 VIX 임계값
+        - 신용 스프레드 지표
+        - 개선된 체제 감지
 
         Args:
             macro_data: 매크로 경제 데이터
@@ -152,18 +157,30 @@ class MarketRegimeHMM:
                 features["dollar_strength"] = 0.0
                 features["dollar_momentum"] = 0.0
 
-            # 4. 변동성 체제 (VIX 기반) - 개선된 검색
+            # 4. 개선된 변동성 체제 (동적 VIX 임계값)
             if vix_col is not None:
                 vix_data = pd.to_numeric(macro_data[vix_col], errors="coerce").fillna(
                     20.0
                 )
+                # 동적 임계값 계산 (60일 롤링 백분위수)
+                vix_low_threshold = vix_data.rolling(60, min_periods=20).quantile(0.25)
+                vix_high_threshold = vix_data.rolling(60, min_periods=20).quantile(0.75)
+                
+                # 동적 체제 분류
                 features["volatility_regime"] = np.where(
-                    vix_data > 25, 1, np.where(vix_data < 15, -1, 0)
+                    vix_data > vix_high_threshold.fillna(25), 1, 
+                    np.where(vix_data < vix_low_threshold.fillna(15), -1, 0)
                 )
                 features["vix_acceleration"] = vix_data.diff(2).fillna(0)
+                features["vix_percentile"] = (
+                    vix_data.rolling(252, min_periods=60)
+                    .rank(pct=True).fillna(0.5)
+                )
+                logger.info("동적 VIX 임계값 적용 완료")
             else:
                 features["volatility_regime"] = 0
                 features["vix_acceleration"] = 0
+                features["vix_percentile"] = 0.5
 
             # 5. 모멘텀 지표 (SPY 기반) - 개선된 검색
             spy_col = None
@@ -188,19 +205,28 @@ class MarketRegimeHMM:
                 features["market_momentum"] = 0.0
                 features["market_trend"] = 0.0
 
-            # 6. 추가 피처들
+            # 6. 신용 스프레드 지표 추가
+            self._add_credit_spread_features(features, macro_data)
+            
+            # 7. 추가 피처들
             features["cross_market_stress"] = features["vix_level"] * abs(
                 features["yield_spread"]
             )
             features["regime_transition"] = (
                 features["volatility_regime"].diff().fillna(0)
             )
+            
+            # 8. 체제 지속성 지표
+            features["regime_persistence"] = self._calculate_regime_persistence(features)
+            
+            # 9. 시장 스트레스 복합 지표
+            features["market_stress_composite"] = self._calculate_market_stress_composite(features)
 
             # NaN 처리
             features = features.fillna(method="ffill").fillna(0)
 
             self.feature_names = list(features.columns)
-            logger.info(f"추출된 피처: {self.feature_names}")
+            logger.info(f"추출된 피처 ({len(self.feature_names)}개): {self.feature_names}")
 
             return features
 
@@ -222,6 +248,207 @@ class MarketRegimeHMM:
             self.feature_names = list(default_features.columns)
             return default_features
 
+    def _add_credit_spread_features(self, features: pd.DataFrame, macro_data: pd.DataFrame):
+        """신용 스프레드 지표 추가"""
+        try:
+            # HYG (고수익 회사채 ETF) 검색
+            hyg_col = None
+            for col in ["hyg_close", "hyg", "hyg_data"]:
+                if col in macro_data.columns:
+                    hyg_col = col
+                    break
+            
+            # LQD (투자등급 회사채 ETF) 검색
+            lqd_col = None
+            for col in ["lqd_close", "lqd", "lqd_data"]:
+                if col in macro_data.columns:
+                    lqd_col = col
+                    break
+                    
+            # TLT (장기 국채 ETF) 검색
+            tlt_col = None
+            for col in ["tlt_close", "tlt", "tlt_data"]:
+                if col in macro_data.columns:
+                    tlt_col = col
+                    break
+            
+            if hyg_col and tlt_col:
+                hyg_data = pd.to_numeric(macro_data[hyg_col], errors="coerce").fillna(100.0)
+                tlt_data = pd.to_numeric(macro_data[tlt_col], errors="coerce").fillna(120.0)
+                
+                # HYG-TLT 스프레드 (신용 위험 지표)
+                features["credit_spread"] = (hyg_data / tlt_data).pct_change(20).fillna(0)
+                features["credit_stress"] = np.where(features["credit_spread"] < -0.05, 1, 0)
+                logger.info("HYG-TLT 신용 스프레드 지표 추가")
+            else:
+                features["credit_spread"] = 0.0
+                features["credit_stress"] = 0
+                
+            if lqd_col and tlt_col:
+                lqd_data = pd.to_numeric(macro_data[lqd_col], errors="coerce").fillna(110.0)
+                tlt_data = pd.to_numeric(macro_data[tlt_col], errors="coerce").fillna(120.0)
+                
+                # LQD-TLT 스프레드 (투자등급 신용 스프레드)
+                features["ig_credit_spread"] = (lqd_data / tlt_data).pct_change(20).fillna(0)
+                logger.info("LQD-TLT 투자등급 스프레드 지표 추가")
+            else:
+                features["ig_credit_spread"] = 0.0
+                
+        except Exception as e:
+            logger.warning(f"신용 스프레드 지표 추가 실패: {e}")
+            features["credit_spread"] = 0.0
+            features["credit_stress"] = 0
+            features["ig_credit_spread"] = 0.0
+    
+    def _calculate_regime_persistence(self, features: pd.DataFrame) -> pd.Series:
+        """체제 지속성 지표 계산"""
+        try:
+            if "volatility_regime" not in features.columns:
+                return pd.Series(0.5, index=features.index)
+                
+            vol_regime = features["volatility_regime"]
+            
+            # 동일 체제 지속 기간 계산
+            regime_changes = vol_regime != vol_regime.shift(1)
+            regime_groups = regime_changes.cumsum()
+            
+            persistence = []
+            for i, group in enumerate(regime_groups):
+                if i == 0:
+                    persistence.append(1)
+                else:
+                    # 현재 체제가 지속된 기간
+                    same_regime_count = (regime_groups[:i+1] == group).sum()
+                    # 최대 20일로 정규화
+                    normalized_persistence = min(same_regime_count / 20.0, 1.0)
+                    persistence.append(normalized_persistence)
+            
+            return pd.Series(persistence, index=features.index)
+            
+        except Exception as e:
+            logger.warning(f"체제 지속성 계산 실패: {e}")
+            return pd.Series(0.5, index=features.index)
+    
+    def _calculate_market_stress_composite(self, features: pd.DataFrame) -> pd.Series:
+        """시장 스트레스 복합 지표 계산"""
+        try:
+            components = []
+            weights = []
+            
+            # VIX 컴포넌트
+            if "vix_level" in features.columns:
+                vix_stress = np.clip(features["vix_level"] / 40.0, 0, 1)
+                components.append(vix_stress)
+                weights.append(0.3)
+            
+            # 신용 스프레드 컴포넌트
+            if "credit_spread" in features.columns:
+                credit_stress = np.clip(-features["credit_spread"] * 5, 0, 1)
+                components.append(credit_stress)
+                weights.append(0.25)
+            
+            # 수익률 곡선 컴포넌트
+            if "yield_spread" in features.columns:
+                # 역전된 수익률 곡선은 스트레스 신호
+                yield_stress = np.clip(-features["yield_spread"] + 2, 0, 1)
+                components.append(yield_stress)
+                weights.append(0.2)
+            
+            # 달러 강세 컴포넌트
+            if "dollar_strength" in features.columns:
+                dollar_stress = np.clip(abs(features["dollar_strength"]) * 2, 0, 1)
+                components.append(dollar_stress)
+                weights.append(0.15)
+            
+            # 모멘텀 컴포넌트  
+            if "market_momentum" in features.columns:
+                momentum_stress = np.clip(-features["market_momentum"] * 3, 0, 1)
+                components.append(momentum_stress)
+                weights.append(0.1)
+            
+            if components:
+                # 가중 평균 계산
+                weights = np.array(weights) / sum(weights)  # 정규화
+                composite = sum(w * comp for w, comp in zip(weights, components))
+                return composite.fillna(0.5)
+            else:
+                return pd.Series(0.5, index=features.index)
+                
+        except Exception as e:
+            logger.warning(f"시장 스트레스 복합 지표 계산 실패: {e}")
+            return pd.Series(0.5, index=features.index)
+
+    def _walk_forward_validation(self, features: pd.DataFrame, n_splits: int = 5) -> float:
+        """
+        워크포워드 검증 수행
+        
+        Args:
+            features: 피처 데이터
+            n_splits: 검증 분할 수
+            
+        Returns:
+            평균 검증 점수
+        """
+        try:
+            if len(features) < 100:
+                logger.warning("워크포워드 검증을 위한 데이터 부족")
+                return 0.5
+                
+            scores = []
+            min_train_size = max(50, len(features) // (n_splits + 1))
+            
+            for i in range(n_splits):
+                # 분할 지점 계산
+                train_end = min_train_size + i * (len(features) - min_train_size) // n_splits
+                test_start = train_end
+                test_end = min(test_start + 20, len(features))  # 20일 테스트 윈도우
+                
+                if test_end <= test_start:
+                    continue
+                    
+                # 훈련/테스트 데이터 분할
+                train_features = features.iloc[:train_end]
+                test_features = features.iloc[test_start:test_end]
+                
+                # 임시 모델 생성 및 학습
+                temp_model = hmm.GaussianHMM(
+                    n_components=self.n_states,
+                    covariance_type=self.model.covariance_type,
+                    n_iter=100,
+                    random_state=42,
+                )
+                
+                temp_scaler = StandardScaler()
+                train_scaled = temp_scaler.fit_transform(train_features)
+                
+                try:
+                    temp_model.fit(train_scaled)
+                    
+                    # 테스트 데이터 예측
+                    test_scaled = temp_scaler.transform(test_features)
+                    predicted_states = temp_model.predict(test_scaled)
+                    
+                    # 예측 일관성 점수 (연속된 예측의 안정성)
+                    if len(predicted_states) > 1:
+                        stability_score = 1 - (np.diff(predicted_states) != 0).mean()
+                        scores.append(stability_score)
+                        
+                except Exception as e:
+                    logger.warning(f"워크포워드 검증 {i+1}번째 분할 실패: {e}")
+                    continue
+            
+            if scores:
+                avg_score = np.mean(scores)
+                logger.info(f"워크포워드 검증 완료: {len(scores)}개 분할, 평균 점수: {avg_score:.3f}")
+                return avg_score
+            else:
+                logger.warning("워크포워드 검증 실패")
+                return 0.5
+                
+        except Exception as e:
+            logger.error(f"워크포워드 검증 오류: {e}")
+            return 0.5
+
     def fit(self, macro_data: pd.DataFrame) -> bool:
         """
         HMM 모델 학습
@@ -238,8 +465,8 @@ class MarketRegimeHMM:
             # 피처 추출
             features = self.extract_macro_features(macro_data)
 
-            if len(features) < 50:  # 최소 데이터 요구량
-                logger.warning(f"학습 데이터 부족: {len(features)}개 (최소 50개 필요)")
+            if len(features) < 200:  # 최소 데이터 요구량 (개선)
+                logger.warning(f"학습 데이터 부족: {len(features)}개 (최소 200개 필요)")
                 return False
 
             # 데이터 스케일링
@@ -250,6 +477,10 @@ class MarketRegimeHMM:
 
             # 학습된 상태 해석
             self._interpret_states(scaled_features, features)
+
+            # 워크포워드 검증 수행
+            validation_score = self._walk_forward_validation(features)
+            logger.info(f"워크포워드 검증 점수: {validation_score:.3f}")
 
             self.is_fitted = True
             logger.info("HMM 모델 학습 완료")
@@ -314,14 +545,22 @@ class MarketRegimeHMM:
                 momentum = chars["market_momentum"]
                 vol_regime = chars["volatility_regime"]
 
-                if vix > 30 or vol_regime > 0.5:
+                # 개선된 상태 분류 로직
+                # 1차: 변동성 기준
+                if vix > 28 or vol_regime > 0.6:
                     regime = "VOLATILE"
-                elif momentum > 0.02:
+                # 2차: 모멘텀 기준 (더 보수적 임계값)
+                elif momentum > 0.015:
                     regime = "BULLISH"
-                elif momentum < -0.02:
+                elif momentum < -0.015:
                     regime = "BEARISH"
+                # 3차: 복합 지표 고려
                 else:
-                    regime = "SIDEWAYS"
+                    # 신용 스프레드나 기타 스트레스 지표 확인
+                    if hasattr(chars, 'credit_stress') and chars.get('credit_stress', 0) > 0.5:
+                        regime = "VOLATILE"
+                    else:
+                        regime = "SIDEWAYS"
 
                 state_mapping[state_idx] = regime
 
@@ -607,7 +846,7 @@ def main():
             except Exception as e:
                 print(f"⚠️  기존 모델 로드 실패: {e}")
 
-        # 매크로 데이터 로드
+        # 매크로 데이터 로드 (개선된 버전)
         print(f"📊 매크로 데이터 로드: {args.data_dir}")
         macro_files = {
             "vix": f"{args.data_dir}/^vix_data.csv",
@@ -615,6 +854,10 @@ def main():
             "irx": f"{args.data_dir}/^irx_data.csv",
             "uup": f"{args.data_dir}/uup_data.csv",
             "spy": f"{args.data_dir}/spy_data.csv",
+            # 신용 스프레드 데이터 추가
+            "hyg": f"{args.data_dir}/hyg_data.csv",
+            "lqd": f"{args.data_dir}/lqd_data.csv", 
+            "tlt": f"{args.data_dir}/tlt_data.csv",
         }
 
         macro_data = pd.DataFrame()
@@ -657,13 +900,17 @@ def main():
             print("❌ 모델 로드 실패")
             sys.exit(1)
 
-        # 최근 매크로 데이터로 예측
+        # 최근 매크로 데이터로 예측 (개선된 버전)
         macro_files = {
             "vix": f"{args.data_dir}/^vix_data.csv",
             "tnx": f"{args.data_dir}/^tnx_data.csv",
             "irx": f"{args.data_dir}/^irx_data.csv",
             "uup": f"{args.data_dir}/uup_data.csv",
             "spy": f"{args.data_dir}/spy_data.csv",
+            # 신용 스프레드 데이터 추가
+            "hyg": f"{args.data_dir}/hyg_data.csv",
+            "lqd": f"{args.data_dir}/lqd_data.csv",
+            "tlt": f"{args.data_dir}/tlt_data.csv",
         }
 
         macro_data = pd.DataFrame()

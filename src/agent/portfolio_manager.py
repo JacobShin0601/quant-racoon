@@ -565,9 +565,10 @@ class AdvancedPortfolioManager:
                 if hasattr(strategy, param_name):
                     setattr(strategy, param_name, param_value)
                     valid_params[param_name] = param_value
-                    self.logger.log_info(
-                        f"  - 파라미터 설정: {param_name} = {param_value}"
-                    )
+            
+            # 파라미터 적용 요약 로깅 (간소화)
+            if valid_params:
+                self.logger.log_info(f"  ✅ {len(valid_params)}개 파라미터 적용 완료")
 
             # 파라미터 적용 완료
 
@@ -657,14 +658,9 @@ class AdvancedPortfolioManager:
                 print(
                     f"🔍 설정 파일에서 최적화 방법 로드: {method_name} -> {method.value}"
                 )
-                self.logger.log_info(
-                    f"🔍 설정 파일에서 최적화 방법 로드: {method_name} -> {method.value}"
-                )
+                # Debug: 설정 파일에서 최적화 방법 로드
 
-            print(f"🔍 입력 데이터 검증:")
-            print(f"  - 데이터 종목 수: {len(data_dict)}")
-            print(f"  - 최적화 결과 조합 수: {len(optimization_results)}")
-            print(f"  - 최적화 방법: {method.value}")
+            # Debug: 입력 데이터 검증 (간소화)
             # 입력 데이터 검증
             self.logger.log_info(f"  - 데이터 종목 수: {len(data_dict)}")
             self.logger.log_info(
@@ -834,9 +830,7 @@ class AdvancedPortfolioManager:
         min_weight = portfolio_config.get("min_weight", 0.0)
         max_weight = portfolio_config.get("max_weight", 1.0)
 
-        print(f"🔍 포트폴리오 제약조건 설정:")
-        print(f"  - 최소 비중: {min_weight}")
-        print(f"  - 최대 비중: {max_weight}")
+        # Debug: 포트폴리오 제약조건 설정 (간소화)
 
         constraints = OptimizationConstraints(
             min_weight=min_weight,
@@ -1114,7 +1108,7 @@ class AdvancedPortfolioManager:
             # 데이터 로드 완료
             # 로드된 종목들 확인
             self.logger.log_success(f"✅ 데이터 로드 완료: {len(data_dict)}개 종목")
-            self.logger.log_info(f"🔍 로드된 종목들: {list(data_dict.keys())}")
+            # Debug: 로드된 종목들 확인 (간소화)
 
             # 2. 개별 최적화 결과 로드
             print("📊 2단계: 개별 최적화 결과 로드 시작")
@@ -1123,12 +1117,12 @@ class AdvancedPortfolioManager:
             if optimization_file_path:
                 # 지정된 최적화 파일
                 # 파일 존재 여부 확인
-                self.logger.log_info(f"🔍 지정된 최적화 파일: {optimization_file_path}")
+                # Debug: 지정된 최적화 파일 확인
                 self.logger.log_info(
                     f"🔍 파일 존재 여부: {os.path.exists(optimization_file_path)}"
                 )
 
-                print("🔍 load_individual_optimization_results 호출 시작")
+                # Debug: load_individual_optimization_results 호출
                 optimization_results = self.load_individual_optimization_results(
                     optimization_file_path
                 )
@@ -1137,8 +1131,8 @@ class AdvancedPortfolioManager:
                 )
             else:
                 # 최신 최적화 결과 파일 자동 감지
-                print("🔍 최신 최적화 결과 파일 자동 감지")
-                self.logger.log_info("🔍 최신 최적화 결과 파일 자동 감지")
+                # Debug: 최신 최적화 결과 파일 자동 감지
+                # Debug: 최신 최적화 결과 파일 자동 감지
                 optimization_results = self._find_latest_optimization_results()
 
             if not optimization_results:
@@ -1160,10 +1154,10 @@ class AdvancedPortfolioManager:
             self.logger.log_info("📊 3단계: 포트폴리오 최적화 실행 시작")
             # 데이터 종목 수
             # 최적화 결과 조합 수
-            self.logger.log_info(f"🔍 데이터 종목 수: {len(data_dict)}")
-            self.logger.log_info(f"🔍 최적화 결과 조합 수: {len(optimization_results)}")
+            # Debug: 데이터 종목 수 확인
+            # Debug: 최적화 결과 조합 수 확인
 
-            print("🔍 optimize_portfolio_with_individual_results 호출 시작")
+            # Debug: optimize_portfolio_with_individual_results 호출
             result = self.optimize_portfolio_with_individual_results(
                 data_dict, optimization_results
             )
@@ -1205,13 +1199,13 @@ class AdvancedPortfolioManager:
     def _find_latest_optimization_results(self) -> Dict[str, Dict]:
         """최신 개별 최적화 결과 파일 찾기"""
         try:
-            self.logger.log_info("🔍 최신 최적화 결과 파일 검색 시작")
+            # Debug: 최신 최적화 결과 파일 검색
 
             # config에서 output 경로 가져오기
             output_config = self.config.get("output", {})
             results_folder = output_config.get("results_folder", "results")
             results_dir = Path(results_folder)
-            self.logger.log_info(f"🔍 결과 디렉토리: {results_dir}")
+            # Debug: 결과 디렉토리 확인
 
             if not results_dir.exists():
                 self.logger.log_error(f"{results_folder} 디렉토리가 존재하지 않습니다")
@@ -1233,7 +1227,7 @@ class AdvancedPortfolioManager:
 
             # 가장 최신 파일 로드
             latest_file = max(optimization_files, key=lambda x: x.stat().st_mtime)
-            self.logger.log_info(f"🔍 최신 파일 선택: {latest_file.name}")
+            # Debug: 최신 파일 선택
             return self.load_individual_optimization_results(str(latest_file))
 
         except Exception as e:

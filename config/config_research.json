@@ -42,12 +42,12 @@
     "dual_momentum": {
       "description": "추세⇄평균회귀 듀얼 모멘텀 전략",
       "param_ranges": {
-        "donchian_period": [10, 12, 15, 18, 20, 22, 25, 28, 30, 35, 40],
-        "rsi_period": [8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 30],
-        "rsi_oversold": [15, 18, 20, 22, 25, 27, 30, 32, 35, 37, 40],
-        "rsi_overbought": [60, 63, 65, 67, 70, 73, 75, 77, 80, 82, 85],
-        "momentum_period": [3, 5, 8, 10, 12, 15, 18, 20, 25, 30],
-        "momentum_threshold": [0.005, 0.008, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.05, 0.06]
+        "donchian_period": [10, 15, 20, 25, 30],
+        "rsi_period": [10, 14, 20, 25],
+        "rsi_oversold": [20, 25, 30, 35],
+        "rsi_overbought": [65, 70, 75, 80],
+        "momentum_period": [5, 10, 15, 20],
+        "momentum_threshold": [0.005, 0.01, 0.015, 0.02, 0.025]
       }
     },
     "volatility_breakout": {
@@ -64,13 +64,13 @@
     "swing_ema": {
       "description": "중기 이동평균 돌파 스윙 트레이딩 전략",
       "param_ranges": {
-        "ema_short_period": [15, 18, 20, 22, 25, 28, 30, 35, 40, 45, 50, 55],
-        "ema_long_period": [40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 100, 110],
-        "min_holding_days": [3, 4, 5, 6, 7, 8, 10, 12, 15, 18],
-        "max_holding_days": [10, 12, 15, 18, 20, 25, 30, 35, 40, 45, 50],
-        "slope_period": [3, 4, 5, 6, 7, 8, 10, 12, 15, 18],
-        "volume_threshold": [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
-        "volatility_threshold": [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
+        "ema_short_period": [10, 15, 20, 25, 30, 35, 40],
+        "ema_long_period": [30, 40, 50, 60, 70, 80, 90],
+        "min_holding_days": [2, 3, 5, 7, 10],
+        "max_holding_days": [10, 15, 20, 25, 30],
+        "slope_period": [3, 5, 7, 10],
+        "volume_threshold": [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
+        "volatility_threshold": [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
       }
     },
     "swing_rsi": {
@@ -293,16 +293,43 @@
     "ai_megatrend": {
       "description": "AI 메가트렌드 상승 포착 전략 - NVDA, 기술주 급상승 전용",
       "param_ranges": {
-        "momentum_lookback": [15, 18, 20, 22, 25, 28, 30],
-        "breakout_period": [30, 35, 40, 45, 50, 55, 60, 70],
-        "volume_surge_multiplier": [1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.5],
-        "price_surge_threshold": [0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05],
-        "ema_short": [6, 8, 9, 10, 12, 15],
-        "ema_long": [18, 20, 21, 24, 26, 30],
-        "rsi_entry_max": [75, 78, 80, 82, 85, 87, 90],
+        "momentum_lookback": [10, 15, 20, 25, 30],
+        "breakout_period": [20, 30, 40, 50, 60],
+        "volume_surge_multiplier": [1.2, 1.5, 1.8, 2.0, 2.5],
+        "price_surge_threshold": [0.01, 0.02, 0.03, 0.04, 0.05],
+        "ema_short": [5, 8, 10, 12],
+        "ema_long": [15, 20, 25, 30],
+        "rsi_entry_max": [70, 75, 80, 85, 90],
         "consecutive_gain_trigger": [1, 2, 3],
-        "profit_target": [0.10, 0.12, 0.15, 0.18, 0.20, 0.25],
-        "stop_loss": [0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.12]
+        "profit_target": [0.08, 0.10, 0.15, 0.20],
+        "stop_loss": [0.05, 0.07, 0.10, 0.12]
+      }
+    },
+    "bull_market_momentum": {
+      "description": "강세장 모멘텀 전략 - 상승장에서 모멘텀 가속 포착",
+      "param_ranges": {
+        "momentum_period": [5, 10, 15, 20],
+        "acceleration_threshold": [0.01, 0.015, 0.02, 0.025],
+        "volume_threshold": [1.0, 1.2, 1.5, 1.8],
+        "rsi_min": [30, 35, 40, 45],
+        "rsi_max": [75, 80, 85, 90],
+        "adx_threshold": [20, 25, 30, 35],
+        "trend_period": [30, 40, 50, 60]
+      }
+    },
+    "ai_tech_mega_trend": {
+      "description": "AI/기술주 메가트렌드 전략 - 상승장 특화",
+      "param_ranges": {
+        "momentum_lookback": [10, 15, 20, 25],
+        "breakout_period": [30, 40, 50, 60],
+        "volume_surge_multiplier": [1.2, 1.5, 1.8, 2.0],
+        "price_surge_threshold": [0.02, 0.03, 0.04, 0.05],
+        "ema_short": [7, 9, 12, 15],
+        "ema_long": [18, 21, 25, 30],
+        "rsi_entry_max": [75, 80, 85],
+        "consecutive_gain_trigger": [1, 2, 3],
+        "profit_target": [0.10, 0.15, 0.20],
+        "stop_loss": [0.05, 0.08, 0.10]
       }
     }
   },
