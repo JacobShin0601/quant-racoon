@@ -313,6 +313,7 @@ class UnifiedDataManager:
             
             if existing_files:
                 # 기존 데이터 사용 (로그 생략)
+                pass
             
             if missing_symbols:
                 self.logger.log_info(f"📊 다운로드 대상: {', '.join(missing_symbols)}")

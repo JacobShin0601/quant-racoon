@@ -38,8 +38,8 @@ class MarketRegimeHMM:
         self.config = config
         self.hmm_config = config.get("hmm_regime", {})
 
-        # 시장 체제 정의
-        self.states = ["BULLISH", "BEARISH", "SIDEWAYS", "VOLATILE"]
+        # 시장 체제 정의 (config와 일치)
+        self.states = ["TRENDING_UP", "TRENDING_DOWN", "SIDEWAYS", "VOLATILE"]
         self.n_states = len(self.states)
 
         # HMM 모델 초기화
@@ -88,9 +88,10 @@ class MarketRegimeHMM:
 
             # 1. VIX 수준 (변동성) - 다양한 컬럼명 시도
             vix_col = None
-            for col in ["vix", "vix_close", "^vix", "vix_data"]:
-                if col in macro_data.columns:
-                    vix_col = col
+            vix_patterns = ["^VIX_close", "VIX_close", "vix_close", "^vix", "vix_data", "vix"]
+            for pattern in vix_patterns:
+                if pattern in macro_data.columns:
+                    vix_col = pattern
                     break
 
             if vix_col is not None:
@@ -110,13 +111,16 @@ class MarketRegimeHMM:
             # 2. 수익률 곡선 기울기 - 다양한 컬럼명 시도
             tnx_col = None
             irx_col = None
-            for col in ["tnx", "tnx_close", "^tnx", "tnx_data"]:
-                if col in macro_data.columns:
-                    tnx_col = col
+            tnx_patterns = ["^TNX_close", "TNX_close", "tnx_close", "^tnx", "tnx_data", "tnx"]
+            irx_patterns = ["^IRX_close", "IRX_close", "irx_close", "^irx", "irx_data", "irx"]
+            
+            for pattern in tnx_patterns:
+                if pattern in macro_data.columns:
+                    tnx_col = pattern
                     break
-            for col in ["irx", "irx_close", "^irx", "irx_data"]:
-                if col in macro_data.columns:
-                    irx_col = col
+            for pattern in irx_patterns:
+                if pattern in macro_data.columns:
+                    irx_col = pattern
                     break
 
             if tnx_col is not None and irx_col is not None:
@@ -138,7 +142,7 @@ class MarketRegimeHMM:
 
             # 3. 달러 강세 (UUP 또는 DXY 대용) - 다양한 컬럼명 시도
             dollar_col = None
-            dollar_patterns = ["uup_close", "uup", "dxy_close", "dxy", "uup_data"]
+            dollar_patterns = ["UUP_close", "uup_close", "UUP_data", "uup", "dxy_close", "dxy", "uup_data"]
             for pattern in dollar_patterns:
                 if pattern in macro_data.columns:
                     dollar_col = pattern
@@ -184,7 +188,7 @@ class MarketRegimeHMM:
 
             # 5. 모멘텀 지표 (SPY 기반) - 개선된 검색
             spy_col = None
-            spy_patterns = ["spy_close", "spy", "spy_data"]
+            spy_patterns = ["SPY_close", "spy_close", "SPY_data", "spy", "spy_data"]
             for pattern in spy_patterns:
                 if pattern in macro_data.columns:
                     spy_col = pattern
@@ -569,15 +573,37 @@ class MarketRegimeHMM:
 
         except Exception as e:
             logger.error(f"상태 해석 실패: {e}")
-            # 기본 매핑
+            # 기본 매핑 - 순서대로 할당
             self.state_mapping = {i: self.states[i] for i in range(self.n_states)}
+            
+        # 중복 매핑 방지 및 SIDEWAYS 보장
+        used_regimes = set()
+        fixed_mapping = {}
+        available_regimes = self.states.copy()  # ['TRENDING_UP', 'TRENDING_DOWN', 'SIDEWAYS', 'VOLATILE']
+        
+        for state_idx in range(self.n_states):
+            current_regime = self.state_mapping.get(state_idx, "SIDEWAYS")
+            if current_regime not in used_regimes:
+                fixed_mapping[state_idx] = current_regime
+                used_regimes.add(current_regime)
+            else:
+                # 중복된 경우 사용되지 않은 체제 할당
+                for regime in available_regimes:
+                    if regime not in used_regimes:
+                        fixed_mapping[state_idx] = regime
+                        used_regimes.add(regime)
+                        break
+        
+        self.state_mapping = fixed_mapping
+        logger.info(f"수정된 상태 매핑: {self.state_mapping}")
 
-    def predict_regime(self, macro_data: pd.DataFrame) -> Dict:
+    def predict_regime(self, macro_data: pd.DataFrame, forecast_days: int = 22) -> Dict:
         """
-        현재 시장 체제 예측
+        시장 체제 예측 (22일 후 예측 지원)
 
         Args:
-            macro_data: 예측용 매크로 데이터 (최근 데이터)
+            macro_data: 예측용 매크로 데이터 
+            forecast_days: 예측 기간 (기본값: 22일, 신경망과 동기화)
 
         Returns:
             예측 결과 딕셔너리
@@ -593,24 +619,59 @@ class MarketRegimeHMM:
             if len(features) == 0:
                 return self._get_default_prediction()
 
-            # 최근 데이터만 사용 (마지막 1개)
+            # 현재(마지막 데이터) 체제 계산
             recent_features = features.iloc[-1:].values
-            scaled_features = self.scaler.transform(recent_features)
+            scaled_recent = self.scaler.transform(recent_features)
+            current_state_idx = self.model.predict(scaled_recent)[0]
+            current_state_probs = self.model.predict_proba(scaled_recent)[0]
+            
+            # 가장 높은 확률의 상태를 기준으로 체제 결정 (더 정확함)
+            actual_current_state_idx = np.argmax(current_state_probs)
+            current_regime = self.state_mapping.get(actual_current_state_idx, "SIDEWAYS")
+            
+            # 디버깅 로그
+            logger.debug(f"predict() 결과: {current_state_idx}, 확률 기반: {actual_current_state_idx}")
+            logger.debug(f"상태 확률: {dict(zip(self.states, current_state_probs))}")
+            
+            if forecast_days <= 1:
+                # 당일 예측 (기존 방식)
+                predicted_state_idx = current_state_idx
+                state_probs = current_state_probs
+            else:
+                # 미래 예측 (22일 후): 시계열 패턴과 전이 확률 사용
+                recent_sequence = features.iloc[-min(10, len(features)):].values
+                scaled_sequence = self.scaler.transform(recent_sequence)
+                
+                # 현재 상태 확률 분포
+                current_states = self.model.predict(scaled_sequence)
+                current_probs = self.model.predict_proba(scaled_sequence)
+                
+                # 전이 행렬을 사용한 미래 상태 예측
+                # 22일 후 상태 확률 = 현재 확률 * (전이행렬)^22
+                transition_matrix = self.model.transmat_
+                future_probs = current_probs[-1] @ np.linalg.matrix_power(transition_matrix, forecast_days)
+                predicted_state_idx = np.argmax(future_probs)
+                state_probs = future_probs
+                
+                # 디버깅 로그 추가 (임시로 INFO 레벨)
+                logger.info(f"🔍 미래 예측 디버깅: future_probs={future_probs}, predicted_idx={predicted_state_idx}")
+                logger.info(f"🔍 가장 높은 확률: {np.max(future_probs):.3f} at idx {predicted_state_idx}")
 
-            # 상태 예측
-            predicted_state_idx = self.model.predict(scaled_features)[0]
-
-            # 상태 확률 계산
-            log_probs = self.model.score_samples(scaled_features)[0]
-            state_probs = self.model.predict_proba(scaled_features)[0]
+            # 상태 확률 계산 (예측 방식에 따라 다름)
+            if forecast_days <= 1:
+                log_probs = self.model.score_samples(scaled_recent)[0]
+            else:
+                # 미래 예측시에는 계산된 future_probs 사용
+                log_probs = np.log(np.max(state_probs))
 
             # 매핑된 체제명
             predicted_regime = self.state_mapping.get(predicted_state_idx, "SIDEWAYS")
 
             # 신뢰도 조정 (과도한 확신 방지)
             raw_confidence = float(state_probs[predicted_state_idx])
-            # 신뢰도를 0.3~0.9 범위로 제한하고 불확실성 추가
-            confidence = min(0.9, max(0.3, raw_confidence * 0.8 + 0.1))
+            # 미래 예측시 불확실성 더 크게 반영
+            uncertainty_factor = 0.8 if forecast_days <= 1 else 0.6
+            confidence = min(0.9, max(0.3, raw_confidence * uncertainty_factor + 0.1))
 
             # 체제 강도 계산
             regime_strength = self._calculate_regime_strength(features.iloc[-1])
@@ -622,10 +683,18 @@ class MarketRegimeHMM:
                 "regime": predicted_regime,
                 "confidence": confidence,
                 "regime_strength": regime_strength,
+                "forecast_days": forecast_days,
+                "current_regime": current_regime if forecast_days > 1 else predicted_regime,
+                "current_confidence": float(current_state_probs[actual_current_state_idx]) * 0.8 + 0.1 if forecast_days > 1 else confidence,
+                "regime_change_expected": current_regime != predicted_regime if forecast_days > 1 else False,
                 "state_probabilities": {
                     self.state_mapping.get(i, f"State_{i}"): float(prob)
                     for i, prob in enumerate(state_probs)
                 },
+                "current_state_probabilities": {
+                    self.state_mapping.get(i, f"State_{i}"): float(prob)
+                    for i, prob in enumerate(current_state_probs)
+                } if forecast_days > 1 else None,
                 "features": {
                     "vix_level": float(current_features.get("vix_level", 20)),
                     "yield_spread": float(current_features.get("yield_spread", 1.5)),
@@ -644,9 +713,51 @@ class MarketRegimeHMM:
                 },
             }
 
-            logger.info(
-                f"예측된 시장 체제: {predicted_regime} (신뢰도: {confidence:.3f})"
-            )
+            # 비교 로그 출력
+            if forecast_days > 1:
+                current_confidence = float(current_state_probs[actual_current_state_idx]) * 0.8 + 0.1
+                logger.info("=" * 60)
+                logger.info("🎭 HMM 시장 체제 분석 결과")
+                logger.info("=" * 60)
+                # 디버깅 정보 추가
+                logger.info(f"🔍 디버깅 정보:")
+                logger.info(f"   State mapping: {self.state_mapping}")
+                logger.info(f"   Current probs length: {len(current_state_probs)}, Future probs length: {len(state_probs)}")
+                logger.info(f"   Predicted state idx: {predicted_state_idx}, max prob: {np.max(state_probs):.3f}")
+                logger.info("")
+                logger.info(f"📊 현재 시장 체제 (마지막 데이터): {current_regime}")
+                logger.info(f"   신뢰도: {current_confidence:.1%}")
+                # 체제별로 확률 합산 (중복 매핑 처리)
+                current_probs_pct = {}
+                for regime in self.states:
+                    total_prob = 0.0
+                    for i in range(self.n_states):
+                        if self.state_mapping.get(i) == regime and i < len(current_state_probs):
+                            total_prob += current_state_probs[i]
+                    current_probs_pct[regime] = f"{total_prob:.1%}"
+                logger.info(f"   상태 확률: {current_probs_pct}")
+                logger.info("")
+                logger.info(f"🔮 {forecast_days}일 후 예측 체제: {predicted_regime}")
+                logger.info(f"   신뢰도: {confidence:.1%}")
+                # 체제별로 미래 확률 합산
+                future_probs_pct = {}
+                for regime in self.states:
+                    total_prob = 0.0
+                    for i in range(self.n_states):
+                        if self.state_mapping.get(i) == regime and i < len(state_probs):
+                            total_prob += state_probs[i]
+                    future_probs_pct[regime] = f"{total_prob:.1%}"
+                logger.info(f"   상태 확률: {future_probs_pct}")
+                logger.info("")
+                if current_regime != predicted_regime:
+                    logger.info(f"⚡ 체제 변화 예상: {current_regime} → {predicted_regime}")
+                else:
+                    logger.info(f"🔄 체제 유지 예상: {current_regime}")
+                logger.info("=" * 60)
+            else:
+                logger.info(
+                    f"예측된 시장 체제: {predicted_regime} (신뢰도: {confidence:.3f})"
+                )
 
             return result
 

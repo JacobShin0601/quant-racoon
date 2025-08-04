@@ -29,6 +29,81 @@ warnings.filterwarnings("ignore")
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(project_root)
 
+
+def print_results_summary(results: Dict) -> None:
+    """
+    분석 결과를 깔끔한 요약 형태로 출력
+    
+    Args:
+        results: trader 분석 결과 딕셔너리
+    """
+    print("\n" + "="*80)
+    print("🎯 HMM-Neural 하이브리드 트레이더 분석 결과")
+    print("="*80)
+    
+    # 시장 체제 정보
+    if "analysis_results" in results and "market_regime" in results["analysis_results"]:
+        regime_info = results["analysis_results"]["market_regime"]
+        regime = regime_info.get("current", "UNKNOWN")
+        confidence = regime_info.get("confidence", 0) * 100
+        
+        print(f"\n📊 시장 체제 분석 (22일 후 예측)")
+        print(f"   현재 체제: {regime}")
+        print(f"   신뢰도: {confidence:.1f}%")
+    
+    # 포트폴리오 추천
+    if "portfolio_results" in results:
+        portfolio = results["portfolio_results"]
+        print(f"\n💼 포트폴리오 최적화 결과")
+        
+        if "portfolio_weights" in portfolio:
+            weights = portfolio["portfolio_weights"]
+            print("   최적 비중:")
+            for symbol, weight in weights.items():
+                print(f"     {symbol}: {weight*100:.1f}%")
+        
+        # 성과 지표
+        if "performance_metrics" in portfolio:
+            metrics = portfolio["performance_metrics"]
+            total_return = metrics.get("total_return", 0) * 100
+            sharpe = metrics.get("sharpe_ratio", 0)
+            max_drawdown = metrics.get("max_drawdown", 0) * 100
+            
+            print(f"\n📈 성과 지표")
+            print(f"   총 수익률: {total_return:.2f}%")
+            print(f"   샤프 비율: {sharpe:.2f}")
+            print(f"   최대 낙폭: {max_drawdown:.2f}%")
+    
+    # 개별 종목 추천 (상위 5개만)
+    if "analysis_results" in results and "trading_signals" in results["analysis_results"]:
+        signals = results["analysis_results"]["trading_signals"]
+        print(f"\n🎯 매매 신호 (상위 5개 종목)")
+        
+        # 신뢰도 순으로 정렬
+        sorted_signals = sorted(
+            signals.items(), 
+            key=lambda x: x[1].get("confidence", 0), 
+            reverse=True
+        )[:5]
+        
+        for symbol, signal in sorted_signals:
+            action = signal.get("action", "HOLD")
+            confidence = signal.get("confidence", 0) * 100
+            score = signal.get("score", 0)
+            
+            # 액션별 이모지
+            action_emoji = {
+                "STRONG_BUY": "🟢", "BUY": "🔵", 
+                "HOLD": "🟡", "SELL": "🔴", "STRONG_SELL": "⚫"
+            }.get(action, "⚪")
+            
+            print(f"   {action_emoji} {symbol}: {action} (신뢰도: {confidence:.1f}%, 점수: {score:.3f})")
+    
+    print(f"\n📁 상세 결과 파일")
+    print(f"   - 결과 디렉토리: results/trader/")
+    print(f"   - 로그 디렉토리: log/trader/")
+    print("="*80 + "\n")
+
 # 중앙화된 로거 임포트
 from src.utils.centralized_logger import get_logger
 
@@ -288,13 +363,13 @@ class HybridTrader:
                 return False
 
             # 2. 신경망 모델 로드
-            neural_model_path = "models/trader/neural_predictor_meta.pkl"
-            if os.path.exists(neural_model_path):
+            neural_model_path = "models/trader/neural_predictor"
+            if os.path.exists(f"{neural_model_path}_meta.pkl"):
                 if not self.neural_predictor.load_model(neural_model_path):
                     self.logger.warning("신경망 모델 로드 실패 - 학습 필요")
                     return False
             else:
-                self.logger.warning(f"신경망 모델 파일 없음: {neural_model_path}")
+                self.logger.warning(f"신경망 모델 파일 없음: {neural_model_path}_meta.pkl")
                 return False
 
             # 3. 투자 점수 생성기 초기화 (InvestmentScoreGenerator는 __init__에서 초기화됨)
@@ -338,31 +413,44 @@ class HybridTrader:
 
             # 1. 시장 체제 분류
             self.logger.step("[1/4] 시장 체제 분류")
-            # 매크로 데이터 로드 (임시로 빈 DataFrame 사용)
-            macro_data = pd.DataFrame()  # TODO: 실제 매크로 데이터 로드 로직 추가
-            regime_result = self.regime_classifier.predict_regime(macro_data)
-            current_regime = regime_result.get("regime", "SIDEWAYS")
+            # 매크로 데이터 로드
+            macro_data = self._load_macro_data()
+            # 22일 후 시장체제 예측 (신경망과 동기화)
+            regime_result = self.regime_classifier.predict_regime(macro_data, forecast_days=22)
+            
+            # 현재 체제와 22일 후 예측 체제 구분
+            actual_current_regime = regime_result.get("current_regime", "SIDEWAYS")
+            predicted_regime = regime_result.get("regime", "SIDEWAYS")
             regime_confidence = regime_result.get("confidence", 0.5)
             transition_prob = {}  # TODO: transition probability 계산 로직 추가
 
             results["market_regime"] = {
-                "current": current_regime,
+                "current": actual_current_regime,  # 실제 현재 체제
+                "predicted": predicted_regime,     # 22일 후 예측 체제
                 "confidence": regime_confidence,
                 "transition_probability": transition_prob,
+                "regime_change_expected": regime_result.get("regime_change_expected", False),
             }
 
-            self.logger.info(f"현재 시장 체제: {current_regime}")
+            self.logger.info(f"현재 시장 체제: {actual_current_regime} → 22일 후 예상: {predicted_regime}")
 
             # 2. 개별 종목 예측
             self.logger.step("[2/4] 개별 종목 예측")
             symbols = self.config["data"]["symbols"]
             predictions = {}
 
+            # 개별종목 데이터 로드
+            stock_data = self._load_stock_data()
+            
             for symbol in symbols:
-                # 피처 데이터 로드 (임시로 빈 DataFrame 사용)
-                features = pd.DataFrame()  # TODO: 실제 피처 데이터 로드 로직 추가
-                pred = self.neural_predictor.predict(features, symbol)
-                predictions[symbol] = pred
+                # 실제 피처 데이터 로드
+                if symbol in stock_data and not stock_data[symbol].empty:
+                    features = stock_data[symbol]
+                    pred = self.neural_predictor.predict(features, symbol)
+                    predictions[symbol] = pred
+                else:
+                    self.logger.warning(f"{symbol} 데이터가 없습니다")
+                    predictions[symbol] = None
 
             results["predictions"] = predictions
 
@@ -370,10 +458,10 @@ class HybridTrader:
             self.logger.step("[3/4] 투자 점수 생성")
             scores = {}
             for symbol in symbols:
-                # 주식 데이터 로드 (임시로 빈 DataFrame 사용)
-                stock_data = pd.DataFrame()  # TODO: 실제 주식 데이터 로드 로직 추가
+                # 실제 주식 데이터 사용 (이미 로드됨)
+                symbol_data = stock_data.get(symbol, pd.DataFrame())
                 score = self.score_generator.generate_investment_score(
-                    predictions[symbol], stock_data, symbol, {"regime": current_regime, "confidence": regime_confidence}
+                    predictions[symbol], symbol_data, symbol, {"regime": actual_current_regime, "confidence": regime_confidence}
                 )
                 scores[symbol] = score
 
@@ -391,7 +479,7 @@ class HybridTrader:
             # 5. 포트폴리오 종합
             individual_signals = list(signals.values())
             portfolio_summary = self.portfolio_aggregator.aggregate_portfolio_signals(
-                individual_signals, {"regime": current_regime, "confidence": regime_confidence}
+                individual_signals, {"regime": actual_current_regime, "confidence": regime_confidence}
             )
             results["portfolio_summary"] = portfolio_summary
 
@@ -413,6 +501,199 @@ class HybridTrader:
         except Exception as e:
             self.logger.error(f"분석 실패: {e}", exc_info=True)
             return {}
+
+    def _load_macro_data(self) -> pd.DataFrame:
+        """
+        매크로 데이터 로드
+        
+        Returns:
+            매크로 데이터 DataFrame
+        """
+        try:
+            import glob
+            
+            # 매크로 데이터 디렉토리에서 CSV 파일들 로드
+            macro_dir = "data/macro"
+            csv_files = glob.glob(f"{macro_dir}/*.csv")
+            
+            if not csv_files:
+                self.logger.warning("매크로 데이터 파일이 없습니다. 빈 DataFrame 반환")
+                return pd.DataFrame()
+            
+            macro_data = pd.DataFrame()
+            
+            for file_path in csv_files:
+                try:
+                    # 파일명에서 심볼 추출
+                    filename = os.path.basename(file_path)
+                    symbol = filename.replace('_data.csv', '').replace('_sector.csv', '').upper()
+                    
+                    # CSV 파일 읽기
+                    df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+                    
+                    # 컬럼명에 심볼 prefix 추가
+                    df.columns = [f"{symbol}_{col}" for col in df.columns]
+                    
+                    # 데이터 병합
+                    if macro_data.empty:
+                        macro_data = df
+                    else:
+                        macro_data = macro_data.join(df, how='outer')
+                        
+                except Exception as e:
+                    self.logger.warning(f"매크로 데이터 파일 로드 실패: {file_path} - {e}")
+                    continue
+            
+            if not macro_data.empty:
+                # 결측값 처리
+                macro_data = macro_data.fillna(method='ffill').fillna(method='bfill')
+                self.logger.info(f"매크로 데이터 로드 완료: {len(macro_data.columns)}개 컬럼, {len(macro_data)}개 행")
+            else:
+                self.logger.warning("유효한 매크로 데이터가 없습니다")
+                
+            return macro_data
+            
+        except Exception as e:
+            self.logger.error(f"매크로 데이터 로드 실패: {e}")
+            return pd.DataFrame()
+
+    def _load_stock_data(self) -> Dict[str, pd.DataFrame]:
+        """
+        개별종목 데이터 로드
+        
+        Returns:
+            심볼별 데이터 딕셔너리
+        """
+        try:
+            import glob
+            
+            # 개별종목 데이터 디렉토리에서 CSV 파일들 로드
+            stock_dir = "data/trader"
+            csv_files = glob.glob(f"{stock_dir}/*.csv")
+            
+            if not csv_files:
+                self.logger.warning("개별종목 데이터 파일이 없습니다")
+                return {}
+            
+            stock_data = {}
+            
+            for file_path in csv_files:
+                try:
+                    # 파일명에서 심볼 추출 (예: AAPL_daily_auto_auto_20250804.csv -> AAPL)
+                    filename = os.path.basename(file_path)
+                    symbol = filename.split('_')[0].upper()  # 첫 번째 언더스코어 전까지
+                    
+                    # CSV 파일 읽기
+                    df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+                    
+                    # 데이터 저장
+                    stock_data[symbol] = df
+                    self.logger.debug(f"로드됨: {symbol} ({len(df)}행) <- {filename}")
+                        
+                except Exception as e:
+                    self.logger.warning(f"개별종목 데이터 파일 로드 실패: {file_path} - {e}")
+                    continue
+            
+            if stock_data:
+                symbols = list(stock_data.keys())
+                total_rows = sum(len(df) for df in stock_data.values())
+                self.logger.info(f"개별종목 데이터 로드 완료: {len(symbols)}개 종목, 총 {total_rows}개 행")
+            else:
+                self.logger.warning("유효한 개별종목 데이터가 없습니다")
+                
+            return stock_data
+            
+        except Exception as e:
+            self.logger.error(f"개별종목 데이터 로드 실패: {e}")
+            return {}
+
+    def _run_simple_backtest(self, weights: Dict[str, float], historical_data: Dict[str, pd.DataFrame]) -> Dict:
+        """
+        간단한 포트폴리오 백테스팅
+        
+        Args:
+            weights: 포트폴리오 비중
+            historical_data: 과거 데이터
+            
+        Returns:
+            백테스팅 결과
+        """
+        try:
+            if not weights or not historical_data:
+                return {"status": "failed", "message": "데이터 부족"}
+            
+            # 공통 기간 찾기
+            common_dates = None
+            returns_data = {}
+            
+            for symbol, weight in weights.items():
+                if symbol in historical_data and weight > 0:
+                    data = historical_data[symbol]
+                    if 'close' in data.columns and len(data) > 50:  # 최소 50일 데이터
+                        returns = data['close'].pct_change().dropna()
+                        returns_data[symbol] = returns
+                        
+                        if common_dates is None:
+                            common_dates = returns.index
+                        else:
+                            common_dates = common_dates.intersection(returns.index)
+            
+            if not returns_data or common_dates is None or len(common_dates) < 30:
+                return {"status": "failed", "message": "충분한 공통 데이터 없음"}
+            
+            # 포트폴리오 수익률 계산
+            portfolio_returns = pd.Series(0.0, index=common_dates)
+            
+            for symbol, weight in weights.items():
+                if symbol in returns_data:
+                    symbol_returns = returns_data[symbol].reindex(common_dates).fillna(0)
+                    portfolio_returns += symbol_returns * weight
+            
+            # 성과 지표 계산
+            total_return = (1 + portfolio_returns).prod() - 1
+            annualized_return = (1 + total_return) ** (252 / len(portfolio_returns)) - 1
+            volatility = portfolio_returns.std() * np.sqrt(252)
+            sharpe_ratio = annualized_return / volatility if volatility > 0 else 0
+            
+            # 최대 낙폭 계산
+            cumulative_returns = (1 + portfolio_returns).cumprod()
+            rolling_max = cumulative_returns.expanding().max()
+            drawdown = (cumulative_returns - rolling_max) / rolling_max
+            max_drawdown = drawdown.min()
+            
+            # Buy & Hold 벤치마크 (동일가중)
+            benchmark_returns = pd.Series(0.0, index=common_dates)
+            equal_weight = 1.0 / len(returns_data)
+            
+            for symbol in returns_data:
+                benchmark_returns += returns_data[symbol].reindex(common_dates).fillna(0) * equal_weight
+            
+            benchmark_total_return = (1 + benchmark_returns).prod() - 1
+            
+            results = {
+                "status": "success",
+                "period": f"{common_dates[0].strftime('%Y-%m-%d')} ~ {common_dates[-1].strftime('%Y-%m-%d')}",
+                "days": len(common_dates),
+                "performance": {
+                    "total_return": float(total_return),
+                    "annualized_return": float(annualized_return),
+                    "volatility": float(volatility),
+                    "sharpe_ratio": float(sharpe_ratio),
+                    "max_drawdown": float(max_drawdown),
+                },
+                "benchmark": {
+                    "total_return": float(benchmark_total_return),
+                    "excess_return": float(total_return - benchmark_total_return),
+                },
+                "weights_used": weights
+            }
+            
+            self.logger.info(f"백테스팅 완료: {len(common_dates)}일, 수익률 {total_return:.2%}")
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"백테스팅 실행 실패: {e}")
+            return {"status": "failed", "message": str(e)}
 
     def run_portfolio_analysis(self, analysis_results: Optional[Dict] = None) -> Dict:
         """
@@ -444,8 +725,8 @@ class HybridTrader:
                 # 포트폴리오 매니저로 최적화 실행
                 # individual_results를 투자 점수로 구성
                 individual_results = list(scores.values())
-                # TODO: historical_data 로드 로직 추가
-                historical_data = {}  # 임시로 빈 딕셔너리 사용
+                # 개별종목 데이터 로드
+                historical_data = self._load_stock_data()
                 optimization_results = self.portfolio_manager.optimize_portfolio_with_constraints(
                     individual_results, historical_data
                 )
@@ -465,12 +746,17 @@ class HybridTrader:
             # 2. 백테스팅
             self.logger.info("백테스팅 실행 중...")
             try:
-                # TrainTestEvaluator에 backtest_portfolio 메서드가 없으므로 건너뛰기
-                self.logger.warning("백테스팅 메서드가 구현되지 않음 - 건너뛰기")
-                backtest_results = {
-                    "status": "not_implemented",
-                    "message": "백테스팅 기능이 구현되지 않음"
-                }
+                if optimization_results and "weights" in optimization_results:
+                    backtest_results = self._run_simple_backtest(
+                        optimization_results["weights"], 
+                        historical_data
+                    )
+                else:
+                    self.logger.warning("최적화 결과가 없어 백테스팅을 건너뜁니다")
+                    backtest_results = {
+                        "status": "skipped",
+                        "message": "최적화 결과 없음"
+                    }
 
             except Exception as e:
                 self.logger.error(f"백테스팅 중 오류: {e}")
@@ -506,7 +792,8 @@ class HybridTrader:
             self.logger.info("결과 요약 레포트 생성 중...")
 
             # 주요 지표 추출
-            metrics = results.get("backtest", {}).get("metrics", {})
+            backtest_results = results.get("backtest", {})
+            metrics = backtest_results.get("performance", {})
             weights = results.get("optimization", {}).get("weights", {})
             signals = results.get("analysis_results", {}).get("trading_signals", {})
 
@@ -600,12 +887,12 @@ class HybridTrader:
 
             # 신경망 모델 로드
             self.logger.model_info("신경망 모델 로드 중")
-            neural_model_path = "models/trader/neural_predictor_meta.pkl"
-            if os.path.exists(neural_model_path):
+            neural_model_path = "models/trader/neural_predictor"
+            if os.path.exists(f"{neural_model_path}_meta.pkl"):
                 if not self.neural_predictor.load_model(neural_model_path):
                     self.logger.warning("신경망 모델 로드 실패 - 기본 모델 사용")
             else:
-                self.logger.warning(f"신경망 모델 파일 없음: {neural_model_path}")
+                self.logger.warning(f"신경망 모델 파일 없음: {neural_model_path}_meta.pkl")
 
         except Exception as e:
             self.logger.error(f"모델 로드 실패: {e}")
@@ -658,9 +945,9 @@ def main():
             # 기본: 분석만 실행
             results = trader.analyze()
 
-        # 결과 출력
+        # 결과 출력 (깔끔한 요약 형태)
         if results:
-            print(json.dumps(results, indent=2, ensure_ascii=False, default=str))
+            print_results_summary(results)
 
     except Exception as e:
         print(f"실행 실패: {e}")
