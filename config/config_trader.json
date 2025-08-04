@@ -6,7 +6,7 @@
   "data": {
     "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
     "interval": "1d",
-    "lookback_days": 700,
+    "lookback_days": 380,
     "end_date": "2025-08-04",
     "train_ratio": 0.6,
     "min_data_points": 50
@@ -129,7 +129,7 @@
 
   "portfolio": {
     "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
-    "max_positions": 4,
+    "max_positions": 6,
     "max_total_exposure": 0.95,
     "cash_reserve": 0.05,
     "concentration_limits": {

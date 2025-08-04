@@ -3,18 +3,22 @@
 set -e
 
 # Conda 환경 활성화
-CONDA_ENV="bedrock_manus"
-PYTHON_PATH="/home/yunchae/anaconda3/envs/${CONDA_ENV}/bin/python3"
+CONDA_ENV="quant"
+PYTHON_PATH="python3"
+
+# Conda 환경 활성화
+source $(conda info --base)/etc/profile.d/conda.sh
+conda activate $CONDA_ENV
 
 # Python 경로 확인
-if [[ ! -f "$PYTHON_PATH" ]]; then
-    echo "Error: Python not found at $PYTHON_PATH"
+if ! command -v python3 &> /dev/null; then
+    echo "Error: Python3 not found"
     echo "Please ensure conda environment '${CONDA_ENV}' is properly installed"
     exit 1
 fi
 
 # 로깅 설정
-LOG_LEVEL=${LOG_LEVEL:-INFO}  # 환경변수로 로그 레벨 설정 가능
+LOG_LEVEL=${LOG_LEVEL:-WARNING}  # 환경변수로 로그 레벨 설정 가능
 TIMESTAMP_FORMAT="%Y-%m-%d %H:%M:%S"
 
 # Python 로거 헬퍼 스크립트 경로
@@ -202,7 +206,7 @@ else
     if [[ "$QUIET_MODE" == true ]]; then
         $PYTHON_PATH -m src.agent.data_manager --data-type macro --time-horizon trader > /dev/null 2>&1
     else
-        $PYTHON_PATH -m src.agent.data_manager --data-type macro --time-horizon trader
+        PYTHONWARNINGS=ignore $PYTHON_PATH -m src.agent.data_manager --data-type macro --time-horizon trader 2>/dev/null | grep -E "(완료|실패|오류|WARNING|ERROR)" || true
     fi
     if [[ $? -ne 0 ]]; then
         error "매크로 데이터 수집 실패"
@@ -230,7 +234,7 @@ print(lookback_days)
         if [[ "$QUIET_MODE" == true ]]; then
             $PYTHON_PATH -m src.agent.data_manager --data-type stock --time-horizon trader --symbols $symbols --lookback-days $lookback_days > /dev/null 2>&1
         else
-            $PYTHON_PATH -m src.agent.data_manager --data-type stock --time-horizon trader --symbols $symbols --lookback-days $lookback_days
+            PYTHONWARNINGS=ignore $PYTHON_PATH -m src.agent.data_manager --data-type stock --time-horizon trader --symbols $symbols --lookback-days $lookback_days 2>/dev/null | grep -E "(완료|실패|오류|WARNING|ERROR|저장됨)" || true
         fi
         if [[ $? -ne 0 ]]; then
             error "개별 종목 데이터 수집 실패"

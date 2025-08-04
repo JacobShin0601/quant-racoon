@@ -15,7 +15,8 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(cat:*)",
-      "Bash(./run_market_analysis.sh:*)"
+      "Bash(./run_market_analysis.sh:*)",
+      "Bash(./run_trader.sh:*)"
     ],
     "deny": []
   }
