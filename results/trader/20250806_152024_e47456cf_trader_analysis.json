@@ -1,420 +1,444 @@
 {
   "market_regime": {
     "current": "SIDEWAYS",
-    "predicted": "BULLISH",
-    "confidence": 0.5791168936771373,
+    "predicted": "TRENDING_UP",
+    "confidence": 0.3231965943627983,
     "transition_probability": {},
     "regime_change_expected": true
   },
   "predictions": {
     "SPY": {
-      "target_22d": -0.30874332785606384,
-      "sigma_22d": 0.037921685725450516,
-      "target_66d": -1.0114049911499023,
-      "sigma_66d": 0.047851573675870895
+      "target_22d": 0.3,
+      "target_22d_prob": 0.8,
+      "risk_score": 0.20977112444385174,
+      "momentum_score": -0.013396100735687075,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "SQQQ": {
-      "target_22d": 0.09608296304941177,
-      "sigma_22d": 0.013309020549058914,
-      "target_66d": 0.2404082715511322,
-      "sigma_66d": 0.017975768074393272
+      "target_22d": -0.1056099459528923,
+      "target_22d_prob": 0.23102408647537231,
+      "risk_score": 0.7138267512454055,
+      "momentum_score": 0.14065328457895926,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "AAPL": {
-      "target_22d": 0.023031001910567284,
-      "sigma_22d": 0.025732122361660004,
-      "target_66d": -0.019745923578739166,
-      "sigma_66d": 0.025971680879592896
+      "target_22d": 0.10949602723121643,
+      "target_22d_prob": 0.5751936435699463,
+      "risk_score": 0.40896188254913957,
+      "momentum_score": -0.49037127171402095,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "MSFT": {
-      "target_22d": -0.4087705612182617,
-      "sigma_22d": 0.041630931198596954,
-      "target_66d": -1.3145307302474976,
-      "sigma_66d": 0.05454741418361664
+      "target_22d": 0.3,
+      "target_22d_prob": 0.8,
+      "risk_score": 0.35694717581594193,
+      "momentum_score": 0.242547706386171,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "NVDA": {
-      "target_22d": -0.23250634968280792,
-      "sigma_22d": 0.0350235179066658,
-      "target_66d": -0.7717438340187073,
-      "sigma_66d": 0.04254182428121567
+      "target_22d": 0.3,
+      "target_22d_prob": 0.8,
+      "risk_score": 0.5635085002825797,
+      "momentum_score": 0.17055778817817516,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "GOOGL": {
-      "target_22d": -0.04192102700471878,
-      "sigma_22d": 0.028042733669281006,
-      "target_66d": -0.2046917974948883,
-      "sigma_66d": 0.03003525361418724
+      "target_22d": 0.1718287318944931,
+      "target_22d_prob": 0.674925971031189,
+      "risk_score": 0.4975444357097709,
+      "momentum_score": 0.2062248311976041,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "AMZN": {
-      "target_22d": -0.10532721877098083,
-      "sigma_22d": 0.030326606705784798,
-      "target_66d": -0.38866445422172546,
-      "sigma_66d": 0.03408411890268326
+      "target_22d": 0.2187630534172058,
+      "target_22d_prob": 0.7500208854675293,
+      "risk_score": 0.5502732244687097,
+      "momentum_score": -0.3929662851002881,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "TSLA": {
-      "target_22d": 0.0825519934296608,
-      "sigma_22d": 0.014869767241179943,
-      "target_66d": 0.2360229194164276,
-      "sigma_66d": 0.019158348441123962
+      "target_22d": -0.11976268142461777,
+      "target_22d_prob": 0.2083797097206116,
+      "risk_score": 0.9304283484696185,
+      "momentum_score": -0.31006043782435366,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "META": {
-      "target_22d": -0.5834615230560303,
-      "sigma_22d": 0.04799233749508858,
-      "target_66d": -1.8297785520553589,
-      "sigma_66d": 0.06590300798416138
+      "target_22d": 0.3,
+      "target_22d_prob": 0.8,
+      "risk_score": 0.6327295801240449,
+      "momentum_score": 0.40690144694835995,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "JPM": {
-      "target_22d": -0.21386843919754028,
-      "sigma_22d": 0.03423934802412987,
-      "target_66d": -0.7039741277694702,
-      "sigma_66d": 0.04102417826652527
+      "target_22d": 0.3,
+      "target_22d_prob": 0.8,
+      "risk_score": 0.352662381408313,
+      "momentum_score": 0.10792986587782302,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "UNH": {
-      "target_22d": 0.14773721992969513,
-      "sigma_22d": -0.002258218824863434,
-      "target_66d": 0.7037268877029419,
-      "sigma_66d": 0.015297633595764637
+      "target_22d": -0.3,
+      "target_22d_prob": 0.0,
+      "risk_score": 0.9261021742667013,
+      "momentum_score": -0.5448920937950764,
+      "prediction_source": "universal",
+      "confidence": 0.8
     },
     "CONL": {
-      "target_22d": -0.20141585171222687,
-      "sigma_22d": 0.03387631103396416,
-      "target_66d": -0.6782180070877075,
-      "sigma_66d": 0.040477167814970016
+      "target_22d": 0.3,
+      "target_22d_prob": 0.8,
+      "risk_score": 1.0,
+      "momentum_score": -0.5542626313729029,
+      "prediction_source": "universal",
+      "confidence": 0.8
     }
   },
   "investment_scores": {
     "SPY": {
       "symbol": "SPY",
-      "final_score": 0.18974823762782617,
-      "confidence": 0.589938713927412,
-      "position_size": 0.019258621425125886,
+      "final_score": 0.19832426759324806,
+      "confidence": 0.5061412486593547,
+      "position_size": 0.019023534876726318,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.30874332785606384,
-        "base_score": -0.30874332785606384,
-        "regime_adjusted_score": -0.2729836324617547,
-        "momentum_factor": 0.15916610768127132,
-        "technical_strength": 0.836600654768841,
+        "neural_prediction": 0.3,
+        "base_score": 0.3,
+        "regime_adjusted_score": 0.2806082043382321,
+        "momentum_factor": 0.10846447472860414,
+        "technical_strength": 0.03585946870321675,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.18974823762782617
+        "integrated_score": 0.19832426759324806
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.06565216408953198,
+        "volatility": 0.1004914556226134,
         "recent_drawdown": 0.026460450156139133,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.399068"
+      "timestamp": "2025-08-06T15:20:24.844292"
     },
     "SQQQ": {
       "symbol": "SQQQ",
-      "final_score": 0.01597534997982928,
-      "confidence": 0.45279863388328445,
-      "position_size": 0.0010452004854353569,
+      "final_score": -0.03816680560893547,
+      "confidence": 0.3848991263406252,
+      "position_size": 0.0024970948242351155,
       "holding_period": 36,
       "components": {
-        "neural_prediction": 0.09608296304941177,
-        "base_score": 0.09608296304941177,
-        "regime_adjusted_score": 0.08495430963011767,
+        "neural_prediction": -0.1056099459528923,
+        "base_score": -0.1056099459528923,
+        "regime_adjusted_score": -0.0987833909803295,
         "momentum_factor": -0.28895028399840783,
         "technical_strength": 0.039766121008508265,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.02168568310457218
+        "integrated_score": -0.05180939713960668
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
         "volatility": 0.29108858070596155,
         "recent_drawdown": 0.38166136148920626,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.400923"
+      "timestamp": "2025-08-06T15:20:24.846115"
     },
     "AAPL": {
       "symbol": "AAPL",
-      "final_score": -0.004386136015507455,
-      "confidence": 0.49275168869503544,
-      "position_size": 0.00039127179260738874,
+      "final_score": 0.04597889922639997,
+      "confidence": 0.43505908575803576,
+      "position_size": 0.004161606514801614,
       "holding_period": 36,
       "components": {
-        "neural_prediction": 0.023031001910567284,
-        "base_score": 0.023031001910567284,
-        "regime_adjusted_score": 0.020363473453623295,
-        "momentum_factor": -0.11636427929953258,
-        "technical_strength": -0.13376182228829453,
+        "neural_prediction": 0.10949602723121643,
+        "base_score": 0.10949602723121643,
+        "regime_adjusted_score": 0.10241827861173936,
+        "momentum_factor": -0.05957758428561127,
+        "technical_strength": -0.12037606458757183,
         "liquidity_factor": 0.5,
-        "integrated_score": -0.004386136015507455
+        "integrated_score": 0.04597889922639997
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.14245944604769573,
+        "volatility": 0.1343048408045457,
         "recent_drawdown": 0.08293800315022035,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.402757"
+      "timestamp": "2025-08-06T15:20:24.847913"
     },
     "MSFT": {
       "symbol": "MSFT",
-      "final_score": 0.16374792921894954,
-      "confidence": 0.5458884759197534,
-      "position_size": 0.013680963610402885,
+      "final_score": 0.42015422653061385,
+      "confidence": 0.5650912779002402,
+      "position_size": 0.033628160341661405,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.4087705612182617,
-        "base_score": -0.4087705612182617,
-        "regime_adjusted_score": -0.36142537369038574,
-        "momentum_factor": 0.28146424821197746,
-        "technical_strength": 0.7518080665684378,
+        "neural_prediction": 0.3,
+        "base_score": 0.3,
+        "regime_adjusted_score": 0.2806082043382321,
+        "momentum_factor": 0.30868252568718046,
+        "technical_strength": 0.7229612534941037,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.16374792921894954
+        "integrated_score": 0.42015422653061385
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.1778192129032253,
+        "volatility": 0.1997646367361495,
         "recent_drawdown": 0.018937831049918433,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.404605"
+      "timestamp": "2025-08-06T15:20:24.849599"
     },
     "NVDA": {
       "symbol": "NVDA",
-      "final_score": 0.2897020568735117,
-      "confidence": 0.573075694920569,
-      "position_size": 0.02062057586583583,
+      "final_score": 0.4841760100828463,
+      "confidence": 0.5740891864100012,
+      "position_size": 0.03446295223471673,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.23250634968280792,
-        "base_score": -0.23250634968280792,
-        "regime_adjusted_score": -0.20557667868510432,
+        "neural_prediction": 0.3,
+        "base_score": 0.3,
+        "regime_adjusted_score": 0.2806082043382321,
         "momentum_factor": 0.5794561612116111,
         "technical_strength": 0.7082747521786026,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.2897020568735117
+        "integrated_score": 0.4841760100828463
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
         "volatility": 0.2551339864399228,
         "recent_drawdown": 0.03450867757631864,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.406382"
+      "timestamp": "2025-08-06T15:20:24.851245"
     },
     "GOOGL": {
       "symbol": "GOOGL",
-      "final_score": 0.24397783744492063,
-      "confidence": 0.5728437123110881,
-      "position_size": 0.0197156875930512,
+      "final_score": 0.32309281709858373,
+      "confidence": 0.5277136143782516,
+      "position_size": 0.026108916744999718,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.04192102700471878,
-        "base_score": -0.04192102700471878,
-        "regime_adjusted_score": -0.03706559201697315,
-        "momentum_factor": 0.11780623459899014,
+        "neural_prediction": 0.1718287318944931,
+        "base_score": 0.1718287318944931,
+        "regime_adjusted_score": 0.16072183970209739,
+        "momentum_factor": 0.11780626246312977,
         "technical_strength": 0.7174100624078494,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.24397783744492063
+        "integrated_score": 0.32309281709858373
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
         "volatility": 0.19494163590007113,
         "recent_drawdown": 0.07508400450074457,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.408077"
+      "timestamp": "2025-08-06T15:20:24.853015"
     },
     "AMZN": {
       "symbol": "AMZN",
-      "final_score": -0.010636508709779793,
-      "confidence": 0.43560003028465166,
-      "position_size": 0.0006104525426930855,
+      "final_score": 0.08829934723125289,
+      "confidence": 0.3890406003255122,
+      "position_size": 0.005027735780823286,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.10532721877098083,
-        "base_score": -0.10532721877098083,
-        "regime_adjusted_score": -0.09312786442012029,
-        "momentum_factor": 0.0008767847233141293,
-        "technical_strength": -0.09824883554895371,
+        "neural_prediction": 0.2187630534172058,
+        "base_score": 0.2187630534172058,
+        "regime_adjusted_score": 0.20462235864983624,
+        "momentum_factor": -0.014850198612538695,
+        "technical_strength": -0.1251597983682374,
         "liquidity_factor": 0.5,
-        "integrated_score": -0.011594158474458008
+        "integrated_score": 0.09684644421474048
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.341298804341338,
-        "recent_drawdown": 0.08269617085933045,
+        "volatility": 0.3441270562527616,
+        "recent_drawdown": 0.09593783544193489,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.409819"
+      "timestamp": "2025-08-06T15:20:24.854750"
     },
     "TSLA": {
       "symbol": "TSLA",
-      "final_score": -0.07811672326503631,
-      "confidence": 0.40796486995310655,
-      "position_size": 0.003124668930601453,
+      "final_score": -0.0959636421340306,
+      "confidence": 0.3554461835804532,
+      "position_size": 0.0038385456853612244,
       "holding_period": 36,
       "components": {
-        "neural_prediction": 0.0825519934296608,
-        "base_score": 0.0825519934296608,
-        "regime_adjusted_score": 0.07299054262929268,
-        "momentum_factor": -0.10893342238790771,
-        "technical_strength": -0.6542327216191681,
+        "neural_prediction": -0.11976268142461777,
+        "base_score": -0.11976268142461777,
+        "regime_adjusted_score": -0.11202130327097912,
+        "momentum_factor": 0.036619237510165256,
+        "technical_strength": -0.6057488216139164,
         "liquidity_factor": 0.5,
-        "integrated_score": -0.11159531895005188
+        "integrated_score": -0.13709091733432943
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.5233896248534972,
+        "volatility": 0.4663275052733283,
         "recent_drawdown": 0.21546473941190025,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.411594"
+      "timestamp": "2025-08-06T15:20:24.856498"
     },
     "META": {
       "symbol": "META",
-      "final_score": 0.047700744597089596,
-      "confidence": 0.41677839156670043,
-      "position_size": 0.0019080297838835842,
+      "final_score": 0.2954290275963438,
+      "confidence": 0.4348152256417732,
+      "position_size": 0.011817161103853753,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.5834615230560303,
-        "base_score": -0.5834615230560303,
-        "regime_adjusted_score": -0.5158830380935623,
-        "momentum_factor": 0.23347662444878217,
-        "technical_strength": 0.6645119199128581,
+        "neural_prediction": 0.3,
+        "base_score": 0.3,
+        "regime_adjusted_score": 0.2806082043382321,
+        "momentum_factor": 0.30467695117629506,
+        "technical_strength": 0.7345157938616412,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.06814392085298514
+        "integrated_score": 0.4220414679947769
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.45345658125092203,
+        "volatility": 0.46771787901867923,
         "recent_drawdown": 0.05809590066607034,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.413327"
+      "timestamp": "2025-08-06T15:20:24.858155"
     },
     "JPM": {
       "symbol": "JPM",
-      "final_score": 0.0030860524081509633,
-      "confidence": 0.47543473014123405,
-      "position_size": 0.00024764993043306784,
+      "final_score": 0.37407818833830053,
+      "confidence": 0.5458823159138422,
+      "position_size": 0.02978501556647017,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.21386843919754028,
-        "base_score": -0.21386843919754028,
-        "regime_adjusted_score": -0.18909747396480883,
-        "momentum_factor": 0.10629133013411493,
-        "technical_strength": 0.00860883784218305,
+        "neural_prediction": 0.3,
+        "base_score": 0.3,
+        "regime_adjusted_score": 0.2806082043382321,
+        "momentum_factor": 0.15628532367617054,
+        "technical_strength": 0.6910543027358602,
         "liquidity_factor": 0.5,
-        "integrated_score": 0.0030860524081509633
+        "integrated_score": 0.37407818833830053
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
-        "volatility": 0.198449196417225,
+        "volatility": 0.20235979243439184,
         "recent_drawdown": 0.044662166286159204,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.415075"
+      "timestamp": "2025-08-06T15:20:24.859784"
     },
     "UNH": {
       "symbol": "UNH",
-      "final_score": -0.14734095232856825,
-      "confidence": 0.460648421910483,
-      "position_size": 0.0061275741030592966,
+      "final_score": -0.23314811985185108,
+      "confidence": 0.41819519912549435,
+      "position_size": 0.009696098462804404,
       "holding_period": 36,
       "components": {
-        "neural_prediction": 0.14773721992969513,
-        "base_score": 0.14773721992969513,
-        "regime_adjusted_score": 0.1306257959524589,
+        "neural_prediction": -0.3,
+        "base_score": -0.3,
+        "regime_adjusted_score": -0.2806082043382321,
         "momentum_factor": -0.6928201985746014,
         "technical_strength": -0.8460001514972455,
         "liquidity_factor": 0.5,
-        "integrated_score": -0.28245476913697815
+        "integrated_score": -0.4469483692532546
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
         "volatility": 0.440076757080285,
         "recent_drawdown": 0.3876696812753357,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.416776"
+      "timestamp": "2025-08-06T15:20:24.861447"
     },
     "CONL": {
       "symbol": "CONL",
-      "final_score": -0.010839477155993779,
-      "confidence": 0.37307085896553865,
-      "position_size": 0.0004335790862397512,
+      "final_score": 0.06334315833201655,
+      "confidence": 0.3172962416416461,
+      "position_size": 0.002533726333280662,
       "holding_period": 36,
       "components": {
-        "neural_prediction": -0.20141585171222687,
-        "base_score": -0.20141585171222687,
-        "regime_adjusted_score": -0.17808718723604292,
+        "neural_prediction": 0.3,
+        "base_score": 0.3,
+        "regime_adjusted_score": 0.2806082043382321,
         "momentum_factor": 0.181956368087536,
         "technical_strength": -0.20425529563385536,
         "liquidity_factor": 0.5,
-        "integrated_score": -0.026809606780997003
+        "integrated_score": 0.15666854984871303
       },
       "market_info": {
         "regime": "SIDEWAYS",
-        "regime_confidence": 0.5791168936771373,
-        "regime_multiplier": 0.8841766212645725
+        "regime_confidence": 0.3231965943627983,
+        "regime_multiplier": 0.9353606811274403
       },
       "risk_metrics": {
         "volatility": 1.4034604477461505,
         "recent_drawdown": 0.46120487718825204,
         "liquidity": 0.5
       },
-      "timestamp": "2025-08-04T21:25:30.418610"
+      "timestamp": "2025-08-06T15:20:24.863097"
     }
   },
   "trading_signals": {
     "SPY": {
       "symbol": "SPY",
-      "timestamp": "2025-08-04T21:25:30.418773",
+      "timestamp": "2025-08-06T15:20:24.863595",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.18974823762782617,
-      "confidence": 0.589938713927412,
-      "position_size": 0.007655006945169888,
+      "action_strength": 0.5396648535186496,
+      "score": 0.19832426759324806,
+      "confidence": 0.5061412486593547,
+      "position_size": 0.007163032643286841,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -430,8 +454,8 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.06565216408953198,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.1004914556226134,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -444,9 +468,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.03,
           "exit_signals": {
-            "score_reversal_threshold": -0.09487411881391308,
+            "score_reversal_threshold": -0.09916213379662403,
             "drawdown_limit": 0.15,
-            "volatility_spike_threshold": 0.09847824613429797
+            "volatility_spike_threshold": 0.1507371834339201
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -462,12 +486,12 @@
         ],
         "mitigation_strategies": [],
         "monitoring_points": {
-          "volatility_threshold": 0.08534781331639157,
+          "volatility_threshold": 0.13063889230939743,
           "drawdown_alert": 0.07646045015613914,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 9.8% 초과시",
+          "변동성 15.1% 초과시",
           "드로우다운 12.6% 초과시",
           "시장 체제 급변시"
         ]
@@ -475,32 +499,28 @@
       "recommendations": {
         "primary_recommendation": "SPY 현 포지션 유지 - 추가 신호 대기",
         "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
-        "timing_advice": [
-          "기술적 강세 - 차트상 긍정적"
-        ],
+        "timing_advice": [],
         "cautions": [
           "신뢰도 보통 - 포지션 크기 조절 필요"
         ],
         "key_factors": {
-          "score_drivers": [
-            "기술적 강세"
-          ],
+          "score_drivers": [],
           "risk_factors": [],
           "opportunity_factors": []
         }
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "SQQQ": {
       "symbol": "SQQQ",
-      "timestamp": "2025-08-04T21:25:30.418825",
+      "timestamp": "2025-08-06T15:20:24.863624",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.01597534997982928,
-      "confidence": 0.45279863388328445,
-      "position_size": 0.0003796164593436581,
+      "action_strength": 0.4923666388782129,
+      "score": -0.03816680560893547,
+      "confidence": 0.3848991263406252,
+      "position_size": 0.0008645561101182271,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -517,7 +537,7 @@
           ],
           "risk_factors": {
             "volatility_level": 0.29108858070596155,
-            "regime_stability": 0.5791168936771373
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -530,7 +550,7 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": -0.00798767498991464,
+            "score_reversal_threshold": 0.019083402804467735,
             "drawdown_limit": 0.43166136148920625,
             "volatility_spike_threshold": 0.43663287105894233
           },
@@ -579,16 +599,16 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "AAPL": {
       "symbol": "AAPL",
-      "timestamp": "2025-08-04T21:25:30.418862",
+      "timestamp": "2025-08-06T15:20:24.863645",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": -0.004386136015507455,
-      "confidence": 0.49275168869503544,
-      "position_size": 0.0001460179072883533,
+      "action_strength": 0.50919577984528,
+      "score": 0.04597889922639997,
+      "confidence": 0.43505908575803576,
+      "position_size": 0.0014930378101039722,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -604,8 +624,8 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.14245944604769573,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.1343048408045457,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -618,9 +638,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.03,
           "exit_signals": {
-            "score_reversal_threshold": 0.0021930680077537276,
+            "score_reversal_threshold": -0.022989449613199986,
             "drawdown_limit": 0.15,
-            "volatility_spike_threshold": 0.2136891690715436
+            "volatility_spike_threshold": 0.20145726120681853
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -636,12 +656,12 @@
         ],
         "mitigation_strategies": [],
         "monitoring_points": {
-          "volatility_threshold": 0.18519727986200446,
+          "volatility_threshold": 0.1745962930459094,
           "drawdown_alert": 0.13293800315022036,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 21.4% 초과시",
+          "변동성 20.1% 초과시",
           "드로우다운 18.3% 초과시",
           "시장 체제 급변시"
         ]
@@ -661,21 +681,21 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "MSFT": {
       "symbol": "MSFT",
-      "timestamp": "2025-08-04T21:25:30.418894",
+      "timestamp": "2025-08-06T15:20:24.863661",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.16374792921894954,
-      "confidence": 0.5458884759197534,
-      "position_size": 0.005287310996199831,
+      "action_strength": 0.5840308453061228,
+      "score": 0.42015422653061385,
+      "confidence": 0.5650912779002402,
+      "position_size": 0.013157785110641257,
       "execution_priority": 10,
       "timing": {
         "entry": {
-          "type": "WAIT",
-          "urgency": "NONE",
+          "type": "PATIENT",
+          "urgency": "LOW",
           "entry_phases": null,
           "regime_considerations": {
             "wait_factor": 1.2,
@@ -686,8 +706,8 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.1778192129032253,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.1997646367361495,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -700,9 +720,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.03,
           "exit_signals": {
-            "score_reversal_threshold": -0.08187396460947477,
+            "score_reversal_threshold": -0.21007711326530693,
             "drawdown_limit": 0.15,
-            "volatility_spike_threshold": 0.26672881935483794
+            "volatility_spike_threshold": 0.29964695510422423
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -718,12 +738,12 @@
         ],
         "mitigation_strategies": [],
         "monitoring_points": {
-          "volatility_threshold": 0.2311649767741929,
+          "volatility_threshold": 0.25969402775699435,
           "drawdown_alert": 0.06893783104991844,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 26.7% 초과시",
+          "변동성 30.0% 초과시",
           "드로우다운 11.9% 초과시",
           "시장 체제 급변시"
         ]
@@ -739,6 +759,7 @@
         ],
         "key_factors": {
           "score_drivers": [
+            "모멘텀 강화",
             "기술적 강세"
           ],
           "risk_factors": [],
@@ -747,21 +768,21 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "NVDA": {
       "symbol": "NVDA",
-      "timestamp": "2025-08-04T21:25:30.418929",
+      "timestamp": "2025-08-06T15:20:24.863679",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.2897020568735117,
-      "confidence": 0.573075694920569,
-      "position_size": 0.008109431677453002,
+      "action_strength": 0.5968352020165693,
+      "score": 0.4841760100828463,
+      "confidence": 0.5740891864100012,
+      "position_size": 0.013561940111107996,
       "execution_priority": 10,
       "timing": {
         "entry": {
-          "type": "WAIT",
-          "urgency": "NONE",
+          "type": "PATIENT",
+          "urgency": "LOW",
           "entry_phases": null,
           "regime_considerations": {
             "wait_factor": 1.2,
@@ -773,7 +794,7 @@
           ],
           "risk_factors": {
             "volatility_level": 0.2551339864399228,
-            "regime_stability": 0.5791168936771373
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -786,7 +807,7 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": -0.14485102843675585,
+            "score_reversal_threshold": -0.24208800504142314,
             "drawdown_limit": 0.15,
             "volatility_spike_threshold": 0.3827009796598842
           },
@@ -837,21 +858,21 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "GOOGL": {
       "symbol": "GOOGL",
-      "timestamp": "2025-08-04T21:25:30.418959",
+      "timestamp": "2025-08-06T15:20:24.863697",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.24397783744492063,
-      "confidence": 0.5728437123110881,
-      "position_size": 0.007752423816155078,
+      "action_strength": 0.5646185634197167,
+      "score": 0.32309281709858373,
+      "confidence": 0.5277136143782516,
+      "position_size": 0.009971736892001095,
       "execution_priority": 10,
       "timing": {
         "entry": {
-          "type": "WAIT",
-          "urgency": "NONE",
+          "type": "PATIENT",
+          "urgency": "LOW",
           "entry_phases": null,
           "regime_considerations": {
             "wait_factor": 1.2,
@@ -863,7 +884,7 @@
           ],
           "risk_factors": {
             "volatility_level": 0.19494163590007113,
-            "regime_stability": 0.5791168936771373
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -876,7 +897,7 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.03,
           "exit_signals": {
-            "score_reversal_threshold": -0.12198891872246032,
+            "score_reversal_threshold": -0.16154640854929186,
             "drawdown_limit": 0.15,
             "volatility_spike_threshold": 0.2924124538501067
           },
@@ -923,16 +944,16 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "AMZN": {
       "symbol": "AMZN",
-      "timestamp": "2025-08-04T21:25:30.418988",
+      "timestamp": "2025-08-06T15:20:24.863712",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": -0.010636508709779793,
-      "confidence": 0.43560003028465166,
-      "position_size": 0.00021909142219438403,
+      "action_strength": 0.5176598694462505,
+      "score": 0.08829934723125289,
+      "confidence": 0.3890406003255122,
+      "position_size": 0.001745932281818209,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -948,8 +969,8 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.341298804341338,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.3441270562527616,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -962,9 +983,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": 0.005318254354889897,
+            "score_reversal_threshold": -0.044149673615626446,
             "drawdown_limit": 0.15,
-            "volatility_spike_threshold": 0.511948206512007
+            "volatility_spike_threshold": 0.5161905843791423
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -983,13 +1004,13 @@
           "변동성 기반 포지션 사이징 적용"
         ],
         "monitoring_points": {
-          "volatility_threshold": 0.44368844564373944,
-          "drawdown_alert": 0.13269617085933044,
+          "volatility_threshold": 0.4473651731285901,
+          "drawdown_alert": 0.1459378354419349,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 51.2% 초과시",
-          "드로우다운 18.3% 초과시",
+          "변동성 51.6% 초과시",
+          "드로우다운 19.6% 초과시",
           "시장 체제 급변시"
         ]
       },
@@ -1011,16 +1032,16 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "TSLA": {
       "symbol": "TSLA",
-      "timestamp": "2025-08-04T21:25:30.419016",
+      "timestamp": "2025-08-06T15:20:24.863726",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": -0.07811672326503631,
-      "confidence": 0.40796486995310655,
-      "position_size": 0.0010998560211301967,
+      "action_strength": 0.48080727157319386,
+      "score": -0.0959636421340306,
+      "confidence": 0.3554461835804532,
+      "position_size": 0.0013007355249305217,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -1036,8 +1057,8 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.5233896248534972,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.4663275052733283,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -1050,9 +1071,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": 0.039058361632518156,
+            "score_reversal_threshold": 0.0479818210670153,
             "drawdown_limit": 0.26546473941190024,
-            "volatility_spike_threshold": 0.7850844372802457
+            "volatility_spike_threshold": 0.6994912579099924
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -1073,12 +1094,12 @@
           "엄격한 손절선 적용"
         ],
         "monitoring_points": {
-          "volatility_threshold": 0.6804065123095463,
+          "volatility_threshold": 0.6062257568553268,
           "drawdown_alert": 0.26546473941190024,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 78.5% 초과시",
+          "변동성 69.9% 초과시",
           "드로우다운 25.0% 초과시",
           "시장 체제 급변시"
         ]
@@ -1107,16 +1128,16 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "META": {
       "symbol": "META",
-      "timestamp": "2025-08-04T21:25:30.419045",
+      "timestamp": "2025-08-06T15:20:24.863740",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.047700744597089596,
-      "confidence": 0.41677839156670043,
-      "position_size": 0.0006758138420679859,
+      "action_strength": 0.5590858055192688,
+      "score": 0.2954290275963438,
+      "confidence": 0.4348152256417732,
+      "position_size": 0.004238860668917778,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -1132,8 +1153,8 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.45345658125092203,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.46771787901867923,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -1146,9 +1167,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": -0.023850372298544798,
+            "score_reversal_threshold": -0.1477145137981719,
             "drawdown_limit": 0.15,
-            "volatility_spike_threshold": 0.680184871876383
+            "volatility_spike_threshold": 0.7015768185280189
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -1167,12 +1188,12 @@
           "변동성 기반 포지션 사이징 적용"
         ],
         "monitoring_points": {
-          "volatility_threshold": 0.5894935556261987,
+          "volatility_threshold": 0.608033242724283,
           "drawdown_alert": 0.10809590066607033,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 68.0% 초과시",
+          "변동성 70.2% 초과시",
           "드로우다운 15.8% 초과시",
           "시장 체제 급변시"
         ]
@@ -1189,8 +1210,8 @@
         ],
         "key_factors": {
           "score_drivers": [
-            "기술적 강세",
-            "AI 모델 부정적"
+            "모멘텀 강화",
+            "기술적 강세"
           ],
           "risk_factors": [
             "높은 변동성"
@@ -1200,21 +1221,21 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "JPM": {
       "symbol": "JPM",
-      "timestamp": "2025-08-04T21:25:30.419072",
+      "timestamp": "2025-08-06T15:20:24.863753",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": 0.0030860524081509633,
-      "confidence": 0.47543473014123405,
-      "position_size": 9.13478270695022e-05,
+      "action_strength": 0.5748156376676601,
+      "score": 0.37407818833830053,
+      "confidence": 0.5458823159138422,
+      "position_size": 0.011511032210856188,
       "execution_priority": 10,
       "timing": {
         "entry": {
-          "type": "WAIT",
-          "urgency": "NONE",
+          "type": "PATIENT",
+          "urgency": "LOW",
           "entry_phases": null,
           "regime_considerations": {
             "wait_factor": 1.2,
@@ -1225,12 +1246,12 @@
             "장 마감 1시간 전"
           ],
           "risk_factors": {
-            "volatility_level": 0.198449196417225,
-            "regime_stability": 0.5791168936771373
+            "volatility_level": 0.20235979243439184,
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
-          "stop_loss": -0.05,
+          "stop_loss": -0.08,
           "take_profit_levels": [
             0.04,
             0.08,
@@ -1239,9 +1260,9 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.03,
           "exit_signals": {
-            "score_reversal_threshold": -0.0015430262040754816,
+            "score_reversal_threshold": -0.18703909416915027,
             "drawdown_limit": 0.15,
-            "volatility_spike_threshold": 0.2976737946258375
+            "volatility_spike_threshold": 0.30353968865158776
           },
           "partial_exit_strategy": {
             "first_target_ratio": 0.3,
@@ -1257,12 +1278,12 @@
         ],
         "mitigation_strategies": [],
         "monitoring_points": {
-          "volatility_threshold": 0.2579839553423925,
+          "volatility_threshold": 0.2630677301647094,
           "drawdown_alert": 0.0946621662861592,
           "liquidity_minimum": 0.4
         },
         "emergency_exit_conditions": [
-          "변동성 29.8% 초과시",
+          "변동성 30.4% 초과시",
           "드로우다운 14.5% 초과시",
           "시장 체제 급변시"
         ]
@@ -1270,28 +1291,32 @@
       "recommendations": {
         "primary_recommendation": "JPM 현 포지션 유지 - 추가 신호 대기",
         "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
-        "timing_advice": [],
+        "timing_advice": [
+          "기술적 강세 - 차트상 긍정적"
+        ],
         "cautions": [
           "신뢰도 보통 - 포지션 크기 조절 필요"
         ],
         "key_factors": {
-          "score_drivers": [],
+          "score_drivers": [
+            "기술적 강세"
+          ],
           "risk_factors": [],
           "opportunity_factors": []
         }
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "UNH": {
       "symbol": "UNH",
-      "timestamp": "2025-08-04T21:25:30.419103",
+      "timestamp": "2025-08-06T15:20:24.863768",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": -0.14734095232856825,
-      "confidence": 0.460648421910483,
-      "position_size": 0.002237557860943276,
+      "action_strength": 0.45337037602962976,
+      "score": -0.23314811985185108,
+      "confidence": 0.41819519912549435,
+      "position_size": 0.003437740072549323,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -1308,7 +1333,7 @@
           ],
           "risk_factors": {
             "volatility_level": 0.440076757080285,
-            "regime_stability": 0.5791168936771373
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -1321,7 +1346,7 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": 0.07367047616428413,
+            "score_reversal_threshold": 0.11657405992592554,
             "drawdown_limit": 0.4376696812753357,
             "volatility_spike_threshold": 0.6601151356204275
           },
@@ -1380,16 +1405,16 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     },
     "CONL": {
       "symbol": "CONL",
-      "timestamp": "2025-08-04T21:25:30.419131",
+      "timestamp": "2025-08-06T15:20:24.863783",
       "action": "HOLD",
-      "action_strength": 0.5,
-      "score": -0.010839477155993779,
-      "confidence": 0.37307085896553865,
-      "position_size": 0.00014883370209317715,
+      "action_strength": 0.5126686316664033,
+      "score": 0.06334315833201655,
+      "confidence": 0.3172962416416461,
+      "position_size": 0.0008344170440447713,
       "execution_priority": 10,
       "timing": {
         "entry": {
@@ -1406,7 +1431,7 @@
           ],
           "risk_factors": {
             "volatility_level": 1.4034604477461505,
-            "regime_stability": 0.5791168936771373
+            "regime_stability": 0.3231965943627983
           }
         },
         "exit": {
@@ -1419,7 +1444,7 @@
           "max_holding_days": 54.0,
           "trailing_stop": 0.05,
           "exit_signals": {
-            "score_reversal_threshold": 0.005419738577996889,
+            "score_reversal_threshold": -0.031671579166008275,
             "drawdown_limit": 0.511204877188252,
             "volatility_spike_threshold": 2.105190671619226
           },
@@ -1472,14 +1497,14 @@
       },
       "holding_period": 36,
       "market_regime": "SIDEWAYS",
-      "regime_confidence": 0.5791168936771373
+      "regime_confidence": 0.3231965943627983
     }
   },
   "portfolio_summary": {
-    "timestamp": "2025-08-04T21:25:30.419345",
+    "timestamp": "2025-08-06T15:20:24.864252",
     "market_regime": "SIDEWAYS",
-    "regime_confidence": 0.5791168936771373,
-    "portfolio_score": 0.0,
+    "regime_confidence": 0.3231965943627983,
+    "portfolio_score": 0.3119437941357128,
     "portfolio_action": "PORTFOLIO_HOLD",
     "signal_distribution": {
       "STRONG_BUY": 0,
@@ -1488,7 +1513,7 @@
       "SELL": 0,
       "STRONG_SELL": 0
     },
-    "total_position_size": 0.6,
+    "total_position_size": 0.06928080648037617,
     "high_priority_count": 0,
     "risk_assessment": {
       "overall_risk": "MEDIUM",
@@ -1497,14 +1522,14 @@
       "risk_factors": [
         "고위험 종목 비율: 41.7%",
         "시장 체제: SIDEWAYS",
-        "체제 신뢰도: 57.9%"
+        "체제 신뢰도: 32.3%"
       ]
     },
     "concentration_risk": {
       "concentration_risk": "LOW",
-      "max_position_size": 0.008109431677453002,
-      "top_3_concentration": 0.02351686243877797,
-      "total_position_size": 0.033802308477108335,
+      "max_position_size": 0.013561940111107996,
+      "top_3_concentration": 0.03823075743260544,
+      "total_position_size": 0.06928080648037618,
       "warnings": [
         "양호한 분산 수준"
       ]
@@ -1521,19 +1546,456 @@
       ],
       "action_summary": "매수 0개, 매도 0개, 보유 12개",
       "risk_guidance": "포트폴리오 리스크: MEDIUM",
-      "regime_guidance": "시장 체제: SIDEWAYS (신뢰도: 57.9%)"
+      "regime_guidance": "시장 체제: SIDEWAYS (신뢰도: 32.3%)"
     },
     "top_opportunities": [
-      {},
-      {},
-      {},
-      {},
-      {}
+      {
+        "symbol": "NVDA",
+        "timestamp": "2025-08-06T15:20:24.863679",
+        "action": "HOLD",
+        "action_strength": 0.5968352020165693,
+        "score": 0.4841760100828463,
+        "confidence": 0.5740891864100012,
+        "position_size": 0.013561940111107996,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.2551339864399228,
+              "regime_stability": 0.3231965943627983
+            }
+          },
+          "exit": {
+            "stop_loss": -0.08,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": -0.24208800504142314,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.3827009796598842
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.33167418237189966,
+            "drawdown_alert": 0.08450867757631864,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 38.3% 초과시",
+            "드로우다운 13.5% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "NVDA 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "모멘텀 강화 중 - 추세 추종 전략 유효",
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "모멘텀 강화",
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": [
+              "기술적/모멘텀 동조"
+            ]
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.3231965943627983
+      },
+      {
+        "symbol": "MSFT",
+        "timestamp": "2025-08-06T15:20:24.863661",
+        "action": "HOLD",
+        "action_strength": 0.5840308453061228,
+        "score": 0.42015422653061385,
+        "confidence": 0.5650912779002402,
+        "position_size": 0.013157785110641257,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.1997646367361495,
+              "regime_stability": 0.3231965943627983
+            }
+          },
+          "exit": {
+            "stop_loss": -0.05,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": -0.21007711326530693,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.29964695510422423
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.25969402775699435,
+            "drawdown_alert": 0.06893783104991844,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 30.0% 초과시",
+            "드로우다운 11.9% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "MSFT 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "모멘텀 강화",
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.3231965943627983
+      },
+      {
+        "symbol": "JPM",
+        "timestamp": "2025-08-06T15:20:24.863753",
+        "action": "HOLD",
+        "action_strength": 0.5748156376676601,
+        "score": 0.37407818833830053,
+        "confidence": 0.5458823159138422,
+        "position_size": 0.011511032210856188,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.20235979243439184,
+              "regime_stability": 0.3231965943627983
+            }
+          },
+          "exit": {
+            "stop_loss": -0.08,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": -0.18703909416915027,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.30353968865158776
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.2630677301647094,
+            "drawdown_alert": 0.0946621662861592,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 30.4% 초과시",
+            "드로우다운 14.5% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "JPM 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.3231965943627983
+      },
+      {
+        "symbol": "GOOGL",
+        "timestamp": "2025-08-06T15:20:24.863697",
+        "action": "HOLD",
+        "action_strength": 0.5646185634197167,
+        "score": 0.32309281709858373,
+        "confidence": 0.5277136143782516,
+        "position_size": 0.009971736892001095,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.19494163590007113,
+              "regime_stability": 0.3231965943627983
+            }
+          },
+          "exit": {
+            "stop_loss": -0.05,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": -0.16154640854929186,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.2924124538501067
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.25342412667009245,
+            "drawdown_alert": 0.12508400450074458,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 29.2% 초과시",
+            "드로우다운 17.5% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "GOOGL 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.3231965943627983
+      },
+      {
+        "symbol": "META",
+        "timestamp": "2025-08-06T15:20:24.863740",
+        "action": "HOLD",
+        "action_strength": 0.5590858055192688,
+        "score": 0.2954290275963438,
+        "confidence": 0.4348152256417732,
+        "position_size": 0.004238860668917778,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "WAIT",
+            "urgency": "NONE",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.46771787901867923,
+              "regime_stability": 0.3231965943627983
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": -0.1477145137981719,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.7015768185280189
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "HIGH",
+          "warnings": [
+            "높은 변동성 - 포지션 크기 축소 권장",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 0.608033242724283,
+            "drawdown_alert": 0.10809590066607033,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 70.2% 초과시",
+            "드로우다운 15.8% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "META 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "모멘텀 강화",
+              "기술적 강세"
+            ],
+            "risk_factors": [
+              "높은 변동성"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.3231965943627983
+      }
     ],
     "immediate_actions": []
   },
   "metadata": {
-    "timestamp": "2025-08-04T21:25:30.419355",
+    "timestamp": "2025-08-06T15:20:24.864257",
     "model_version": "v1.0",
     "config": {
       "trader_name": "HMM-Neural Hybrid Trader",
@@ -1557,7 +2019,7 @@
         "interval": "1d",
         "lookback_days": 380,
         "end_date": "2025-08-04",
-        "train_ratio": 0.6,
+        "train_ratio": 0.7,
         "min_data_points": 50
       },
       "data_sources": {
@@ -1593,8 +2055,8 @@
       "hmm_regime": {
         "n_states": 4,
         "state_names": [
-          "BULLISH",
-          "BEARISH",
+          "TRENDING_UP",
+          "TRENDING_DOWN",
           "SIDEWAYS",
           "VOLATILE"
         ],
@@ -1612,7 +2074,19 @@
             "vix_ma": 20,
             "yield_ma": 10,
             "momentum": 20,
-            "volatility_std": 20
+            "volatility_std": 20,
+            "vix_percentile": 252,
+            "vix_percentile_min": 60
+          },
+          "thresholds": {
+            "vix_volatile": 28,
+            "vol_regime_threshold": 0.6,
+            "uncertainty_factor_short": 0.8,
+            "uncertainty_factor_long": 0.6,
+            "confidence_min": 0.3,
+            "confidence_max": 0.9,
+            "confidence_adjustment": 0.1,
+            "min_validation_data": 100
           }
         },
         "model_path": "models/trader/hmm_regime_model.pkl"
@@ -1627,28 +2101,27 @@
           "dropout_rate": 0.2,
           "output_activation": "tanh"
         },
-        "target_forward_days": [
-          22,
-          66
-        ],
-        "train_ratio": 0.8,
+        "target_forward_days": 22,
+        "include_sigma": true,
         "ensemble": {
           "universal_weight": 0.7,
           "individual_weight": 0.3,
           "enable_individual_models": true,
           "enable_weight_learning": true,
           "weight_learning_config": {
-            "learning_rate": 0.001,
-            "epochs": 100,
+            "learning_rate": 0.0005,
+            "epochs": 200,
             "batch_size": 32,
             "validation_split": 0.2,
-            "min_samples_for_weight_learning": 50
+            "min_samples_for_weight_learning": 50,
+            "early_stopping_patience": 25,
+            "min_delta": 1e-06
           }
         },
         "training": {
           "epochs": 200,
           "batch_size": 32,
-          "learning_rate": 0.001,
+          "learning_rate": 0.0005,
           "validation_split": 0.2,
           "early_stopping_patience": 20,
           "reduce_lr_patience": 10
@@ -1672,8 +2145,8 @@
       },
       "scoring": {
         "regime_multipliers": {
-          "BULLISH": 1.2,
-          "BEARISH": 0.3,
+          "TRENDING_UP": 1.2,
+          "TRENDING_DOWN": 0.3,
           "SIDEWAYS": 0.8,
           "VOLATILE": 0.6
         },
@@ -1734,7 +2207,6 @@
         "method": "optuna",
         "objective_metric": "sharpe_ratio",
         "n_trials": 100,
-        "train_ratio": 0.7,
         "threshold_ranges": {
           "strong_buy": [
             0.4,
@@ -1763,57 +2235,21 @@
         },
         "volatility_penalty": 0.3
       },
-      "backtesting": {
-        "enable": true,
-        "period_ratio": 0.5,
-        "min_period_days": 60,
-        "max_period_days": 252,
-        "start_date_offset": 0,
-        "end_date_offset": 0,
-        "performance_metrics": {
-          "calculate_sharpe": true,
-          "calculate_sortino": true,
-          "calculate_max_drawdown": true,
-          "calculate_win_rate": true,
-          "benchmark_comparison": true
+      "neural_config": {
+        "architecture": {
+          "hidden_layers": [
+            128,
+            64,
+            32
+          ],
+          "dropout_rate": 0.2
         },
-        "trading_simulation": {
-          "include_commission": true,
-          "include_slippage": true,
-          "position_sizing": "fixed",
-          "max_positions": 4
-        }
-      },
-      "trading": {
-        "initial_capital": 100000,
-        "commission": 0.001,
-        "slippage": 0.0005,
-        "position_sizing": "fixed",
-        "fixed_position_size": 0.1,
-        "execution": {
-          "order_type": "market",
-          "time_in_force": "day"
-        }
-      },
-      "risk_management": {
-        "position_sizing": {
-          "method": "volatility_adjusted",
-          "base_risk": 0.02,
-          "max_risk_per_trade": 0.05,
-          "portfolio_heat": 0.2
-        },
-        "stop_loss": {
-          "method": "adaptive",
-          "min_stop": 0.03,
-          "max_stop": 0.12,
-          "trailing_stop": true,
-          "volatility_multiplier": 2.0
-        },
-        "exposure_limits": {
-          "max_gross_exposure": 1.0,
-          "max_net_exposure": 0.8,
-          "max_sector_exposure": 0.4,
-          "max_single_name": 0.15
+        "training": {
+          "learning_rate": 0.001,
+          "batch_size": 32,
+          "epochs": 500,
+          "early_stopping_patience": 50,
+          "weight_decay": 0.0001
         }
       },
       "logging": {
@@ -1857,13 +2293,6 @@
           "csv",
           "json"
         ]
-      },
-      "model_persistence": {
-        "save_models": true,
-        "model_directory": "models/trader",
-        "model_versioning": true,
-        "backup_models": true,
-        "retention_days": 30
       }
     }
   }

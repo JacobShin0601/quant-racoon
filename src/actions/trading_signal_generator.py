@@ -87,7 +87,7 @@ class TradingSignalGenerator:
                 logger.warning(f"{symbol} 신뢰도가 None입니다. 기본값 0.3 사용")
                 confidence = 0.3
 
-            logger.info(
+            logger.debug(
                 f"{symbol} 매매 신호 생성 시작 - 점수: {score:.4f}, 신뢰도: {confidence:.3f}"
             )
 
@@ -133,7 +133,7 @@ class TradingSignalGenerator:
                 ],
             }
 
-            logger.info(
+            logger.debug(
                 f"{symbol} 신호: {action} (강도: {action_strength:.2f}, 우선순위: {execution_priority})"
             )
 
@@ -157,25 +157,31 @@ class TradingSignalGenerator:
         try:
             # 신뢰도가 너무 낮으면 보유
             if confidence < self.min_confidence:
+                logger.debug(f"낮은 신뢰도({confidence:.3f}) - HOLD 액션")
                 return "HOLD", 0.5
 
-            # 점수 기반 액션 결정
+            # 점수 기반 액션 결정 (상위 조건부터 체크)
             if score >= self.signal_thresholds["strong_buy"]:
                 action = "STRONG_BUY"
                 strength = min(1.0, score * confidence)
             elif score >= self.signal_thresholds["buy"]:
                 action = "BUY"
                 strength = score * confidence * 0.8
-            elif score >= self.signal_thresholds["hold_lower"]:
-                action = "HOLD"
-                strength = 0.5
-            elif score >= self.signal_thresholds["sell"]:
+            elif score <= self.signal_thresholds["strong_sell"]:
+                action = "STRONG_SELL"
+                strength = min(1.0, abs(score) * confidence)
+            elif score <= self.signal_thresholds["sell"]:
                 action = "SELL"
                 strength = abs(score) * confidence * 0.8
             else:
-                action = "STRONG_SELL"
-                strength = min(1.0, abs(score) * confidence)
+                # hold_lower < score < hold_upper 범위일 때만 HOLD
+                action = "HOLD"
+                # HOLD 강도도 점수에 따라 차등 적용 (0.3~0.7 범위)
+                strength = 0.5 + (score * 0.2)  # 점수가 높을수록 강도 증가
 
+            logger.debug(f"액션 결정: 점수={score:.4f}, 신뢰도={confidence:.3f}, 액션={action}, 강도={strength:.3f}")
+            logger.debug(f"임계값: {self.signal_thresholds}")
+            
             return action, float(strength)
 
         except Exception as e:
@@ -710,10 +716,7 @@ class PortfolioSignalAggregator:
 
             # 입력 데이터 구조 확인
             for i, signal in enumerate(individual_signals):
-                logger.info(f"신호 {i}: keys = {list(signal.keys())}")
-                if "trading_signal" in signal:
-                    trading_signal_keys = list(signal["trading_signal"].keys())
-                    logger.info(f"  trading_signal keys = {trading_signal_keys}")
+                logger.debug(f"신호 {i}: keys = {list(signal.keys())}")
 
             # 신호별 분류
             signal_counts = {
@@ -730,23 +733,22 @@ class PortfolioSignalAggregator:
 
             for i, signal in enumerate(individual_signals):
                 try:
-                    # 신호 구조에서 trading_signal 부분 추출
-                    trading_signal = signal.get("trading_signal", {})
-                    action = trading_signal.get("action", "HOLD")
+                    # individual_signals에는 generate_signal의 반환값이 직접 들어있음
+                    action = signal.get("action", "HOLD")
 
                     signal_counts[action] = signal_counts.get(action, 0) + 1
 
-                    position_size = trading_signal.get("position_size", 0.05)
-                    score = trading_signal.get("score", 0.0)
-                    execution_priority = trading_signal.get("execution_priority", 5)
+                    position_size = signal.get("position_size", 0.05)
+                    score = signal.get("score", 0.0)
+                    execution_priority = signal.get("execution_priority", 5)
 
                     total_position_size += position_size
                     weighted_score += score * position_size
 
                     if execution_priority <= 3:  # 높은 우선순위
-                        high_priority_signals.append(trading_signal)
+                        high_priority_signals.append(signal)
 
-                    logger.info(f"신호 {i} 처리 완료: {action}, score={score:.3f}")
+                    logger.debug(f"신호 {i} 처리 완료: {action}, symbol={signal.get('symbol', 'UNKNOWN')}, score={score:.4f}")
 
                 except Exception as e:
                     logger.error(f"신호 {i} 처리 실패: {e}")
@@ -795,14 +797,14 @@ class PortfolioSignalAggregator:
                 "execution_plan": execution_plan,
                 "recommendations": portfolio_recommendations,
                 "top_opportunities": sorted(
-                    [s.get("trading_signal", {}) for s in individual_signals],
+                    individual_signals,
                     key=lambda x: x.get("score", 0),
                     reverse=True,
                 )[:5],
                 "immediate_actions": [
-                    s.get("trading_signal", {})
+                    s
                     for s in individual_signals
-                    if s.get("trading_signal", {}).get("execution_priority", 5) <= 2
+                    if s.get("execution_priority", 5) <= 2
                 ],
             }
 

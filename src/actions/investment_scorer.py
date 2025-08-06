@@ -432,7 +432,7 @@ class InvestmentScoreGenerator:
                 "timestamp": datetime.now().isoformat(),
             }
 
-            logger.info(
+            logger.debug(
                 f"{symbol} 최종 점수: {final_score:.4f} (신뢰도: {confidence:.3f})"
             )
 

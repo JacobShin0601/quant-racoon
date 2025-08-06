@@ -99,13 +99,15 @@ class NeuralPortfolioManager:
 
             # 1. 기본 가중치 계산 (투자 점수 기반)
             for result in individual_results:
+                # individual_results는 investment_score 객체들의 리스트
                 symbol = result.get("symbol")
-                investment_score = result.get("investment_score", {})
-                score = investment_score.get("final_score", 0)
-                confidence = investment_score.get("confidence", 0)
+                score = result.get("final_score", 0)
+                confidence = result.get("confidence", 0)
 
-                # 신뢰도로 조정된 점수
-                adjusted_score = max(0, score * confidence)
+                # 신뢰도로 조정된 점수 (음수 점수도 고려)
+                # score를 0~1 범위로 변환 (-1~1 -> 0~1)
+                normalized_score = (score + 1) / 2
+                adjusted_score = normalized_score * confidence
                 weights[symbol] = adjusted_score
                 total_score += adjusted_score
 
@@ -345,16 +347,29 @@ class NeuralPortfolioManager:
     def _prepare_returns_data(
         self, historical_data: Dict[str, pd.DataFrame], lookback_days: int = 252
     ) -> pd.DataFrame:
-        """과거 수익률 데이터 준비"""
+        """과거 수익률 데이터 준비 (신경망 예측 대상 종목들만)"""
         try:
             returns_dict = {}
+            
+            # 설정에서 실제 투자 대상 종목들만 가져오기 (매크로 지표 제외)
+            target_symbols = self.config.get("data", {}).get("symbols", [])
+            logger.info(f"포트폴리오 최적화 대상 종목: {target_symbols}")
 
+            # 디버깅: 어떤 심볼들이 들어있는지 확인
+            logger.info(f"Historical data에 포함된 심볼들: {list(historical_data.keys())}")
+            
             for symbol, data in historical_data.items():
-                if "close" in data.columns and len(data) > lookback_days:
+                # 신경망 예측 대상 종목들만 포함
+                if symbol in target_symbols and "close" in data.columns and len(data) > lookback_days:
                     # 최근 데이터만 사용
                     recent_data = data.tail(lookback_days)
                     returns = recent_data["close"].pct_change().dropna()
                     returns_dict[symbol] = returns
+                    logger.info(f"✅ {symbol} 추가됨 (target_symbols에 포함)")
+                elif symbol not in target_symbols:
+                    logger.info(f"❌ {symbol} 제외됨 (target_symbols에 없음)")
+                else:
+                    logger.info(f"❌ {symbol} 제외됨 (데이터 부족 또는 close 컬럼 없음)")
 
             if returns_dict:
                 returns_df = pd.DataFrame(returns_dict).dropna()
@@ -386,18 +401,29 @@ class NeuralPortfolioManager:
         optimized_weights: Dict[str, float],
         alpha: float = 0.7,
     ) -> Dict[str, float]:
-        """신경망 비중과 최적화 비중 결합"""
+        """신경망 비중과 최적화 비중 결합 (투자 대상 종목만)"""
         try:
             combined_weights = {}
-            all_symbols = set(neural_weights.keys()) | set(optimized_weights.keys())
-
-            for symbol in all_symbols:
+            
+            # 투자 대상 종목들만 가져오기 (매크로 지표 제외)
+            target_symbols = set(self.config.get("data", {}).get("symbols", []))
+            logger.info(f"비중 결합 시 대상 종목: {sorted(target_symbols)}")
+            
+            # neural_weights에 있는 종목들만 결합 (target_symbols과 교집합)
+            valid_symbols = set(neural_weights.keys()) & target_symbols
+            
+            for symbol in valid_symbols:
                 neural_w = neural_weights.get(symbol, 0)
                 opt_w = optimized_weights.get(symbol, 0)
 
                 # 가중 평균 (alpha: 신경망 비중의 가중치)
                 combined_w = alpha * neural_w + (1 - alpha) * opt_w
                 combined_weights[symbol] = combined_w
+                
+            # 매크로 지표들 제외 로그
+            excluded_symbols = set(optimized_weights.keys()) - target_symbols
+            if excluded_symbols:
+                logger.info(f"매크로 지표 제외됨: {sorted(excluded_symbols)}")
 
             # 정규화
             total_weight = sum(combined_weights.values())
@@ -405,6 +431,7 @@ class NeuralPortfolioManager:
                 for symbol in combined_weights:
                     combined_weights[symbol] = combined_weights[symbol] / total_weight
 
+            logger.info(f"최종 결합 비중 ({len(combined_weights)}개): {combined_weights}")
             return combined_weights
 
         except Exception as e:
@@ -413,12 +440,13 @@ class NeuralPortfolioManager:
 
     def _estimate_performance(self, weights: Dict[str, float]) -> Dict[str, float]:
         """간단한 성과 추정"""
+        risk_mgmt = self.config.get("portfolio", {}).get("risk_management", {})
         return {
-            "sharpe_ratio": 0.8,  # 추정값
-            "expected_return": 0.12,  # 추정값
-            "volatility": 0.15,  # 추정값
-            "sortino_ratio": 1.0,  # 추정값
-            "max_drawdown": -0.08,  # 추정값
+            "sharpe_ratio": risk_mgmt.get("default_sharpe_ratio", 0.8),
+            "expected_return": risk_mgmt.get("default_expected_return", 0.12),
+            "volatility": risk_mgmt.get("default_volatility", 0.15),
+            "sortino_ratio": risk_mgmt.get("default_sortino_ratio", 1.0),
+            "max_drawdown": -risk_mgmt.get("default_max_drawdown", 0.08),
         }
 
     def backtest_neural_signals(
@@ -971,7 +999,8 @@ class NeuralPortfolioManager:
                 total_return = sum(returns) / len(returns)
 
             # 변동성 계산
-            volatility = 0.15  # 기본값
+            default_volatility = self.config.get("portfolio", {}).get("risk_management", {}).get("default_volatility", 0.15)
+            volatility = default_volatility
             if daily_returns is not None and len(daily_returns) > 1:
                 # 일일 수익률 시계열이 있으면 이를 사용
                 volatility = daily_returns.std() * np.sqrt(252)  # 연율화
@@ -1016,10 +1045,11 @@ class NeuralPortfolioManager:
 
         except Exception as e:
             logger.error(f"❌ 포트폴리오 메트릭 계산 실패: {e}")
+            default_volatility = self.config.get("portfolio", {}).get("risk_management", {}).get("default_volatility", 0.15)
             return {
                 "total_return": total_return,
                 "sharpe_ratio": 0.0,
-                "volatility": 0.15,
+                "volatility": default_volatility,
                 "max_drawdown": 0.0,
             }
 

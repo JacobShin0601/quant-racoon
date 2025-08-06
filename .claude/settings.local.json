@@ -16,7 +16,14 @@
       "Bash(sed:*)",
       "Bash(cat:*)",
       "Bash(./run_market_analysis.sh:*)",
-      "Bash(./run_trader.sh:*)"
+      "Bash(./run_trader.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(rm:*)",
+      "Bash(git log:*)",
+      "Bash(LOG_LEVEL=DEBUG ./run_trader.sh:*)",
+      "Bash(export:*)",
+      "Bash(LOG_LEVEL=DEBUG python3:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }

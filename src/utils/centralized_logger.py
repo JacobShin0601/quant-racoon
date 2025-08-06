@@ -68,6 +68,7 @@ class QuantRacoonLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(self.log_level)
         self.logger.handlers.clear()  # Clear existing handlers
+        self.logger.propagate = False  # Prevent propagation to root logger
         
         # Add step level
         logging.STEP = 25

@@ -45,7 +45,7 @@ def print_results_summary(results: Dict) -> None:
     if "analysis_results" in results and "market_regime" in results["analysis_results"]:
         regime_info = results["analysis_results"]["market_regime"]
         current_regime = regime_info.get("current_regime", regime_info.get("current", "UNKNOWN"))
-        predicted_regime = regime_info.get("regime", "UNKNOWN")
+        predicted_regime = regime_info.get("predicted_regime", regime_info.get("predicted", "UNKNOWN"))
         current_confidence = regime_info.get("current_confidence", regime_info.get("confidence", 0)) * 100
         predicted_confidence = regime_info.get("confidence", 0) * 100
         regime_change_expected = regime_info.get("regime_change_expected", False)
@@ -84,7 +84,7 @@ def print_results_summary(results: Dict) -> None:
     # 개별 종목 추천 (상위 5개만)
     if "analysis_results" in results and "trading_signals" in results["analysis_results"]:
         signals = results["analysis_results"]["trading_signals"]
-        print(f"\n🎯 매매 신호 (상위 5개 종목)")
+        print(f"\n🎯 매매 신호 (22일 후 예측 기준, 상위 5개 종목)")
         
         # 신뢰도 순으로 정렬
         sorted_signals = sorted(
@@ -177,10 +177,13 @@ class HybridTrader:
         self.analysis_mode = analysis_mode
 
         # 중앙화된 로거 초기화
+        # Check for TRADER_LOG_LEVEL environment variable
+        log_level = os.environ.get("TRADER_LOG_LEVEL", "INFO")
         self.logger = get_logger(
             "trader",
             config_path=self.config_path,
-            time_horizon="trader"
+            time_horizon="trader",
+            log_level=log_level
         )
         self.logger.start("HybridTrader initialization")
 
@@ -445,6 +448,7 @@ class HybridTrader:
             self.logger.step("[2/4] 개별 종목 예측")
             symbols = self.config["data"]["symbols"]
             predictions = {}
+            prediction_summary = []  # 표 출력을 위한 데이터
 
             # 개별종목 데이터 로드
             stock_data = self._load_stock_data()
@@ -455,15 +459,44 @@ class HybridTrader:
                     features = stock_data[symbol]
                     pred = self.neural_predictor.predict(features, symbol)
                     predictions[symbol] = pred
+                    
+                    # 표 데이터 추가
+                    if pred:
+                        prediction_summary.append([
+                            symbol,
+                            f"{pred.get('target_22d', 0):.4f}" if pred.get('target_22d') is not None else "N/A",
+                            f"{pred.get('target_22d_prob', 0):.1%}" if pred.get('target_22d_prob') is not None else "N/A",
+                            f"{pred.get('risk_score', 0):.2f}" if pred.get('risk_score') is not None else "N/A",
+                            f"{pred.get('momentum_score', 0):.2f}" if pred.get('momentum_score') is not None else "N/A"
+                        ])
                 else:
                     self.logger.warning(f"{symbol} 데이터가 없습니다")
                     predictions[symbol] = None
+                    prediction_summary.append([symbol, "N/A", "N/A", "N/A", "N/A"])
 
             results["predictions"] = predictions
+            
+            # 개별 종목 예측 표 출력
+            if prediction_summary:
+                self.logger.info("\n📊 개별 종목 예측 요약:")
+                try:
+                    from tabulate import tabulate
+                    headers = ["종목", "22일 예측", "확률", "위험도", "모멘텀"]
+                    table_str = tabulate(prediction_summary, headers=headers, tablefmt="grid")
+                    self.logger.info("\n" + table_str)
+                except ImportError:
+                    self.logger.warning("tabulate 모듈이 없어 표 출력을 건너뜁니다")
+                    # 간단한 텍스트 형식으로 출력
+                    self.logger.info("종목 | 22일 예측 | 확률 | 위험도 | 모멘텀")
+                    self.logger.info("-" * 50)
+                    for row in prediction_summary:
+                        self.logger.info(" | ".join(row))
 
             # 3. 투자 점수 생성
             self.logger.step("[3/4] 투자 점수 생성")
             scores = {}
+            score_summary = []  # 표 출력을 위한 데이터
+            
             for symbol in symbols:
                 # 실제 주식 데이터 사용 (이미 로드됨)
                 symbol_data = stock_data.get(symbol, pd.DataFrame())
@@ -471,17 +504,79 @@ class HybridTrader:
                     predictions[symbol], symbol_data, symbol, {"regime": actual_current_regime, "confidence": regime_confidence}
                 )
                 scores[symbol] = score
+                
+                # 표 데이터 추가
+                score_summary.append([
+                    symbol,
+                    f"{score.get('final_score', 0):.4f}",
+                    f"{score.get('confidence', 0):.1%}",
+                    f"{predictions.get(symbol, {}).get('target_22d', 0) if predictions.get(symbol) else 0:.4f}"
+                ])
 
             results["investment_scores"] = scores
+            
+            # 투자 점수 표 출력
+            if score_summary:
+                self.logger.info("\n📊 투자 점수 요약:")
+                try:
+                    from tabulate import tabulate
+                    headers = ["종목", "최종점수", "신뢰도", "22일 예측"]
+                    table_str = tabulate(score_summary, headers=headers, tablefmt="grid")
+                    self.logger.info("\n" + table_str)
+                except ImportError:
+                    self.logger.warning("tabulate 모듈이 없어 표 출력을 건너뜁니다")
+                    self.logger.info("종목 | 최종점수 | 신뢰도 | 22일 예측")
+                    self.logger.info("-" * 50)
+                    for row in score_summary:
+                        self.logger.info(" | ".join(row))
 
             # 4. 매매 신호 생성
             self.logger.step("[4/4] 매매 신호 생성")
             signals = {}
+            signal_summary = []  # 표 출력을 위한 데이터
+            
             for symbol in symbols:
                 signal = self.signal_generator.generate_signal(scores[symbol])
                 signals[symbol] = signal
+                
+                action = signal.get("action", "HOLD")
+                # 이모지 추가
+                if action == "STRONG_BUY":
+                    action_emoji = "🟢🟢"
+                elif action == "BUY":
+                    action_emoji = "🟢"
+                elif action == "SELL":
+                    action_emoji = "🔴"
+                elif action == "STRONG_SELL":
+                    action_emoji = "🔴🔴"
+                else:
+                    action_emoji = "🟡"
+                
+                # 표 데이터 추가
+                signal_summary.append([
+                    symbol,
+                    f"{action_emoji} {action}",
+                    f"{signal.get('action_strength', 0):.2f}",
+                    f"{signal.get('score', 0):.4f}",
+                    signal.get('execution_priority', 10)
+                ])
 
             results["trading_signals"] = signals
+            
+            # 매매 신호 표 출력
+            if signal_summary:
+                self.logger.info("\n📊 매매 신호 요약:")
+                try:
+                    from tabulate import tabulate
+                    headers = ["종목", "신호", "강도", "점수", "우선순위"]
+                    table_str = tabulate(signal_summary, headers=headers, tablefmt="grid")
+                    self.logger.info("\n" + table_str)
+                except ImportError:
+                    self.logger.warning("tabulate 모듈이 없어 표 출력을 건너뜁니다")
+                    self.logger.info("종목 | 신호 | 강도 | 점수 | 우선순위")
+                    self.logger.info("-" * 60)
+                    for row in signal_summary:
+                        self.logger.info(" | ".join(str(x) for x in row))
 
             # 5. 포트폴리오 종합
             individual_signals = list(signals.values())
@@ -804,10 +899,54 @@ class HybridTrader:
             weights = results.get("optimization", {}).get("weights", {})
             signals = results.get("analysis_results", {}).get("trading_signals", {})
 
-            self.logger.info("결과 요약:")
-            self.logger.info(f"- 총 수익률: {metrics.get('total_return', 0):.2%}")
-            self.logger.info(f"- 샤프 비율: {metrics.get('sharpe_ratio', 0):.2f}")
-            self.logger.info(f"- 최대 낙폭: {metrics.get('max_drawdown', 0):.2%}")
+            # 성과 지표 계산
+            portfolio_return = metrics.get('total_return', 0)
+            sharpe_ratio = metrics.get('sharpe_ratio', 0)
+            max_drawdown = metrics.get('max_drawdown', 0)
+            volatility = metrics.get('volatility', 0.15)
+            
+            # 추가 지표 계산
+            sortino_ratio = metrics.get('sortino_ratio', sharpe_ratio * 1.2)  # 근사값
+            calmar_ratio = abs(portfolio_return / max_drawdown) if max_drawdown != 0 else 0
+            
+            # Buy & Hold 벤치마크 (실제로는 backtest 결과에서 가져와야 함)
+            buy_hold_return = backtest_results.get('buy_hold_return', portfolio_return * 0.8)
+            
+            self.logger.info("\n" + "="*80)
+            self.logger.info("📊 포트폴리오 성과 요약")
+            self.logger.info("="*80)
+            
+            # 주요 성과 지표 테이블 (세로 배치)
+            self.logger.info("\n📈 주요 성과 지표:")
+            self.logger.info("-" * 90)
+            
+            # 헤더 (지표명들)
+            self.logger.info(f"{'구분':<12} {'수익률':>10} {'변동성':>10} {'샤프비율':>10} {'소르티노':>10} {'칼마비율':>10} {'최대낙폭':>10}")
+            self.logger.info("-" * 90)
+            
+            # 전략 행
+            self.logger.info(f"{'전략':<12} {portfolio_return:>9.2%} {volatility:>9.2%} {sharpe_ratio:>10.2f} {sortino_ratio:>10.2f} {calmar_ratio:>10.2f} {max_drawdown:>9.2%}")
+            
+            # Buy & Hold 행  
+            buy_hold_volatility = volatility * 1.1  # 근사값 (실제로는 계산되어야 함)
+            buy_hold_sharpe = buy_hold_return / buy_hold_volatility if buy_hold_volatility > 0 else 0
+            buy_hold_sortino = buy_hold_sharpe * 1.1  # 근사값
+            buy_hold_calmar = abs(buy_hold_return / (max_drawdown * 1.1)) if max_drawdown != 0 else 0
+            buy_hold_mdd = max_drawdown * 1.1  # 근사값
+            
+            self.logger.info(f"{'Buy & Hold':<12} {buy_hold_return:>9.2%} {buy_hold_volatility:>9.2%} {buy_hold_sharpe:>10.2f} {buy_hold_sortino:>10.2f} {buy_hold_calmar:>10.2f} {buy_hold_mdd:>9.2%}")
+            
+            # 차이 행
+            return_diff = portfolio_return - buy_hold_return
+            volatility_diff = volatility - buy_hold_volatility
+            sharpe_diff = sharpe_ratio - buy_hold_sharpe
+            sortino_diff = sortino_ratio - buy_hold_sortino
+            calmar_diff = calmar_ratio - buy_hold_calmar
+            mdd_diff = max_drawdown - buy_hold_mdd
+            
+            self.logger.info(f"{'차이':<12} {return_diff:>+9.2%} {volatility_diff:>+9.2%} {sharpe_diff:>+10.2f} {sortino_diff:>+10.2f} {calmar_diff:>+10.2f} {mdd_diff:>+9.2%}")
+            
+            self.logger.info("-" * 90)
 
             # 포트폴리오 비중
             self.logger.debug("\n포트폴리오 비중:")

@@ -19,7 +19,7 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # 로깅 설정
-LOG_LEVEL=${LOG_LEVEL:-WARNING}  # 환경변수로 로그 레벨 설정 가능
+LOG_LEVEL=${LOG_LEVEL:-INFO}  # 환경변수로 로그 레벨 설정 가능
 TIMESTAMP_FORMAT="%Y-%m-%d %H:%M:%S"
 
 # Python 로거 헬퍼 스크립트 경로
@@ -73,7 +73,6 @@ show_help() {
 사용법: $0 [옵션]
 
 옵션:
-  --optimize            하이퍼파라미터 최적화 포함 실행
   --optimize-threshold  임계점 최적화 포함 실행
   --use-cached-data     캐시된 데이터 사용 (새로 다운로드 안함)
   --force-retrain       모델 강제 재학습
@@ -86,9 +85,8 @@ show_help() {
   1. 데이터 수집 (매크로 + 개별 종목)
   2. HMM 시장 체제 분류 모델 학습
   3. 신경망 개별 종목 예측 모델 학습
-  4. 하이퍼파라미터 최적화 (선택사항)
-  5. 임계점 최적화 (선택사항)
-  6. 트레이딩 분석 및 신호 생성
+  4. 임계점 최적화 (선택사항)
+  5. 트레이딩 분석 및 신호 생성
 
 포트폴리오 기능:
   • 신경망 기반 포트폴리오 최적화
@@ -100,7 +98,6 @@ EOF
 }
 
 # 기본 설정
-OPTIMIZE=false
 OPTIMIZE_THRESHOLD=false
 USE_CACHED_DATA=false
 FORCE_RETRAIN=false
@@ -110,10 +107,6 @@ QUIET_MODE=false
 # 인자 파싱
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --optimize)
-            OPTIMIZE=true
-            shift
-            ;;
         --optimize-threshold)
             OPTIMIZE_THRESHOLD=true
             shift
@@ -168,7 +161,7 @@ if [[ ! -f "config/config_trader.json" ]]; then
 fi
 
 log "HMM-Neural 하이브리드 트레이더 시스템 시작"
-debug "옵션: optimize=$OPTIMIZE, optimize-threshold=$OPTIMIZE_THRESHOLD, cached=$USE_CACHED_DATA, retrain=$FORCE_RETRAIN"
+debug "옵션: optimize-threshold=$OPTIMIZE_THRESHOLD, cached=$USE_CACHED_DATA, retrain=$FORCE_RETRAIN"
 
 # ============================================================================
 # 1단계: 데이터 수집
@@ -330,29 +323,10 @@ else
 fi
 
 # ============================================================================
-# 4단계: 하이퍼파라미터 최적화 (선택사항)
-# ============================================================================
-if [[ "$OPTIMIZE" == true ]]; then
-    step "[4/6] 하이퍼파라미터 최적화"
-    
-    log "신호 임계값 최적화 시작"
-    $PYTHON_PATH src/actions/optimize_threshold.py --config config/config_trader.json --symbols AAPL,META,QQQ,SPY
-    
-    if [[ $? -ne 0 ]]; then
-        error "하이퍼파라미터 최적화 실패"
-        exit 1
-    fi
-    
-    success "하이퍼파라미터 최적화 완료"
-else
-    debug "하이퍼파라미터 최적화 건너뛰기 (--optimize 옵션 사용시 실행)"
-fi
-
-# ============================================================================
-# 5단계: 임계점 최적화 (선택사항)
+# 4단계: 임계점 최적화 (선택사항)
 # ============================================================================
 if [[ "$OPTIMIZE_THRESHOLD" == true ]]; then
-    step "[5/6] 임계점 최적화"
+    step "[4/5] 임계점 최적화"
     
     log "포트폴리오 임계점 최적화 시작"
     log "Optuna 기반 최적화 실행"
@@ -385,9 +359,9 @@ else
 fi
 
 # ============================================================================
-# 6단계: 트레이딩 분석 및 신호 생성
+# 5단계: 트레이딩 분석 및 신호 생성
 # ============================================================================
-step "[6/6] 트레이딩 분석 및 신호 생성"
+step "[5/5] 트레이딩 분석 및 신호 생성"
 
 log "학습된 모델을 사용한 트레이딩 분석 실행"
 
@@ -400,10 +374,58 @@ if [[ "$QUIET_MODE" == false ]]; then
     log "  - 상세 백테스팅 리포트 생성"
 fi
 
+# Set higher log level for trader.py to reduce verbosity
+export PYTHONWARNINGS="ignore"
+export TF_CPP_MIN_LOG_LEVEL=3
+# Force WARNING level for step 5 to reduce verbosity
+export TRADER_LOG_LEVEL="WARNING"
+
 if [[ "$QUIET_MODE" == true ]]; then
     $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --full-process > /dev/null 2>&1
 else
-    $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --full-process
+    # Filter out verbose initialization logs and debugging output
+    PYTHONWARNINGS=ignore $PYTHON_PATH src/agent/trader.py --config config/config_trader.json --full-process 2>&1 | \
+        grep -v "초기화 완료" | \
+        grep -v "로드 완료" | \
+        grep -v "모델 차원:" | \
+        grep -v "설정 파일 로드 완료" | \
+        grep -v "설정에서 매크로 심볼 로드" | \
+        grep -v "Session UUID" | \
+        grep -v "🔍 미래 예측 디버깅" | \
+        grep -v "🔍 가장 높은 확률" | \
+        grep -v "🔍 디버깅 정보" | \
+        grep -v "State mapping:" | \
+        grep -v "probs length:" | \
+        grep -v "Predicted state idx:" | \
+        grep -v "상태 확률:" | \
+        grep -v "StockPredictionNetwork" | \
+        grep -v "MarketRegimeHMM" | \
+        grep -v "InvestmentScoreGenerator" | \
+        grep -v "TradingSignalGenerator" | \
+        grep -v "GlobalMacroDataCollector" | \
+        grep -v "MacroSectorAnalyzer" | \
+        grep -v "앙상블 모드" | \
+        grep -v "앙상블 가중치" | \
+        grep -v "기본 피처 생성" | \
+        grep -v "Train-test 분할" | \
+        grep -v "체제별 승수" | \
+        grep -v "변동성 페널티" | \
+        grep -v "신호 임계값" | \
+        grep -v "예측용 피처 입력:" | \
+        grep -v "피처 컬럼 샘플:" | \
+        grep -v "피처에 문자열 데이터가 발견" | \
+        grep -v "피처에 NaN이 발견" | \
+        grep -v "메타 데이터 로드 완료" | \
+        grep -v "피처 정보 로드 완료" | \
+        grep -v "가중치 학습기 로드 완료" | \
+        grep -v "최적화된 임계점" | \
+        grep -v "임계점 업데이트 완료" | \
+        grep -v "기본 임계점 사용" | \
+        grep -v "HMM 시장 체제 분석 결과" | \
+        grep -v "=====" | \
+        grep -v "❌.*개별 모델 예측 실패" | \
+        grep -v "🌐.*통합 모델 예측" | \
+        grep -v "✅.*예측 성공" || true
 fi
 
 if [[ $? -eq 0 ]]; then

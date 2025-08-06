@@ -15,10 +15,21 @@ from sklearn.model_selection import train_test_split
 import joblib
 import json
 import os
+import random
 from typing import Dict, List, Optional, Tuple, Union
 from datetime import datetime, timedelta
 import logging
 import warnings
+
+# Seed 고정 (재현 가능한 결과를 위해)
+torch.manual_seed(42)
+np.random.seed(42)
+random.seed(42)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(42)
+    torch.cuda.manual_seed_all(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 # tqdm import (진행바 표시용)
 try:
@@ -119,13 +130,19 @@ class SimpleStockPredictor(nn.Module):
         layers = []
         prev_size = input_size
 
-        for hidden_size in hidden_sizes:
-            layers.extend(
-                [nn.Linear(prev_size, hidden_size), nn.ReLU(), nn.Dropout(dropout_rate)]
-            )
+        # 은닉층 구성
+        for i, hidden_size in enumerate(hidden_sizes):
+            layers.append(nn.Linear(prev_size, hidden_size))
+            layers.append(nn.LeakyReLU(0.1))  # ReLU 대신 LeakyReLU 사용
+            
+            # 배치 정규화 추가 (첫 번째 층 제외)
+            if i > 0:
+                layers.append(nn.BatchNorm1d(hidden_size))
+            
+            layers.append(nn.Dropout(dropout_rate))
             prev_size = hidden_size
 
-        # 출력층을 동적으로 설정
+        # 출력층 (활성화 함수 없음 - 회귀 문제)
         layers.append(nn.Linear(prev_size, output_size))
 
         self.network = nn.Sequential(*layers)
@@ -172,7 +189,7 @@ class StockPredictionNetwork:
         self.neural_config = config.get("neural_network", {})
 
         # Train-test 분할 설정
-        self.train_ratio = self.neural_config.get("train_ratio", 0.8)
+        self.train_ratio = self.config.get("data", {}).get("train_ratio", 0.7)
         logger.info(f"📊 Train-test 분할 비율: {self.train_ratio:.1%}")
 
         # 앙상블 설정
@@ -184,11 +201,13 @@ class StockPredictionNetwork:
                 "enable_individual_models": True,
                 "enable_weight_learning": True,  # 가중치 학습 활성화
                 "weight_learning_config": {
-                    "learning_rate": 0.001,
-                    "epochs": 100,
+                    "learning_rate": 0.0005,  # 더 안정적인 학습을 위해 감소
+                    "epochs": 200,  # 더 충분한 학습을 위해 증가
                     "batch_size": 32,
                     "validation_split": 0.2,
                     "min_samples_for_weight_learning": 50,
+                    "early_stopping_patience": 25,  # 더 강화된 Early stopping
+                    "min_delta": 1e-6,  # 최소 개선 임계값
                 },
             },
         )
@@ -266,8 +285,8 @@ class StockPredictionNetwork:
             PyTorch 모델
         """
         architecture = self.neural_config.get("architecture", {})
-        hidden_sizes = architecture.get("hidden_layers", [32, 16])
-        dropout_rate = architecture.get("dropout_rate", 0.2)
+        hidden_sizes = architecture.get("hidden_layers", [64, 32, 16])
+        dropout_rate = architecture.get("dropout_rate", 0.25)
 
         model = SimpleStockPredictor(
             input_size=input_dim,
@@ -879,6 +898,7 @@ class StockPredictionNetwork:
             (X, y) 튜플
         """
         try:
+            logger.debug(f"prepare_training_data 시작 - features shape: {features.shape if hasattr(features, 'shape') else 'N/A'}, lookback: {lookback_days}")
             # 타겟을 numpy array로 변환
             if isinstance(target, pd.Series):
                 target_array = target.values
@@ -953,6 +973,9 @@ class StockPredictionNetwork:
 
             # 윈도우 데이터 생성
             X, y = [], []
+            
+            num_windows = len(features_array) - lookback_days
+            logger.debug(f"윈도우 생성: features_array 길이={len(features_array)}, lookback_days={lookback_days}, 생성 가능 윈도우 수={num_windows}")
 
             for i in range(lookback_days, len(features_array)):
                 # 입력 윈도우
@@ -960,10 +983,15 @@ class StockPredictionNetwork:
                 # 타겟 (현재 시점의 미래 수익률)
                 y.append(target_array[i])
 
-            return np.array(X), np.array(y)
+            logger.debug(f"생성된 윈도우: X={len(X)}, y={len(y)}")
+            result_X, result_y = np.array(X), np.array(y)
+            logger.debug(f"최종 결과 shape: X={result_X.shape}, y={result_y.shape}")
+            return result_X, result_y
 
         except Exception as e:
             logger.error(f"시계열 데이터 준비 실패: {e}")
+            import traceback
+            logger.error(f"Stack trace: {traceback.format_exc()}")
             return np.array([]), np.array([])
 
     def _prepare_prediction_data(
@@ -1038,6 +1066,7 @@ class StockPredictionNetwork:
         통합 모델 학습 (모든 종목 데이터를 합쳐서 학습)
         """
         try:
+            logger.info(f"통합 모델 학습 시작. 종목 수: {len(training_data)}")
             # 전체 학습 데이터 수집
             all_X, all_y = [], []
             target_columns = None
@@ -1049,6 +1078,8 @@ class StockPredictionNetwork:
                 try:
                     features = data["features"]
                     target = data["target"]
+                    logger.debug(f"{symbol} - features shape: {features.shape if hasattr(features, 'shape') else len(features)}")
+                    logger.debug(f"{symbol} - target shape: {target.shape if hasattr(target, 'shape') else len(target)}")
                 except KeyError as e:
                     logger.error(
                         f"❌ {symbol}: {e} 키가 없습니다. 사용 가능한 키: {list(data.keys())}"
@@ -1059,6 +1090,7 @@ class StockPredictionNetwork:
                 if isinstance(target, pd.DataFrame):
                     if target_columns is None:
                         target_columns = list(target.columns)
+                        logger.info(f"타겟 컬럼 순서: {target_columns}")
                     target = target.values
                 elif isinstance(target, pd.Series):
                     target = target.values
@@ -1075,18 +1107,22 @@ class StockPredictionNetwork:
                 # 시계열 윈도우 데이터 생성
                 features_config = self.neural_config.get("features", {})
                 lookback = features_config.get("lookback_days", 20)
+                logger.debug(f"{symbol} - prepare_training_data 호출. lookback: {lookback}")
                 X, y = self.prepare_training_data(features, target, lookback)
+                logger.debug(f"{symbol} - prepare_training_data 결과 - X shape: {X.shape if hasattr(X, 'shape') else len(X)}, y shape: {y.shape if hasattr(y, 'shape') else len(y)}")
 
                 if len(X) > 0 and len(y) > 0:
                     all_X.append(X)
                     all_y.append(y)
+                    logger.info(f"{symbol}: 윈도우 데이터 생성 성공 (X: {len(X)}, y: {len(y)})")
                 else:
                     logger.warning(
                         f"{symbol}: 윈도우 데이터 생성 실패 (X: {len(X)}, y: {len(y)})"
                     )
 
+            logger.info(f"all_X 길이: {len(all_X)}, all_y 길이: {len(all_y)}")
             if not all_X:
-                logger.error("통합 모델 학습 데이터가 없습니다")
+                logger.error("통합 모델 학습 데이터가 없습니다 - all_X가 비어있음")
                 return False
 
             # 종목별 피처를 통합하여 새로운 피처 생성
@@ -1219,21 +1255,34 @@ class StockPredictionNetwork:
             # 데이터 스케일링
             X_scaled = self.universal_scaler.fit_transform(X_combined)
 
-            # 타겟 클리핑 (-1 ~ 1) 및 NaN 검증
-            y_clipped = np.clip(y_combined, -1, 1)
+            # 타겟 정규화 (클리핑 대신 표준화 사용)
+            logger.info(f"Universal model target stats - min: {y_combined.min():.4f}, max: {y_combined.max():.4f}, mean: {y_combined.mean():.4f}, std: {y_combined.std():.4f}")
+            
+            # 표준화: (x - mean) / std
+            y_mean = np.mean(y_combined, axis=0)
+            y_std = np.std(y_combined, axis=0)
+            y_std[y_std == 0] = 1  # 0으로 나누기 방지
+            
+            y_normalized = (y_combined - y_mean) / y_std
+            
+            # 정규화 통계 저장 (예측 시 역변환용)
+            self.target_stats = {'mean': y_mean, 'std': y_std}
+            
+            logger.info(f"Universal model normalization stats - mean: {y_mean}, std: {y_std}")
+            logger.info(f"After normalization - min: {y_normalized.min():.4f}, max: {y_normalized.max():.4f}, mean: {y_normalized.mean():.4f}, std: {y_normalized.std():.4f}")
 
             # 최종 NaN 검증
-            if np.isnan(X_scaled).any() or np.isnan(y_clipped).any():
+            if np.isnan(X_scaled).any() or np.isnan(y_normalized).any():
                 logger.error("스케일링 후에도 NaN이 존재합니다. 학습을 중단합니다.")
                 return False
 
             # 모델 구축
-            output_size = y_clipped.shape[1] if len(y_clipped.shape) > 1 else 1
+            output_size = y_normalized.shape[1] if len(y_normalized.shape) > 1 else 1
             self.universal_model = self._build_model(X_scaled.shape[1], output_size)
 
             # 학습/검증 데이터 분할
             X_train, X_val, y_train, y_val = train_test_split(
-                X_scaled, y_clipped, test_size=0.2, random_state=42
+                X_scaled, y_normalized, test_size=0.2, random_state=42
             )
 
             # 학습 설정
@@ -1247,10 +1296,14 @@ class StockPredictionNetwork:
             )
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-            # 손실 함수 및 옵티마이저
-            criterion = nn.MSELoss()
+            # 손실 함수 및 옵티마이저 (L2 정규화 추가)
+            # HuberLoss 사용 - 이상치에 더 강건함
+            criterion = nn.HuberLoss(delta=0.1)
             learning_rate = training_config.get("learning_rate", 0.001)
-            optimizer = optim.Adam(self.universal_model.parameters(), lr=learning_rate)
+            weight_decay = training_config.get("weight_decay", 0.0001)  # L2 정규화 강도
+            optimizer = optim.Adam(self.universal_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+            
+            logger.info(f"Optimizer settings - lr: {learning_rate}, weight_decay (L2): {weight_decay}")
 
             # 학습 파라미터
             epochs = training_config.get("epochs", 200)
@@ -1414,16 +1467,38 @@ class StockPredictionNetwork:
                         symbol_iter.update(1)
                     continue
 
-                # 타겟 클리핑 (-1 ~ 1)
-                y_clipped = np.clip(y, -1, 1)
+                # 타겟 정규화 (통합 모델과 동일한 방식 적용)
+                logger.info(f"{symbol} target stats - min: {y.min():.4f}, max: {y.max():.4f}, mean: {y.mean():.4f}, std: {y.std():.4f}")
+                
+                # 먼저 극단값 클리핑
+                y_clipped = np.clip(y, -0.3, 0.3)
+                logger.info(f"{symbol} after clipping - min: {y_clipped.min():.4f}, max: {y_clipped.max():.4f}")
+                
+                # 표준화 적용
+                y_mean = np.mean(y_clipped, axis=0)
+                y_std = np.std(y_clipped, axis=0)
+                if np.isscalar(y_std):
+                    if y_std == 0:
+                        y_std = 1
+                else:
+                    y_std[y_std == 0] = 1  # 0으로 나누기 방지
+                
+                y_normalized = (y_clipped - y_mean) / y_std
+                
+                # 개별 모델 타겟 통계 저장
+                if not hasattr(self, 'individual_target_stats'):
+                    self.individual_target_stats = {}
+                self.individual_target_stats[symbol] = {'mean': y_mean, 'std': y_std}
+                
+                logger.info(f"{symbol} after normalization - min: {y_normalized.min():.4f}, max: {y_normalized.max():.4f}, mean: {y_normalized.mean():.4f}, std: {y_normalized.std():.4f}")
 
                 # 모델 구축
-                output_size = y_clipped.shape[1] if len(y_clipped.shape) > 1 else 1
+                output_size = y_normalized.shape[1] if len(y_normalized.shape) > 1 else 1
                 model = self._build_model(X_scaled.shape[1], output_size)
 
                 # 학습/검증 데이터 분할
                 X_train, X_val, y_train, y_val = train_test_split(
-                    X_scaled, y_clipped, test_size=0.2, random_state=42
+                    X_scaled, y_normalized, test_size=0.2, random_state=42
                 )
 
                 # 학습 설정
@@ -1439,10 +1514,11 @@ class StockPredictionNetwork:
                     val_dataset, batch_size=batch_size, shuffle=False
                 )
 
-                # 손실 함수 및 옵티마이저
+                # 손실 함수 및 옵티마이저 (L2 정규화 추가)
                 criterion = nn.MSELoss()
-                learning_rate = training_config.get("learning_rate", 0.001)
-                optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+                learning_rate = training_config.get("learning_rate", 0.0005)
+                weight_decay = training_config.get("weight_decay", 0.01)  # L2 정규화
+                optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
                 # 학습 파라미터
                 epochs = training_config.get("epochs", 200)
@@ -1699,32 +1775,37 @@ class StockPredictionNetwork:
 
                 # 검증 결과 요약
                 print("\n📊 22일 예측 검증 결과:")
-                print("─" * 50)
-                print(f"{'종목':^10} {'RMSE':^10} {'예측수':^10} {'평균오차':^10}")
-                print("─" * 50)
+                print("─" * 70)
+                print(f"{'종목':^8} {'RMSE':^8} {'MAE':^8} {'예측수':^8} {'평균오차(ME)':^12} {'수익률해석':^16}")
+                print("─" * 70)
                 
                 all_predictions = []
                 all_actuals = []
                 
                 for symbol, result in validation_results.items():
                     if result["num_predictions"] > 0:
-                        # 평균 오차 계산
+                        # 기존 계산된 메트릭 사용
                         predictions = result['predictions']
                         actuals = result['actual_values']
                         all_predictions.extend(predictions)
                         all_actuals.extend(actuals)
                         
-                        mean_error = np.mean([p - a for p, a in zip(predictions, actuals)])
+                        rmse = result['rmse']
+                        mae = result['mae']
+                        me = result['me']
                         
-                        print(f"{symbol:^10} {result['rmse']:^10.4f} {result['num_predictions']:^10d} {mean_error:^10.4f}")
+                        # 수익률 해석 추가
+                        mae_pct = f"±{mae*100:.1f}%"
+                        
+                        print(f"{symbol:^8} {rmse:^8.4f} {mae:^8.4f} {result['num_predictions']:^8d} {me:^12.4f} {mae_pct:^16}")
                         logger.info(
-                            f"   {symbol}: RMSE = {result['rmse']:.4f} ({result['num_predictions']}개 예측, 평균오차 = {mean_error:.4f})"
+                            f"   {symbol}: RMSE = {rmse:.4f}, MAE = {mae:.4f}, ME = {me:.4f} ({result['num_predictions']}개 예측)"
                         )
                     else:
-                        print(f"{symbol:^10} {'N/A':^10} {0:^10d} {'N/A':^10}")
+                        print(f"{symbol:^8} {'N/A':^8} {'N/A':^8} {0:^8d} {'N/A':^12} {'N/A':^16}")
                         logger.warning(f"   {symbol}: 검증 데이터 부족")
                 
-                print("─" * 50)
+                print("─" * 70)
                 
                 # 전체 평균 RMSE 계산
                 valid_rmses = [
@@ -1774,6 +1855,11 @@ class StockPredictionNetwork:
             예측 결과 (단일값 또는 멀티타겟 딕셔너리)
         """
         try:
+            logger.info(f"🎯 {symbol} 예측 시작...")
+            logger.debug(f"입력 피처 shape: {features.shape}")
+            logger.debug(f"입력 피처 컬럼 수: {len(features.columns)}")
+            logger.debug(f"입력 피처 샘플 (첫 5개): {list(features.columns[:5])}")
+            
             if self.universal_model is None:
                 logger.error("통합 모델이 학습되지 않았습니다")
                 return None
@@ -1853,13 +1939,36 @@ class StockPredictionNetwork:
                 and symbol in self.individual_scalers
             ):
                 try:
+                    # 개별 모델은 학습시와 동일한 피처 사용
+                    # 저장된 피처 정보 확인
+                    if hasattr(self, 'feature_info') and self.feature_info:
+                        individual_features_info = self.feature_info.get('individual_features', {})
+                        if symbol in individual_features_info:
+                            # 저장된 피처명 사용
+                            saved_feature_names = individual_features_info[symbol].get('feature_names', [])
+                            if saved_feature_names and all(col in features.columns for col in saved_feature_names):
+                                # 저장된 피처만 선택
+                                features_subset = features[saved_feature_names]
+                            else:
+                                # 피처명이 없으면 전체 사용
+                                features_subset = features
+                        else:
+                            features_subset = features
+                    else:
+                        features_subset = features
+                    
+                    # 예측용 윈도우 데이터는 이미 위에서 생성됨 (X)
+                    # 개별 모델도 동일한 X 사용
                     X_individual = self.individual_scalers[symbol].transform(X)
                     individual_pred = self._predict_with_model(
-                        self.individual_models[symbol], X_individual
+                        self.individual_models[symbol], X_individual, is_individual=True, symbol=symbol
                     )
                     logger.info(f"✅ {symbol} 개별 모델 예측 성공: {individual_pred}")
                 except Exception as e:
                     logger.warning(f"❌ {symbol} 개별 모델 예측 실패: {e}")
+                    if 'X' in locals():
+                        logger.debug(f"   - 입력 피처 shape: {X.shape}")
+                        logger.debug(f"   - 예상 피처 shape: {self.individual_scalers[symbol].n_features_in_} features")
 
             # 2. 통합 모델 예측 (개별 모델이 없거나 실패한 경우)
             if individual_pred is None:
@@ -1941,7 +2050,7 @@ class StockPredictionNetwork:
                                     )
 
                                     universal_pred = self._predict_with_model(
-                                        self.universal_model, X_universal_scaled
+                                        self.universal_model, X_universal_scaled, is_individual=False
                                     )
                                     logger.info(
                                         f"🌐 {symbol} 통합 모델 예측 성공: {universal_pred}"
@@ -1966,6 +2075,9 @@ class StockPredictionNetwork:
                     universal_pred = None
 
             # 3. 앙상블 조합 - 동적 가중치 사용
+            prediction_value = None
+            prediction_source = None
+            
             if individual_pred is not None and universal_pred is not None:
                 # 두 모델 모두 예측 성공한 경우 앙상블 조합
                 try:
@@ -1983,37 +2095,225 @@ class StockPredictionNetwork:
                     logger.info(
                         f"🎯 {symbol} 앙상블 예측: Universal({dynamic_universal_weight:.3f}) + Individual({dynamic_individual_weight:.3f}) = {ensemble_pred:.4f}"
                     )
-                    return ensemble_pred
+                    prediction_value = ensemble_pred
+                    prediction_source = "ensemble"
 
                 except Exception as e:
                     logger.warning(f"앙상블 조합 실패: {e}, 개별 모델 예측 사용")
-                    return individual_pred
+                    prediction_value = individual_pred
+                    prediction_source = "individual"
 
             elif individual_pred is not None:
                 # 개별 모델 예측이 성공한 경우 우선 사용
                 logger.info(f"✅ {symbol} 개별 모델 예측 사용: {individual_pred}")
-                return individual_pred
+                prediction_value = individual_pred
+                prediction_source = "individual"
             elif universal_pred is not None:
                 # 개별 모델이 없으면 통합 모델 사용
                 logger.info(f"🌐 {symbol} 통합 모델 예측 사용: {universal_pred}")
-                return universal_pred
+                prediction_value = universal_pred
+                prediction_source = "universal"
             else:
                 # 모든 예측이 실패한 경우 기본값 반환
                 logger.warning(f"⚠️ {symbol} 모든 예측 실패, 기본값 반환")
                 # 멀티타겟 형식으로 기본값 반환 (이전 결과와 유사한 값)
-                return {
-                    "target_22d": 0.05,  # 5% 예상 수익률
-                    "target_66d": 0.15,  # 15% 예상 수익률
-                    "sigma_22d": 0.02,  # 2% 변동성
-                    "sigma_66d": 0.03,  # 3% 변동성
-                }
+                prediction_value = 0.05  # 5% 예상 수익률
+                prediction_source = "default"
+            
+            # 예측값이 딕셔너리인 경우 target_22d 추출
+            if isinstance(prediction_value, dict):
+                # 멀티타겟 예측에서 22일 타겟만 사용
+                target_22d_value = prediction_value.get("target_22d", prediction_value.get("target_0", 0.0))
+                logger.info(f"{symbol} 멀티타겟에서 target_22d 추출: {target_22d_value}")
+                
+                # 디버깅: 전체 딕셔너리 내용 확인
+                logger.debug(f"{symbol} 전체 예측 딕셔너리: {prediction_value}")
+                if "sigma_22d" in prediction_value:
+                    logger.warning(f"{symbol} sigma_22d 값: {prediction_value['sigma_22d']}")
+                    if abs(prediction_value.get('sigma_22d', 0)) > 0.5 and abs(target_22d_value) > 0.5:
+                        logger.error(f"{symbol} 경고: sigma 값이 target 값으로 사용되고 있을 수 있습니다!")
+            else:
+                target_22d_value = prediction_value
+            
+            # 추가 메트릭 계산 (단일 값으로 전달)
+            prediction_dict = self._calculate_prediction_metrics(
+                target_22d_value, features, symbol, prediction_source
+            )
+            
+            # 예측값이 비현실적인 범위를 벗어나지 않도록 soft clipping
+            # 수익률 타겟만 클리핑 (sigma는 클리핑하지 않음)
+            for key in prediction_dict:
+                if "target_" in key and "prob" not in key:
+                    original_value = prediction_dict[key]
+                    # 수익률은 ±30%로 클리핑
+                    clipped_value = np.clip(original_value, -0.3, 0.3)
+                    if abs(original_value - clipped_value) > 0.001:
+                        logger.warning(f"{symbol} {key} 극단적 예측값 클리핑: {original_value:.4f} -> {clipped_value:.4f}")
+                        logger.debug(f"   - 예측 소스: {prediction_source}")
+                        logger.debug(f"   - 원본 예측값 범위: [{original_value:.4f}]")
+                    prediction_dict[key] = clipped_value
+                elif "sigma_" in key:
+                    # sigma는 음수가 될 수 없으므로 0 이상으로만 제한
+                    original_value = prediction_dict[key]
+                    if original_value < 0:
+                        logger.warning(f"{symbol} {key} 음수 sigma 수정: {original_value:.4f} -> 0.0")
+                        prediction_dict[key] = 0.0
+                    elif original_value > 1.0:
+                        # 극단적으로 높은 변동성도 제한 (100%)
+                        logger.warning(f"{symbol} {key} 극단적 sigma 클리핑: {original_value:.4f} -> 1.0")
+                        prediction_dict[key] = 1.0
+            
+            return prediction_dict
 
         except Exception as e:
             logger.error(f"앙상블 예측 실패: {e}")
             return None
+    
+    def _calculate_prediction_metrics(self, prediction_value: Union[float, Dict], 
+                                    features: pd.DataFrame, symbol: str, 
+                                    source: str) -> Dict:
+        """
+        예측값에 대한 추가 메트릭 계산
+        
+        Args:
+            prediction_value: 예측값 (float 또는 dict)
+            features: 입력 피처 데이터
+            symbol: 종목 심볼
+            source: 예측 소스 (ensemble/individual/universal/default)
+            
+        Returns:
+            예측 결과 딕셔너리 (target_22d, probability, risk_score, momentum_score 포함)
+        """
+        try:
+            # 예측값은 이미 float으로 전달됨
+            target_22d = float(prediction_value)
+            
+            # 확률 계산 (예측값의 신뢰도를 확률로 변환)
+            # 예측값이 클수록 높은 확률
+            if target_22d > 0:
+                probability = 0.5 + min(abs(target_22d) * 2, 0.5)  # 0.5 ~ 1.0
+            else:
+                probability = 0.5 - min(abs(target_22d) * 2, 0.5)  # 0.0 ~ 0.5
+            
+            # 리스크 점수 계산 (변동성 기반)
+            risk_score = self._calculate_risk_score(features)
+            
+            # 모멘텀 점수 계산 (가격 추세 기반)
+            momentum_score = self._calculate_momentum_score(features)
+            
+            # 소스별 신뢰도 조정
+            confidence_multiplier = {
+                "ensemble": 1.0,
+                "individual": 0.9,
+                "universal": 0.8,
+                "default": 0.5
+            }.get(source, 0.7)
+            
+            return {
+                "target_22d": target_22d,
+                "target_22d_prob": probability * confidence_multiplier,
+                "risk_score": risk_score,
+                "momentum_score": momentum_score,
+                "prediction_source": source,
+                "confidence": confidence_multiplier
+            }
+            
+        except Exception as e:
+            logger.error(f"메트릭 계산 실패: {e}")
+            return {
+                "target_22d": 0.0,
+                "target_22d_prob": 0.5,
+                "risk_score": 0.5,
+                "momentum_score": 0.0,
+                "prediction_source": "error",
+                "confidence": 0.0
+            }
+    
+    def _calculate_risk_score(self, features: pd.DataFrame) -> float:
+        """
+        리스크 점수 계산 (0~1, 높을수록 위험)
+        
+        Args:
+            features: 피처 데이터
+            
+        Returns:
+            리스크 점수
+        """
+        try:
+            risk_score = 0.5  # 기본값
+            
+            # 변동성 기반 리스크
+            if "volatility" in features.columns:
+                vol = features["volatility"].iloc[-1]
+                # 변동성 정규화 (0~1)
+                risk_score = min(vol / 0.5, 1.0)  # 50% 변동성을 최대값으로
+            elif "close" in features.columns:
+                # 가격 데이터로 변동성 계산
+                returns = features["close"].pct_change().dropna()
+                if len(returns) > 0:
+                    vol = returns.std() * np.sqrt(252)  # 연간화
+                    risk_score = min(vol / 0.5, 1.0)
+            
+            # ATR 기반 리스크 추가
+            if "atr" in features.columns:
+                atr = features["atr"].iloc[-1]
+                close = features["close"].iloc[-1] if "close" in features.columns else 1.0
+                atr_ratio = atr / close if close > 0 else 0.02
+                atr_risk = min(atr_ratio / 0.05, 1.0)  # 5% ATR을 최대값으로
+                risk_score = (risk_score + atr_risk) / 2
+            
+            return float(np.clip(risk_score, 0.0, 1.0))
+            
+        except Exception as e:
+            logger.error(f"리스크 점수 계산 실패: {e}")
+            return 0.5
+    
+    def _calculate_momentum_score(self, features: pd.DataFrame) -> float:
+        """
+        모멘텀 점수 계산 (-1~1, 양수는 상승 모멘텀)
+        
+        Args:
+            features: 피처 데이터
+            
+        Returns:
+            모멘텀 점수
+        """
+        try:
+            momentum_score = 0.0  # 기본값
+            
+            # RSI 기반 모멘텀
+            if "rsi" in features.columns:
+                rsi = features["rsi"].iloc[-1]
+                # RSI를 -1~1로 변환
+                momentum_score = (rsi - 50) / 50
+            
+            # 가격 기반 모멘텀
+            if "close" in features.columns and len(features) >= 22:
+                # 22일 수익률
+                ret_22d = (features["close"].iloc[-1] / features["close"].iloc[-22] - 1)
+                price_momentum = np.clip(ret_22d / 0.2, -1, 1)  # 20% 수익률을 최대값으로
+                
+                if momentum_score != 0:
+                    # RSI와 가격 모멘텀 평균
+                    momentum_score = (momentum_score + price_momentum) / 2
+                else:
+                    momentum_score = price_momentum
+            
+            # MACD 기반 모멘텀 추가
+            if "macd" in features.columns and "macd_signal" in features.columns:
+                macd = features["macd"].iloc[-1]
+                signal = features["macd_signal"].iloc[-1]
+                macd_momentum = np.clip((macd - signal) / abs(signal) if signal != 0 else 0, -1, 1)
+                momentum_score = (momentum_score * 0.7 + macd_momentum * 0.3)
+            
+            return float(np.clip(momentum_score, -1.0, 1.0))
+            
+        except Exception as e:
+            logger.error(f"모멘텀 점수 계산 실패: {e}")
+            return 0.0
 
     def _predict_with_model(
-        self, model: nn.Module, X: np.ndarray
+        self, model: nn.Module, X: np.ndarray, is_individual: bool = False, symbol: str = None
     ) -> Union[float, Dict[str, float]]:
         """
         개별 모델로 예측 수행
@@ -2022,25 +2322,98 @@ class StockPredictionNetwork:
             model.eval()
             with torch.no_grad():
                 X_tensor = torch.FloatTensor(X)
+                logger.debug(f"모델 입력 shape: {X_tensor.shape}")
+                
                 outputs = model(X_tensor)
                 predictions = outputs.numpy()
+                logger.debug(f"모델 출력 shape: {predictions.shape}")
+                logger.debug(f"모델 원시 출력 (첫 5개): {predictions.flatten()[:5]}")
 
                 # 최근 예측값 사용
                 latest_pred = predictions[-1]
-
-                # 멀티타겟인 경우 딕셔너리로 변환
-                if len(latest_pred.shape) > 0 and len(latest_pred) > 1:
-                    if self.target_columns:
-                        return {
-                            col: float(val)
-                            for col, val in zip(self.target_columns, latest_pred)
-                        }
+                logger.debug(f"최근 예측값 (정규화된 상태): {latest_pred}")
+                
+                # 정규화된 예측값을 원래 스케일로 역변환
+                # 디버깅을 위한 로그 추가
+                logger.debug(f"예측값 역변환 전: {latest_pred}")
+                logger.debug(f"예측값 shape: {latest_pred.shape if hasattr(latest_pred, 'shape') else 'scalar'}")
+                
+                if is_individual and symbol and hasattr(self, 'individual_target_stats'):
+                    if symbol in self.individual_target_stats:
+                        stats = self.individual_target_stats[symbol]
+                        logger.debug(f"{symbol} 개별 모델 통계 - mean: {stats['mean']}, std: {stats['std']}")
+                        
+                        # 멀티타겟인 경우 각 타겟별로 역변환
+                        if isinstance(stats['mean'], np.ndarray) and len(latest_pred.shape) > 0 and latest_pred.shape[0] > 1:
+                            logger.debug(f"{symbol} 멀티타겟 역변환 - mean shape: {stats['mean'].shape}, std shape: {stats['std'].shape}")
+                            # 각 타겟별로 다른 통계값 적용
+                            for i in range(len(latest_pred)):
+                                before = latest_pred[i]
+                                latest_pred[i] = latest_pred[i] * stats['std'][i] + stats['mean'][i]
+                                logger.debug(f"  타겟[{i}]: {before:.4f} -> {latest_pred[i]:.4f} (mean={stats['mean'][i]:.4f}, std={stats['std'][i]:.4f})")
+                        else:
+                            # 단일 타겟 또는 스칼라 통계값
+                            logger.debug(f"{symbol} 스칼라 역변환 - mean: {stats['mean']}, std: {stats['std']}")
+                            before = latest_pred if np.isscalar(latest_pred) else latest_pred.copy()
+                            latest_pred = latest_pred * stats['std'] + stats['mean']
+                            logger.debug(f"  역변환: {before} -> {latest_pred}")
+                        
+                        logger.debug(f"{symbol} 개별 모델 역변환 후: {latest_pred}")
+                elif hasattr(self, 'target_stats'):
+                    # Universal 모델의 경우
+                    logger.info(f"통합 모델 역정규화 시작")
+                    logger.info(f"통합 모델 통계 - mean: {self.target_stats['mean']}, std: {self.target_stats['std']}")
+                    logger.info(f"예측값 (정규화된 상태): {latest_pred}")
+                    
+                    # 멀티타겟인 경우 각 타겟별로 역변환
+                    if isinstance(self.target_stats['mean'], np.ndarray) and len(latest_pred.shape) > 0 and latest_pred.shape[0] > 1:
+                        logger.debug(f"통합 멀티타겟 역변환 - mean shape: {self.target_stats['mean'].shape}, std shape: {self.target_stats['std'].shape}")
+                        # 각 타겟별로 다른 통계값 적용
+                        for i in range(len(latest_pred)):
+                            before = latest_pred[i]
+                            latest_pred[i] = latest_pred[i] * self.target_stats['std'][i] + self.target_stats['mean'][i]
+                            logger.debug(f"  타겟[{i}]: {before:.4f} -> {latest_pred[i]:.4f} (mean={self.target_stats['mean'][i]:.4f}, std={self.target_stats['std'][i]:.4f})")
                     else:
-                        return {
-                            f"target_{i}": float(val)
-                            for i, val in enumerate(latest_pred)
-                        }
+                        # 단일 타겟 또는 스칼라 통계값
+                        logger.debug(f"통합 스칼라 역변환 - mean: {self.target_stats['mean']}, std: {self.target_stats['std']}")
+                        before = latest_pred if np.isscalar(latest_pred) else latest_pred.copy()
+                        latest_pred = latest_pred * self.target_stats['std'] + self.target_stats['mean']
+                        logger.debug(f"  역변환: {before} -> {latest_pred}")
+                    
+                    logger.debug(f"통합 모델 역변환 후: {latest_pred}")
+                    
+                # 멀티타겟인 경우 처리
+                if isinstance(latest_pred, np.ndarray) and len(latest_pred.shape) > 0:
+                    if len(latest_pred) > 1:
+                        logger.debug(f"멀티타겟 예측값: {latest_pred}")
+                        # 멀티타겟인 경우 딕셔너리로 변환
+                        if self.target_columns:
+                            # 타겟 컬럼과 값을 매핑
+                            result_dict = {}
+                            for i, (col, val) in enumerate(zip(self.target_columns, latest_pred)):
+                                result_dict[col] = float(val)
+                                logger.debug(f"  컬럼[{i}] {col}: {val:.4f}")
+                            
+                            logger.info(f"멀티타겟 딕셔너리 반환: {result_dict}")
+                            logger.info(f"target_columns 순서: {self.target_columns}")
+                            
+                            # 경고: sigma 값이 너무 크면 경고
+                            if 'sigma_22d' in result_dict and result_dict['sigma_22d'] > 0.5:
+                                logger.warning(f"높은 sigma_22d 값 감지: {result_dict['sigma_22d']:.4f}")
+                            if 'target_22d' in result_dict and abs(result_dict['target_22d']) > 0.5:
+                                logger.warning(f"극단적인 target_22d 값 감지: {result_dict['target_22d']:.4f}")
+                            
+                            return result_dict
+                        else:
+                            return {
+                                f"target_{i}": float(val)
+                                for i, val in enumerate(latest_pred)
+                            }
+                    else:
+                        # 단일 요소 배열인 경우
+                        return float(latest_pred[0]) if len(latest_pred) == 1 else float(latest_pred)
                 else:
+                    # 스칼라 값인 경우
                     return float(latest_pred)
 
         except Exception as e:
@@ -2096,6 +2469,8 @@ class StockPredictionNetwork:
                 "feature_info": self.feature_info,  # 피처 정보도 함께 저장
                 "ensemble_config": self.ensemble_config,  # 앙상블 설정 저장
                 "weight_training_data": self.weight_training_data,  # 가중치 학습 데이터 저장
+                "target_stats": getattr(self, 'target_stats', None),  # 정규화 통계 저장
+                "individual_target_stats": getattr(self, 'individual_target_stats', {}),  # 개별 종목 정규화 통계
             }
 
             joblib.dump(model_data, f"{filepath}_meta.pkl")
@@ -2128,6 +2503,10 @@ class StockPredictionNetwork:
                 self.weight_training_data = model_data.get(
                     "weight_training_data", self.weight_training_data
                 )
+                
+                # 정규화 통계 로드
+                self.target_stats = model_data.get("target_stats", None)
+                self.individual_target_stats = model_data.get("individual_target_stats", {})
 
                 logger.info("메타 데이터 로드 완료")
             else:
@@ -2141,10 +2520,20 @@ class StockPredictionNetwork:
                     universal_state_dict = torch.load(
                         universal_path, map_location=torch.device("cpu")
                     )
-                    actual_input_dim = universal_state_dict["network.0.weight"].shape[1]
-                    actual_output_dim = universal_state_dict["network.6.weight"].shape[
-                        0
-                    ]
+                    
+                    # 모델 키 확인 및 적절한 레이어 찾기
+                    logger.debug(f"Model keys: {list(universal_state_dict.keys())}")
+                    
+                    # 첫 번째 레이어와 마지막 레이어 찾기
+                    weight_keys = [k for k in universal_state_dict.keys() if 'weight' in k and 'network' in k]
+                    if not weight_keys:
+                        raise ValueError("모델에 network 레이어가 없습니다")
+                    
+                    first_layer_key = weight_keys[0]
+                    last_layer_key = weight_keys[-1]
+                    
+                    actual_input_dim = universal_state_dict[first_layer_key].shape[1]
+                    actual_output_dim = universal_state_dict[last_layer_key].shape[0]
 
                     logger.info(
                         f"통합 모델 차원: 입력 {actual_input_dim}, 출력 {actual_output_dim}"
@@ -2161,6 +2550,13 @@ class StockPredictionNetwork:
                     logger.info("통합 모델 로드 완료")
                 except Exception as e:
                     logger.error(f"통합 모델 로드 실패: {e}")
+                    import traceback
+                    logger.error(f"Stack trace: {traceback.format_exc()}")
+                    self.universal_model = None  # 로드 실패 시 None으로 설정
+                    return False  # 통합 모델은 필수이므로 False 반환
+            else:
+                logger.error(f"통합 모델 파일이 없습니다: {universal_path}")
+                return False  # 통합 모델 파일이 없으면 False 반환
 
             # 개별 모델들 로드
             for symbol in self.individual_scalers.keys():
@@ -2171,12 +2567,17 @@ class StockPredictionNetwork:
                         individual_state_dict = torch.load(
                             individual_path, map_location=torch.device("cpu")
                         )
-                        individual_input_dim = individual_state_dict[
-                            "network.0.weight"
-                        ].shape[1]
-                        individual_output_dim = individual_state_dict[
-                            "network.6.weight"
-                        ].shape[0]
+                        
+                        # 모델 키 확인 및 적절한 레이어 찾기
+                        weight_keys = [k for k in individual_state_dict.keys() if 'weight' in k and 'network' in k]
+                        if not weight_keys:
+                            raise ValueError(f"{symbol} 모델에 network 레이어가 없습니다")
+                        
+                        first_layer_key = weight_keys[0]
+                        last_layer_key = weight_keys[-1]
+                        
+                        individual_input_dim = individual_state_dict[first_layer_key].shape[1]
+                        individual_output_dim = individual_state_dict[last_layer_key].shape[0]
 
                         logger.info(
                             f"{symbol} 개별 모델 차원: 입력 {individual_input_dim}, 출력 {individual_output_dim}"
@@ -2254,10 +2655,13 @@ class StockPredictionNetwork:
             (train_data, test_data) 튜플
         """
         try:
+            # 1. 모든 데이터를 공통 기간으로 정렬
+            aligned_data = self._align_data_periods(training_data)
+            
             train_data = {}
             test_data = {}
 
-            for symbol, data in training_data.items():
+            for symbol, data in aligned_data.items():
                 features = data["features"]
                 target = data["target"]
 
@@ -2303,6 +2707,76 @@ class StockPredictionNetwork:
             logger.error(f"Train-test 분할 실패: {e}")
             return training_data, {}
 
+    def _align_data_periods(self, training_data: Dict) -> Dict:
+        """
+        모든 데이터를 공통 기간으로 정렬
+        SPY 같은 매크로 데이터가 더 길 경우, 다른 종목들과 맞춤
+        
+        Args:
+            training_data: 전체 학습 데이터
+            
+        Returns:
+            정렬된 데이터
+        """
+        try:
+            # 1. 모든 데이터의 날짜 범위 확인
+            date_ranges = {}
+            for symbol, data in training_data.items():
+                features = data["features"]
+                if hasattr(features, 'index') and hasattr(features.index, 'min'):
+                    start_date = features.index.min()
+                    end_date = features.index.max()
+                    date_ranges[symbol] = {
+                        'start': start_date,
+                        'end': end_date,
+                        'days': len(features)
+                    }
+                    logger.info(f"📅 {symbol}: {start_date} ~ {end_date} ({len(features)}일)")
+            
+            if not date_ranges:
+                logger.warning("날짜 정보가 없어 데이터 정렬을 건너뜁니다")
+                return training_data
+            
+            # 2. 공통 기간 계산 (가장 늦은 시작일 ~ 가장 이른 종료일)
+            common_start = max(info['start'] for info in date_ranges.values())
+            common_end = min(info['end'] for info in date_ranges.values())
+            
+            logger.info(f"🔄 공통 기간으로 데이터 정렬: {common_start} ~ {common_end}")
+            
+            # 3. 모든 데이터를 공통 기간으로 자르기
+            aligned_data = {}
+            for symbol, data in training_data.items():
+                features = data["features"]
+                target = data["target"]
+                
+                # 날짜 인덱스가 있는 경우만 정렬
+                if hasattr(features, 'index') and hasattr(features.index, 'min'):
+                    # 공통 기간으로 자르기
+                    mask = (features.index >= common_start) & (features.index <= common_end)
+                    aligned_features = features.loc[mask]
+                    
+                    if hasattr(target, 'index'):
+                        aligned_target = target.loc[mask]
+                    else:
+                        # target이 Series/array인 경우 같은 인덱스로 자르기
+                        aligned_target = target[mask] if len(target) == len(features) else target
+                    
+                    logger.info(f"✂️  {symbol}: {len(features)}일 → {len(aligned_features)}일")
+                    
+                    aligned_data[symbol] = {
+                        "features": aligned_features,
+                        "target": aligned_target
+                    }
+                else:
+                    # 날짜 정보가 없으면 그대로 사용
+                    aligned_data[symbol] = data
+            
+            return aligned_data
+            
+        except Exception as e:
+            logger.error(f"데이터 정렬 실패: {e}")
+            return training_data  # 실패하면 원본 반환
+
     def _validate_22d_predictions(self, test_data: Dict) -> Dict:
         """
         22일 예측 검증 수행
@@ -2331,8 +2805,21 @@ class StockPredictionNetwork:
                 actual_values = []
                 dates = []
 
-                # 22일 전부터 예측 시작 (22일 후 예측을 위해)
-                for i in range(22, len(features)):
+                # 22일 예측을 위한 범위 계산 (더 정확한 로직)
+                features_len = len(features)
+                target_len = len(target)
+                
+                # 최대 예측 시작 인덱스: features와 target에서 22일 후 확인 가능한 마지막 위치
+                max_start_idx = min(features_len - 1, target_len - 22 - 1)  # -1은 0-based 인덱싱
+                min_start_idx = 22  # 최소 22일의 historical data 필요
+                
+                available_predictions = max(0, max_start_idx - min_start_idx + 1)
+                
+                logger.info(f"   🔢 {symbol} 데이터: features={features_len}, target={target_len}")
+                logger.info(f"   🔢 {symbol} 예측 범위: {min_start_idx} ~ {max_start_idx} (총 {available_predictions}개 가능)")
+                
+                # 수정된 범위로 예측 수행
+                for i in range(min_start_idx, max_start_idx + 1):
                     # 현재 시점의 피처로 22일 후 예측
                     current_features = features.iloc[: i + 1]  # 현재까지의 데이터
 
@@ -2346,13 +2833,13 @@ class StockPredictionNetwork:
                         elif isinstance(prediction, (int, float)):
                             pred_22d = float(prediction)
                         else:
-                            logger.warning(
+                            logger.debug(
                                 f"❌ {symbol} {i}일차 예측값 타입 오류: {type(prediction)}"
                             )
                             continue
 
-                        # 실제 22일 후 값
-                        if i + 22 < len(target):
+                        # 실제 22일 후 값 (범위 이미 검증됨)
+                        if i + 22 < target_len:
                             # target이 DataFrame인 경우 target_22d 컬럼 선택
                             if isinstance(target, pd.DataFrame):
                                 if "target_22d" in target.columns:
@@ -2387,21 +2874,31 @@ class StockPredictionNetwork:
 
                             dates.append(date_str)
 
-                            # Line-by-line 로그 출력
-                            logger.info(
+                            # Line-by-line 로그 출력 (DEBUG 레벨로 변경)
+                            logger.debug(
                                 f"📅 {symbol} {date_str}: 예측 {pred_22d:.4f} vs 실제 {actual_22d:.4f} (차이: {pred_22d - actual_22d:.4f})"
                             )
 
                     except Exception as e:
-                        logger.warning(f"❌ {symbol} {i}일차 예측 실패: {e}")
+                        logger.debug(f"❌ {symbol} {i}일차 예측 실패: {e}")
                         continue
 
+                # 예측 결과 요약
+                logger.info(f"   📊 {symbol} 예측 완료: {len(predictions)}개 성공 / {available_predictions}개 시도")
+                
                 if predictions and actual_values:
-                    # RMSE 계산
+                    # 오차 메트릭 계산
+                    predictions_arr = np.array(predictions)
+                    actual_arr = np.array(actual_values)
+                    
                     rmse = self._calculate_test_rmse(predictions, actual_values)
+                    mae = np.mean(np.abs(predictions_arr - actual_arr))  # Mean Absolute Error
+                    me = np.mean(predictions_arr - actual_arr)  # Mean Error (bias)
 
                     validation_results[symbol] = {
                         "rmse": rmse,
+                        "mae": mae,
+                        "me": me,
                         "predictions": predictions,
                         "actual_values": actual_values,
                         "dates": dates,
@@ -2409,12 +2906,14 @@ class StockPredictionNetwork:
                     }
 
                     logger.info(
-                        f"✅ {symbol} 검증 완료: RMSE = {rmse:.4f} ({len(predictions)}개 예측)"
+                        f"✅ {symbol} 검증 완료: RMSE = {rmse:.4f}, MAE = {mae:.4f}, ME = {me:.4f} ({len(predictions)}개 예측)"
                     )
                 else:
                     logger.warning(f"⚠️ {symbol} 검증 데이터 부족")
                     validation_results[symbol] = {
                         "rmse": float("inf"),
+                        "mae": float("inf"),
+                        "me": 0.0,
                         "predictions": [],
                         "actual_values": [],
                         "dates": [],
@@ -2515,17 +3014,19 @@ class StockPredictionNetwork:
 
             # 손실 함수 및 옵티마이저
             criterion = nn.MSELoss()
-            learning_rate = self.weight_learning_config.get("learning_rate", 0.001)
+            learning_rate = self.weight_learning_config.get("learning_rate", 0.0005)
             optimizer = optim.Adam(self.weight_learner.parameters(), lr=learning_rate)
 
             # 학습 파라미터
-            epochs = self.weight_learning_config.get("epochs", 100)
+            epochs = self.weight_learning_config.get("epochs", 200)
             best_val_loss = float("inf")
-            patience = 15
+            patience = self.weight_learning_config.get("early_stopping_patience", 25)
+            min_delta = self.weight_learning_config.get("min_delta", 1e-6)
             patience_counter = 0
+            best_model_state = None  # 초기화
 
             logger.info(
-                f"가중치 학습기 훈련 시작 - Epochs: {epochs}, Input Size: {input_size}"
+                f"가중치 학습기 훈련 시작 - Epochs: {epochs}, Input Size: {input_size}, LR: {learning_rate}, Patience: {patience}"
             )
 
             # 훈련 루프
@@ -2559,15 +3060,21 @@ class StockPredictionNetwork:
                         f"Epoch {epoch+1}/{epochs} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}"
                     )
 
-                # Early stopping
-                if val_loss < best_val_loss:
+                # Early stopping (개선된 조건)
+                if val_loss < best_val_loss - min_delta:
                     best_val_loss = val_loss
                     patience_counter = 0
+                    # 최적 모델 상태 저장
+                    best_model_state = self.weight_learner.state_dict().copy()
                 else:
                     patience_counter += 1
 
                 if patience_counter >= patience:
                     logger.info(f"Early stopping at epoch {epoch+1}")
+                    # 최적 모델 상태로 복원
+                    if best_model_state is not None:
+                        self.weight_learner.load_state_dict(best_model_state)
+                        logger.info("최적 모델 상태로 복원됨")
                     break
 
             print(f"\n✅ 앙상블 가중치 학습기 훈련 완료!")
@@ -2575,6 +3082,8 @@ class StockPredictionNetwork:
             print(f"   • 훈련 에포크: {epochs}회")
             print(f"   • 학습률: {learning_rate}")
             print(f"   • 배치 크기: {batch_size}")
+            print(f"   • Early Stopping 허용치: {patience}")
+            print(f"   • 최소 개선 임계값: {min_delta}")
             logger.info(
                 f"✅ 앙상블 가중치 학습기 훈련 완료 - Best Val Loss: {best_val_loss:.6f}"
             )
@@ -2653,7 +3162,7 @@ class StockPredictionNetwork:
                                             )
                                         )
                                         individual_pred = self._predict_with_model(
-                                            self.individual_models[symbol], X_individual
+                                            self.individual_models[symbol], X_individual, is_individual=True, symbol=symbol
                                         )
                                 except Exception as e:
                                     logger.debug(
@@ -2731,7 +3240,7 @@ class StockPredictionNetwork:
                                                 )
                                             )
                                             universal_pred = self._predict_with_model(
-                                                self.universal_model, X_universal_scaled
+                                                self.universal_model, X_universal_scaled, is_individual=False
                                             )
                                 except Exception as e:
                                     logger.debug(
@@ -3327,53 +3836,45 @@ def main():
                 else:
                     print(f"   ❌ {symbol}: 피처 생성 실패")
 
-                # 타겟 생성 (22일, 66일 후 수익률 + 각각의 표준편차)
+                # 타겟 생성 (수익률 + 표준편차)
                 target_forward_days = config.get("neural_network", {}).get(
-                    "target_forward_days", [22, 66]
+                    "target_forward_days", 22
                 )
+                include_sigma = config.get("neural_network", {}).get(
+                    "include_sigma", True
+                )
+                
+                # 기본적으로 22일 타겟만 사용 (설정 가능)
                 if isinstance(target_forward_days, list):
-                    targets = {}
-                    for days in target_forward_days:
-                        # 미래 수익률 계산
-                        future_returns = (
-                            stock_data["close"].pct_change(days).shift(-days)
-                        )
-                        # NaN 처리: ffill과 bfill 사용
-                        future_returns = future_returns.fillna(method="ffill").fillna(
-                            method="bfill"
-                        )
-                        targets[f"target_{days}d"] = future_returns
-
-                        # 해당 기간의 수익률 표준편차 계산
-                        rolling_returns = stock_data["close"].pct_change()
-                        rolling_std = rolling_returns.rolling(
-                            window=days, min_periods=1
-                        ).std()
-                        # NaN 처리: ffill과 bfill 사용
-                        rolling_std = rolling_std.fillna(method="ffill").fillna(
-                            method="bfill"
-                        )
-                        targets[f"sigma_{days}d"] = rolling_std
-
-                    target = pd.DataFrame(targets)
+                    # 리스트로 주어진 경우 첫 번째 값만 사용
+                    target_days = target_forward_days[0]
                 else:
-                    # 단일 타겟 (22일 수익률 + 표준편차)
-                    future_returns = stock_data["close"].pct_change(22).shift(-22)
-                    future_returns = future_returns.fillna(method="ffill").fillna(
-                        method="bfill"
-                    )
-
+                    target_days = target_forward_days
+                
+                # 미래 수익률 계산 (현재 가격 대비 미래 가격의 변화율)
+                future_returns = (
+                    stock_data["close"].shift(-target_days) / stock_data["close"] - 1
+                )
+                # NaN 처리: ffill과 bfill 사용
+                future_returns = future_returns.fillna(method="ffill").fillna(
+                    method="bfill"
+                )
+                
+                targets = {f"target_{target_days}d": future_returns}
+                
+                if include_sigma:
+                    # 해당 기간의 수익률 표준편차 계산
                     rolling_returns = stock_data["close"].pct_change()
                     rolling_std = rolling_returns.rolling(
-                        window=22, min_periods=1
+                        window=target_days, min_periods=1
                     ).std()
+                    # NaN 처리: ffill과 bfill 사용
                     rolling_std = rolling_std.fillna(method="ffill").fillna(
                         method="bfill"
                     )
-
-                    target = pd.DataFrame(
-                        {"target_22d": future_returns, "sigma_22d": rolling_std}
-                    )
+                    targets[f"sigma_{target_days}d"] = rolling_std
+                
+                target = pd.DataFrame(targets)
 
                 training_data[symbol] = {
                     "features": features,

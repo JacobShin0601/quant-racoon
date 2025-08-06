@@ -46,8 +46,8 @@ class MarketRegimeHMM:
         self.model = hmm.GaussianHMM(
             n_components=self.n_states,
             covariance_type=self.hmm_config.get("covariance_type", "diag"),
-            n_iter=self.hmm_config.get("n_iter", 100),
-            random_state=42,
+            n_iter=self.hmm_config.get("n_iter", 1000),
+            random_state=self.hmm_config.get("random_state", 42),
         )
 
         # 스케일러 초기화
@@ -176,8 +176,10 @@ class MarketRegimeHMM:
                     np.where(vix_data < vix_low_threshold.fillna(15), -1, 0)
                 )
                 features["vix_acceleration"] = vix_data.diff(2).fillna(0)
+                vix_percentile_period = self.hmm_config.get("feature_config", {}).get("rolling_periods", {}).get("vix_percentile", 252)
+                vix_percentile_min = self.hmm_config.get("feature_config", {}).get("rolling_periods", {}).get("vix_percentile_min", 60)
                 features["vix_percentile"] = (
-                    vix_data.rolling(252, min_periods=60)
+                    vix_data.rolling(vix_percentile_period, min_periods=vix_percentile_min)
                     .rank(pct=True).fillna(0.5)
                 )
                 logger.info("동적 VIX 임계값 적용 완료")
@@ -186,7 +188,7 @@ class MarketRegimeHMM:
                 features["vix_acceleration"] = 0
                 features["vix_percentile"] = 0.5
 
-            # 5. 모멘텀 지표 (SPY 기반) - 개선된 검색
+            # 5. 강화된 SPY 기반 모멘텀 지표 (신경망과 일치하도록)
             spy_col = None
             spy_patterns = ["SPY_close", "spy_close", "SPY_data", "spy", "spy_data"]
             for pattern in spy_patterns:
@@ -199,15 +201,82 @@ class MarketRegimeHMM:
                 spy_data = pd.to_numeric(macro_data[spy_col], errors="coerce").fillna(
                     400.0
                 )
+                
+                # 기존 피처들
                 features["market_momentum"] = spy_data.pct_change(20).fillna(0)
                 features["market_trend"] = (
                     spy_data / spy_data.rolling(50).mean() - 1
                 ).fillna(0)
-                logger.info(f"SPY 데이터 사용: {spy_col}")
+                
+                # 강화된 SPY 피처들 (신경망과 유사한 시그널)
+                # 1) 다양한 기간의 수익률
+                features["spy_return_1d"] = spy_data.pct_change(1).fillna(0)
+                features["spy_return_5d"] = spy_data.pct_change(5).fillna(0) 
+                features["spy_return_10d"] = spy_data.pct_change(10).fillna(0)
+                features["spy_return_22d"] = spy_data.pct_change(22).fillna(0)  # 22일 후 예측과 연관
+                
+                # 2) 이동평균 교차 신호들
+                spy_ma5 = spy_data.rolling(5).mean()
+                spy_ma10 = spy_data.rolling(10).mean() 
+                spy_ma20 = spy_data.rolling(20).mean()
+                spy_ma50 = spy_data.rolling(50).mean()
+                
+                features["spy_ma5_cross"] = (spy_data > spy_ma5).astype(int) - 0.5
+                features["spy_ma10_cross"] = (spy_data > spy_ma10).astype(int) - 0.5
+                features["spy_ma20_cross"] = (spy_data > spy_ma20).astype(int) - 0.5
+                features["spy_ma50_cross"] = (spy_data > spy_ma50).astype(int) - 0.5
+                features["spy_ma5_ma10_cross"] = (spy_ma5 > spy_ma10).astype(int) - 0.5
+                features["spy_ma10_ma20_cross"] = (spy_ma10 > spy_ma20).astype(int) - 0.5
+                
+                # 3) 변동성 지표
+                features["spy_volatility_5d"] = spy_data.pct_change().rolling(5).std().fillna(0)
+                features["spy_volatility_20d"] = spy_data.pct_change().rolling(20).std().fillna(0)
+                
+                # 4) RSI 유사 지표
+                spy_returns = spy_data.pct_change().fillna(0)
+                gains = spy_returns.where(spy_returns > 0, 0).rolling(14).mean()
+                losses = (-spy_returns.where(spy_returns < 0, 0)).rolling(14).mean()
+                rs = gains / (losses + 1e-8)
+                features["spy_rsi_like"] = 100 - (100 / (1 + rs))
+                features["spy_rsi_like"] = features["spy_rsi_like"].fillna(50) / 100 - 0.5  # -0.5 ~ 0.5로 정규화
+                
+                # 5) 가격 모멘텀과 추세 강도
+                features["spy_momentum_strength"] = (
+                    (spy_data.pct_change(5) > 0).astype(int) + 
+                    (spy_data.pct_change(10) > 0).astype(int) + 
+                    (spy_data.pct_change(20) > 0).astype(int)
+                ) / 3 - 0.5  # -0.5 ~ 0.5
+                
+                # 6) 최근 고점/저점 대비 위치 
+                spy_high_52w = spy_data.rolling(252, min_periods=50).max()
+                spy_low_52w = spy_data.rolling(252, min_periods=50).min()
+                features["spy_position_in_range"] = (
+                    (spy_data - spy_low_52w) / (spy_high_52w - spy_low_52w + 1e-8)
+                ).fillna(0.5) - 0.5  # -0.5 ~ 0.5
+                
+                # 7) 강세/약세 체제 구분 (22일 예측과 연관성)
+                features["spy_bull_bear_regime"] = np.where(
+                    (features["spy_return_22d"] > 0.05) & (features["spy_momentum_strength"] > 0.1), 1,  # 강세
+                    np.where(
+                        (features["spy_return_22d"] < -0.05) & (features["spy_momentum_strength"] < -0.1), -1,  # 약세
+                        0  # 중립
+                    )
+                )
+                
+                logger.info(f"강화된 SPY 데이터 사용: {spy_col} (17개 추가 피처)")
             else:
                 logger.warning("SPY 데이터 없음")
                 features["market_momentum"] = 0.0
                 features["market_trend"] = 0.0
+                # 기본값 설정
+                default_spy_features = [
+                    "spy_return_1d", "spy_return_5d", "spy_return_10d", "spy_return_22d",
+                    "spy_ma5_cross", "spy_ma10_cross", "spy_ma20_cross", "spy_ma50_cross", 
+                    "spy_ma5_ma10_cross", "spy_ma10_ma20_cross", "spy_volatility_5d", "spy_volatility_20d",
+                    "spy_rsi_like", "spy_momentum_strength", "spy_position_in_range", "spy_bull_bear_regime"
+                ]
+                for feature_name in default_spy_features:
+                    features[feature_name] = 0.0
 
             # 6. 신용 스프레드 지표 추가
             self._add_credit_spread_features(features, macro_data)
@@ -394,7 +463,8 @@ class MarketRegimeHMM:
             평균 검증 점수
         """
         try:
-            if len(features) < 100:
+            min_validation_data = self.hmm_config.get("feature_config", {}).get("thresholds", {}).get("min_validation_data", 100)
+            if len(features) < min_validation_data:
                 logger.warning("워크포워드 검증을 위한 데이터 부족")
                 return 0.5
                 
@@ -418,8 +488,8 @@ class MarketRegimeHMM:
                 temp_model = hmm.GaussianHMM(
                     n_components=self.n_states,
                     covariance_type=self.model.covariance_type,
-                    n_iter=100,
-                    random_state=42,
+                    n_iter=self.hmm_config.get("n_iter", 1000),
+                    random_state=self.hmm_config.get("random_state", 42),
                 )
                 
                 temp_scaler = StandardScaler()
@@ -551,7 +621,9 @@ class MarketRegimeHMM:
 
                 # 개선된 상태 분류 로직
                 # 1차: 변동성 기준
-                if vix > 28 or vol_regime > 0.6:
+                vix_volatile_threshold = self.hmm_config.get("feature_config", {}).get("thresholds", {}).get("vix_volatile", 28)
+                vol_regime_threshold = self.hmm_config.get("feature_config", {}).get("thresholds", {}).get("vol_regime_threshold", 0.6)
+                if vix > vix_volatile_threshold or vol_regime > vol_regime_threshold:
                     regime = "VOLATILE"
                 # 2차: 모멘텀 기준 (더 보수적 임계값)
                 elif momentum > 0.015:
@@ -670,8 +742,12 @@ class MarketRegimeHMM:
             # 신뢰도 조정 (과도한 확신 방지)
             raw_confidence = float(state_probs[predicted_state_idx])
             # 미래 예측시 불확실성 더 크게 반영
-            uncertainty_factor = 0.8 if forecast_days <= 1 else 0.6
-            confidence = min(0.9, max(0.3, raw_confidence * uncertainty_factor + 0.1))
+            thresholds = self.hmm_config.get("feature_config", {}).get("thresholds", {})
+            uncertainty_factor = thresholds.get("uncertainty_factor_short", 0.8) if forecast_days <= 1 else thresholds.get("uncertainty_factor_long", 0.6)
+            confidence_min = thresholds.get("confidence_min", 0.3)
+            confidence_max = thresholds.get("confidence_max", 0.9)
+            confidence_adjustment = thresholds.get("confidence_adjustment", 0.1)
+            confidence = min(confidence_max, max(confidence_min, raw_confidence * uncertainty_factor + confidence_adjustment))
 
             # 체제 강도 계산
             regime_strength = self._calculate_regime_strength(features.iloc[-1])
@@ -685,7 +761,7 @@ class MarketRegimeHMM:
                 "regime_strength": regime_strength,
                 "forecast_days": forecast_days,
                 "current_regime": current_regime if forecast_days > 1 else predicted_regime,
-                "current_confidence": float(current_state_probs[actual_current_state_idx]) * 0.8 + 0.1 if forecast_days > 1 else confidence,
+                "current_confidence": float(current_state_probs[actual_current_state_idx]) * uncertainty_factor + confidence_adjustment if forecast_days > 1 else confidence,
                 "regime_change_expected": current_regime != predicted_regime if forecast_days > 1 else False,
                 "state_probabilities": {
                     self.state_mapping.get(i, f"State_{i}"): float(prob)
@@ -715,7 +791,7 @@ class MarketRegimeHMM:
 
             # 비교 로그 출력
             if forecast_days > 1:
-                current_confidence = float(current_state_probs[actual_current_state_idx]) * 0.8 + 0.1
+                current_confidence = float(current_state_probs[actual_current_state_idx]) * uncertainty_factor + confidence_adjustment
                 logger.info("=" * 60)
                 logger.info("🎭 HMM 시장 체제 분석 결과")
                 logger.info("=" * 60)

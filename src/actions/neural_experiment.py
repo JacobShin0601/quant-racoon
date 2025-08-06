@@ -121,7 +121,7 @@ class NeuralExperiment:
             
             # 타겟이 없으면 22일 수익률 계산
             if 'target_22d' not in df.columns:
-                df['target_22d'] = df['close'].pct_change(22).shift(-22)
+                df['target_22d'] = df['close'].shift(-22) / df['close'] - 1
             
             target = df[['target_22d']]
             

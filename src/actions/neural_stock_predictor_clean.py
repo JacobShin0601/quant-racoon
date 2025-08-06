@@ -497,13 +497,22 @@ class StockPredictionNetwork:
                 latest_pred = predictions[-1].numpy()
 
             # 결과 반환
+            result = {}
             if self.target_columns:
-                return {
-                    col: float(val)
-                    for col, val in zip(self.target_columns, latest_pred)
-                }
+                for col, val in zip(self.target_columns, latest_pred):
+                    # 예측값이 비현실적인 범위를 벗어나지 않도록 클리핑
+                    if "target_22d" in col or "target_66d" in col:
+                        clipped_val = np.clip(float(val), -0.3, 0.3)
+                        if float(val) != clipped_val:
+                            logger.warning(f"{symbol} {col} 예측값 클리핑: {float(val):.4f} -> {clipped_val:.4f}")
+                        result[col] = clipped_val
+                    else:
+                        result[col] = float(val)
             else:
-                return {f"target_{i}": float(val) for i, val in enumerate(latest_pred)}
+                for i, val in enumerate(latest_pred):
+                    result[f"target_{i}"] = float(val)
+            
+            return result
 
         except Exception as e:
             logger.error(f"❌ 예측 실패: {e}")
@@ -650,8 +659,8 @@ def main():
 
                 # 타겟 생성 (22일, 66일 수익률 + 표준편차)
                 close = df["close"]
-                target_22d = close.pct_change(22).shift(-22)
-                target_66d = close.pct_change(66).shift(-66)
+                target_22d = close.shift(-22) / close - 1
+                target_66d = close.shift(-66) / close - 1
 
                 # 표준편차 계산
                 rolling_std_22d = (
