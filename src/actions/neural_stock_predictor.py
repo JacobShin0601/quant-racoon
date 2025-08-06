@@ -1258,6 +1258,12 @@ class StockPredictionNetwork:
             # 타겟 정규화 (클리핑 대신 표준화 사용)
             logger.info(f"Universal model target stats - min: {y_combined.min():.4f}, max: {y_combined.max():.4f}, mean: {y_combined.mean():.4f}, std: {y_combined.std():.4f}")
             
+            # 극단값 클리핑 (정규화 전에 수행)
+            # target_22d (첫 번째 컬럼)은 -50% ~ 50%로 제한
+            if y_combined.shape[1] > 0:
+                y_combined[:, 0] = np.clip(y_combined[:, 0], -0.5, 0.5)
+                logger.info(f"Target clipping applied - new min: {y_combined[:, 0].min():.4f}, max: {y_combined[:, 0].max():.4f}")
+            
             # 표준화: (x - mean) / std
             y_mean = np.mean(y_combined, axis=0)
             y_std = np.std(y_combined, axis=0)
