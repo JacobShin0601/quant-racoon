@@ -131,7 +131,8 @@ class NeuralPortfolioManager:
                     result["symbol"]: equal_weight for result in individual_results
                 }
 
-            logger.info(f"📊 계산된 포트폴리오 비중: {weights}")
+            # 첫 번째 테이블은 제거 - 최종 결합 테이블에서 모든 정보 표시
+            logger.debug("신경망 기본 비중 계산 완료")
             return weights
 
         except Exception as e:
@@ -353,10 +354,10 @@ class NeuralPortfolioManager:
             
             # 설정에서 실제 투자 대상 종목들만 가져오기 (매크로 지표 제외)
             target_symbols = self.config.get("data", {}).get("symbols", [])
-            logger.info(f"포트폴리오 최적화 대상 종목: {target_symbols}")
+            logger.debug(f"포트폴리오 최적화 대상 종목: {target_symbols}")
 
             # 디버깅: 어떤 심볼들이 들어있는지 확인
-            logger.info(f"Historical data에 포함된 심볼들: {list(historical_data.keys())}")
+            logger.debug(f"Historical data에 포함된 심볼들: {list(historical_data.keys())}")
             
             for symbol, data in historical_data.items():
                 # 신경망 예측 대상 종목들만 포함
@@ -365,7 +366,7 @@ class NeuralPortfolioManager:
                     recent_data = data.tail(lookback_days)
                     returns = recent_data["close"].pct_change().dropna()
                     returns_dict[symbol] = returns
-                    logger.info(f"✅ {symbol} 추가됨 (target_symbols에 포함)")
+                    logger.debug(f"✅ {symbol} 추가됨 (target_symbols에 포함)")
                 elif symbol not in target_symbols:
                     logger.info(f"❌ {symbol} 제외됨 (target_symbols에 없음)")
                 else:
@@ -373,7 +374,7 @@ class NeuralPortfolioManager:
 
             if returns_dict:
                 returns_df = pd.DataFrame(returns_dict).dropna()
-                logger.info(f"수익률 데이터 준비 완료: {returns_df.shape}")
+                logger.debug(f"수익률 데이터 준비 완료: {returns_df.shape}")
                 return returns_df
             else:
                 logger.warning("유효한 수익률 데이터 없음")
@@ -407,7 +408,7 @@ class NeuralPortfolioManager:
             
             # 투자 대상 종목들만 가져오기 (매크로 지표 제외)
             target_symbols = set(self.config.get("data", {}).get("symbols", []))
-            logger.info(f"비중 결합 시 대상 종목: {sorted(target_symbols)}")
+            logger.debug(f"비중 결합 시 대상 종목: {sorted(target_symbols)}")
             
             # neural_weights에 있는 종목들만 결합 (target_symbols과 교집합)
             valid_symbols = set(neural_weights.keys()) & target_symbols
@@ -431,7 +432,35 @@ class NeuralPortfolioManager:
                 for symbol in combined_weights:
                     combined_weights[symbol] = combined_weights[symbol] / total_weight
 
-            logger.info(f"최종 결합 비중 ({len(combined_weights)}개): {combined_weights}")
+            # 포트폴리오 비중을 하나의 종합 테이블로 출력 (신경망 + 최적화 + 최종)
+            logger.info(f"📊 포트폴리오 비중 종합 분석 ({len(combined_weights)}개 종목):")
+            try:
+                from tabulate import tabulate
+                table_data = []
+                for symbol in sorted(combined_weights.keys()):
+                    neural_w = neural_weights.get(symbol, 0)
+                    opt_w = optimized_weights.get(symbol, 0)
+                    final_w = combined_weights.get(symbol, 0)
+                    table_data.append([
+                        symbol, 
+                        f"{neural_w:.2%}", 
+                        f"{opt_w:.2%}", 
+                        f"{final_w:.2%}"
+                    ])
+                
+                headers = ["종목", "신경망 비중", "최적화 비중", "최종 비중"]
+                table_str = tabulate(table_data, headers=headers, tablefmt="grid")
+                logger.info(f"\n{table_str}")
+            except ImportError:
+                # tabulate가 없을 때 간단한 형태로 출력
+                logger.info("종목 | 신경망비중 | 최적화비중 | 최종비중")
+                logger.info("-" * 55)
+                for symbol in sorted(combined_weights.keys()):
+                    neural_w = neural_weights.get(symbol, 0)
+                    opt_w = optimized_weights.get(symbol, 0)
+                    final_w = combined_weights.get(symbol, 0)
+                    logger.info(f"{symbol} | {neural_w:.2%} | {opt_w:.2%} | {final_w:.2%}")
+            
             return combined_weights
 
         except Exception as e:

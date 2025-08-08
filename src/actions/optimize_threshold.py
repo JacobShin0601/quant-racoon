@@ -1490,8 +1490,15 @@ class ThresholdOptimizer:
             print(f"  Test 수익률: {final_test.get('total_return', 0)*100:.2f}%")
             print(f"  Train 샤프 비율: {final_train.get('sharpe_ratio', 0):.3f}")
             print(f"  Test 샤프 비율: {final_test.get('sharpe_ratio', 0):.3f}")
-            print(f"  Train 소르티노 비율: {final_train.get('sortino_ratio', 0):.3f}")
-            print(f"  Test 소르티노 비율: {final_test.get('sortino_ratio', 0):.3f}")
+            # 소르티노 비율 출력 (inf 값 처리)
+            train_sortino = final_train.get('sortino_ratio', 0)
+            test_sortino = final_test.get('sortino_ratio', 0)
+            
+            train_sortino_str = f"{train_sortino:.3f}" if abs(train_sortino) < 50 else f"{train_sortino:.0f}+"
+            test_sortino_str = f"{test_sortino:.3f}" if abs(test_sortino) < 50 else f"{test_sortino:.0f}+"
+            
+            print(f"  Train 소르티노 비율: {train_sortino_str}")
+            print(f"  Test 소르티노 비율: {test_sortino_str}")
 
             print("=" * 80)
 
@@ -1596,8 +1603,15 @@ def main():
             print(f"  Test 수익률: {test_perf.get('total_return', 0)*100:.2f}%")
             print(f"  Train 샤프 비율: {train_perf.get('sharpe_ratio', 0):.3f}")
             print(f"  Test 샤프 비율: {test_perf.get('sharpe_ratio', 0):.3f}")
-            print(f"  Train 소르티노 비율: {train_perf.get('sortino_ratio', 0):.3f}")
-            print(f"  Test 소르티노 비율: {test_perf.get('sortino_ratio', 0):.3f}")
+            # 소르티노 비율 출력 (inf 값 처리)
+            train_sortino = train_perf.get('sortino_ratio', 0)
+            test_sortino = test_perf.get('sortino_ratio', 0)
+            
+            train_sortino_str = f"{train_sortino:.3f}" if abs(train_sortino) < 50 else f"{train_sortino:.0f}+"
+            test_sortino_str = f"{test_sortino:.3f}" if abs(test_sortino) < 50 else f"{test_sortino:.0f}+"
+            
+            print(f"  Train 소르티노 비율: {train_sortino_str}")
+            print(f"  Test 소르티노 비율: {test_sortino_str}")
             print(f"  총 거래 수 (Train): {train_results['total_trades']}")
             print(f"  총 거래 수 (Test): {test_results['total_trades']}")
 

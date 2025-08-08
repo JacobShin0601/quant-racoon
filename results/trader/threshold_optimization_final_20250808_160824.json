@@ -1,0 +1,450 @@
+{
+  "optimization_results": {
+    "best_thresholds": {
+      "strong_buy": 0.6911694009191099,
+      "buy": 0.598776201476081,
+      "hold_upper": 0.40525956078439973,
+      "hold_lower": -0.1369311556212784,
+      "sell": -0.5798873008445458,
+      "strong_sell": -0.8898656417395595
+    },
+    "best_score": 3.374153142509049,
+    "study": "<optuna.study.study.Study object at 0x7f06acf1ce30>",
+    "optimization_method": "optuna"
+  },
+  "final_train_results": {
+    "symbol_results": {
+      "SPY": {
+        "trades": [
+          {
+            "entry_date": "2024-05-21 00:00:00-04:00",
+            "exit_date": "2025-03-04 00:00:00-05:00",
+            "entry_price": 523.1355590820312,
+            "exit_price": 573.4346313476562,
+            "position": "LONG",
+            "pnl": 0.09614921293801357
+          }
+        ],
+        "performance": {
+          "total_return": 0.09614921293801348,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "SQQQ": {
+        "trades": [
+          {
+            "entry_date": "2024-05-21 00:00:00-04:00",
+            "exit_date": "2025-03-04 00:00:00-05:00",
+            "entry_price": 44.256797790527344,
+            "exit_price": 32.91813659667969,
+            "position": "SHORT",
+            "pnl": 0.2562015726378325
+          }
+        ],
+        "performance": {
+          "total_return": 0.2562015726378326,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "AAPL": {
+        "trades": [
+          {
+            "entry_date": "2024-12-06 00:00:00-05:00",
+            "exit_date": "2025-03-04 00:00:00-05:00",
+            "entry_price": 242.25559997558597,
+            "exit_price": 235.6210174560547,
+            "position": "LONG",
+            "pnl": -0.027386704456779938
+          }
+        ],
+        "performance": {
+          "total_return": -0.02738670445677993,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "MSFT": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "NVDA": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "GOOGL": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "AMZN": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "TSLA": {
+        "trades": [
+          {
+            "entry_date": "2024-07-10 00:00:00-04:00",
+            "exit_date": "2025-03-04 00:00:00-05:00",
+            "entry_price": 263.260009765625,
+            "exit_price": 272.0400085449219,
+            "position": "LONG",
+            "pnl": 0.03335105391477243
+          }
+        ],
+        "performance": {
+          "total_return": 0.03335105391477233,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "META": {
+        "trades": [
+          {
+            "entry_date": "2024-09-26 00:00:00-04:00",
+            "exit_date": "2025-03-04 00:00:00-05:00",
+            "entry_price": 566.4421997070312,
+            "exit_price": 638.9395141601562,
+            "position": "LONG",
+            "pnl": 0.12798713529927896
+          }
+        ],
+        "performance": {
+          "total_return": 0.12798713529927896,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "JPM": {
+        "trades": [
+          {
+            "entry_date": "2024-08-23 00:00:00-04:00",
+            "exit_date": "2025-03-04 00:00:00-05:00",
+            "entry_price": 213.5153350830078,
+            "exit_price": 247.5255279541016,
+            "position": "LONG",
+            "pnl": 0.1592868861520964
+          }
+        ],
+        "performance": {
+          "total_return": 0.1592868861520964,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "UNH": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "CONL": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      }
+    },
+    "portfolio_performance": {
+      "total_return": 0.645589156485214,
+      "sharpe_ratio": 1.1902203262076005,
+      "sortino_ratio": 0.0,
+      "max_drawdown": 0.02738670445677993,
+      "win_rate": 0.8333333333333334,
+      "profit_factor": 24.573086623257073,
+      "total_trades": 6
+    },
+    "total_trades": 6
+  },
+  "final_test_results": {
+    "symbol_results": {
+      "SPY": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "SQQQ": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "AAPL": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "MSFT": {
+        "trades": [
+          {
+            "entry_date": "2025-05-16 00:00:00-04:00",
+            "exit_date": "2025-08-07 00:00:00-04:00",
+            "entry_price": 454.2699890136719,
+            "exit_price": 520.8400268554688,
+            "position": "LONG",
+            "pnl": 0.14654289178630586
+          }
+        ],
+        "performance": {
+          "total_return": 0.14654289178630586,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "NVDA": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "GOOGL": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "AMZN": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "TSLA": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "META": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "JPM": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      },
+      "UNH": {
+        "trades": [
+          {
+            "entry_date": "2025-05-15 00:00:00-04:00",
+            "exit_date": "2025-08-07 00:00:00-04:00",
+            "entry_price": 272.4161682128906,
+            "exit_price": 244.6699981689453,
+            "position": "SHORT",
+            "pnl": 0.10185214125125623
+          }
+        ],
+        "performance": {
+          "total_return": 0.1018521412512563,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
+        },
+        "signal_count": 1
+      },
+      "CONL": {
+        "trades": [],
+        "performance": {
+          "total_return": 0.0,
+          "sharpe_ratio": 0.0,
+          "sortino_ratio": 0.0,
+          "max_drawdown": 0.0,
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
+        },
+        "signal_count": 0
+      }
+    },
+    "portfolio_performance": {
+      "total_return": 0.2483950330375621,
+      "sharpe_ratio": 5.558085958810498,
+      "sortino_ratio": Infinity,
+      "max_drawdown": 0.0,
+      "win_rate": 1.0,
+      "profit_factor": Infinity,
+      "total_trades": 2
+    },
+    "total_trades": 2
+  },
+  "best_thresholds": {
+    "strong_buy": 0.6911694009191099,
+    "buy": 0.598776201476081,
+    "hold_upper": 0.40525956078439973,
+    "hold_lower": -0.1369311556212784,
+    "sell": -0.5798873008445458,
+    "strong_sell": -0.8898656417395595
+  },
+  "symbols": [
+    "SPY",
+    "SQQQ",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "GOOGL",
+    "AMZN",
+    "TSLA",
+    "META",
+    "JPM",
+    "UNH",
+    "CONL"
+  ],
+  "timestamp": "2025-08-08T16:08:24.924433"
+}

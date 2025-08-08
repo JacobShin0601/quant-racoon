@@ -519,12 +519,14 @@ class IndividualStrategyResearcher:
             returns_array = np.array(returns)
             negative_returns = returns_array[returns_array < 0]
 
+            # 음수 수익률이 없으면 매우 높은 값 반환 (무한대 대신)
             if len(negative_returns) == 0:
-                return 0
+                return 99.99  # inf 대신 매우 높은 값
 
             downside_deviation = np.std(negative_returns)
+            # 하방 편차가 0이면 매우 높은 값 반환
             if downside_deviation == 0:
-                return 0
+                return 99.99  # inf 대신 매우 높은 값
 
             mean_return = np.mean(returns_array)
             risk_free_rate = 0.02 / 252  # 일간 무위험 수익률

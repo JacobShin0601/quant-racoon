@@ -1,7 +1,7 @@
 {
   "eda2d4a4720c5aefafe8f94eed9ecb0d": {
     "path": "data/macro",
-    "timestamp": "2025-08-06T15:11:14.565437",
+    "timestamp": "2025-08-08T14:44:03.028432",
     "metadata": {
       "files": 21,
       "symbols": []
@@ -269,8 +269,8 @@
     }
   },
   "e19ca3e8eac694517addedd1f8de5fa5": {
-    "path": "data/trader/SPY_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:20.516150",
+    "path": "data/trader/SPY_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:09.803315",
     "metadata": {
       "symbol": "SPY",
       "rows": 261,
@@ -278,8 +278,8 @@
     }
   },
   "e9f4a9893c46976f3c75602e7e6830a7": {
-    "path": "data/trader/SQQQ_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:25.155015",
+    "path": "data/trader/SQQQ_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:15.921960",
     "metadata": {
       "symbol": "SQQQ",
       "rows": 261,
@@ -287,8 +287,8 @@
     }
   },
   "53298b1ab27f715ec4ac0cffcb4074b3": {
-    "path": "data/trader/AAPL_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:29.761920",
+    "path": "data/trader/AAPL_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:21.590523",
     "metadata": {
       "symbol": "AAPL",
       "rows": 261,
@@ -296,8 +296,8 @@
     }
   },
   "9a8d5845efeba02c47b3b4beafb80cd1": {
-    "path": "data/trader/MSFT_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:34.014417",
+    "path": "data/trader/MSFT_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:27.223029",
     "metadata": {
       "symbol": "MSFT",
       "rows": 261,
@@ -305,8 +305,8 @@
     }
   },
   "909683a9c0738b78560055bec51e8fd6": {
-    "path": "data/trader/NVDA_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:38.253066",
+    "path": "data/trader/NVDA_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:32.140893",
     "metadata": {
       "symbol": "NVDA",
       "rows": 261,
@@ -314,8 +314,8 @@
     }
   },
   "4b68344d9d6951e5c0f45769c723c955": {
-    "path": "data/trader/GOOGL_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:43.347270",
+    "path": "data/trader/GOOGL_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:37.213084",
     "metadata": {
       "symbol": "GOOGL",
       "rows": 261,
@@ -323,8 +323,8 @@
     }
   },
   "276eaaca04131f1b6ddf83a79dae4138": {
-    "path": "data/trader/AMZN_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:47.999612",
+    "path": "data/trader/AMZN_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:41.659300",
     "metadata": {
       "symbol": "AMZN",
       "rows": 261,
@@ -332,8 +332,8 @@
     }
   },
   "867af030dda9ead6859bd3bf382acb90": {
-    "path": "data/trader/TSLA_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:51.905455",
+    "path": "data/trader/TSLA_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:46.259194",
     "metadata": {
       "symbol": "TSLA",
       "rows": 261,
@@ -341,8 +341,8 @@
     }
   },
   "a26a277cf1355b49a00abd1aae16fc3c": {
-    "path": "data/trader/META_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:11:59.360133",
+    "path": "data/trader/META_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:52.390071",
     "metadata": {
       "symbol": "META",
       "rows": 261,
@@ -350,17 +350,17 @@
     }
   },
   "029d4e90ce5982e0ad99637f731dcc37": {
-    "path": "data/trader/JPM_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:12:04.238169",
+    "path": "data/trader/JPM_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:26:57.540227",
     "metadata": {
       "symbol": "JPM",
       "rows": 261,
-      "columns": 117
+      "columns": 118
     }
   },
   "13e30710500af173c1ec3e487ff160fd": {
-    "path": "data/trader/UNH_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:12:08.978918",
+    "path": "data/trader/UNH_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:27:02.564769",
     "metadata": {
       "symbol": "UNH",
       "rows": 261,
@@ -368,11 +368,119 @@
     }
   },
   "57a473a0a920597b1674fda153f9fc75": {
-    "path": "data/trader/CONL_daily_auto_auto_20250806.csv",
-    "timestamp": "2025-08-06T15:12:12.312628",
+    "path": "data/trader/CONL_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T13:27:07.664201",
     "metadata": {
       "symbol": "CONL",
       "rows": 261,
+      "columns": 48
+    }
+  },
+  "8e65d96bc07ea8468767a35f3a1ba0bf": {
+    "path": "data/trader/SPY_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:10.486604",
+    "metadata": {
+      "symbol": "SPY",
+      "rows": 357,
+      "columns": 53
+    }
+  },
+  "50d7584b2913480335208667d69d4dd3": {
+    "path": "data/trader/SQQQ_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:14.344792",
+    "metadata": {
+      "symbol": "SQQQ",
+      "rows": 357,
+      "columns": 50
+    }
+  },
+  "6801de016daea48fa2bf023ee280e024": {
+    "path": "data/trader/AAPL_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:19.335955",
+    "metadata": {
+      "symbol": "AAPL",
+      "rows": 357,
+      "columns": 135
+    }
+  },
+  "14a454d72f4eb53a451680f43e0d1fe1": {
+    "path": "data/trader/MSFT_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:23.422168",
+    "metadata": {
+      "symbol": "MSFT",
+      "rows": 357,
+      "columns": 137
+    }
+  },
+  "9e4c43b2440545feaa4f7f374eca74a1": {
+    "path": "data/trader/NVDA_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:27.928475",
+    "metadata": {
+      "symbol": "NVDA",
+      "rows": 357,
+      "columns": 137
+    }
+  },
+  "473c78c938ab9a1cfc7c0370d809aa28": {
+    "path": "data/trader/GOOGL_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:33.431558",
+    "metadata": {
+      "symbol": "GOOGL",
+      "rows": 357,
+      "columns": 135
+    }
+  },
+  "f9709c292b27beba07fb1e90e6d0645e": {
+    "path": "data/trader/AMZN_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:38.206297",
+    "metadata": {
+      "symbol": "AMZN",
+      "rows": 357,
+      "columns": 131
+    }
+  },
+  "ff28db77d6e32ef3ce6f862728af02b3": {
+    "path": "data/trader/TSLA_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:42.984075",
+    "metadata": {
+      "symbol": "TSLA",
+      "rows": 357,
+      "columns": 132
+    }
+  },
+  "0c7dc16be70d8875d7d489677e1f43b7": {
+    "path": "data/trader/META_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:46.474360",
+    "metadata": {
+      "symbol": "META",
+      "rows": 357,
+      "columns": 130
+    }
+  },
+  "cba6af2fd2a9dad8edab55a159436882": {
+    "path": "data/trader/JPM_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:50.735334",
+    "metadata": {
+      "symbol": "JPM",
+      "rows": 357,
+      "columns": 118
+    }
+  },
+  "5f359b539d81556855a4052aa41fdd8c": {
+    "path": "data/trader/UNH_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:55.275450",
+    "metadata": {
+      "symbol": "UNH",
+      "rows": 357,
+      "columns": 131
+    }
+  },
+  "2f3b3f5c3f9474e453fcd786eb0bc2d4": {
+    "path": "data/trader/CONL_daily_auto_auto_20250808.csv",
+    "timestamp": "2025-08-08T14:44:58.987530",
+    "metadata": {
+      "symbol": "CONL",
+      "rows": 357,
       "columns": 48
     }
   }

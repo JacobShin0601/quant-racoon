@@ -6,8 +6,8 @@
   "data": {
     "symbols": ["SPY", "SQQQ", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "JPM", "UNH", "CONL"],
     "interval": "1d",
-    "lookback_days": 380,
-    "end_date": "2025-08-04",
+    "lookback_days": 520,
+    "end_date": "2025-08-07",
     "train_ratio": 0.7,
     "min_data_points": 50
   },
@@ -77,7 +77,7 @@
       "weight_learning_config": {
         "learning_rate": 0.0005,
         "epochs": 200,
-        "batch_size": 32,
+        "batch_size": 16,
         "validation_split": 0.2,
         "min_samples_for_weight_learning": 50,
         "early_stopping_patience": 25,
@@ -86,7 +86,7 @@
     },
     "training": {
       "epochs": 200,
-      "batch_size": 32,
+      "batch_size": 16,
       "learning_rate": 0.0005,
       "validation_split": 0.2,
       "early_stopping_patience": 20,
@@ -120,7 +120,12 @@
       "technical": 0.25,
       "liquidity": 0.1
     },
-    "volatility_penalty": 0.3
+    "volatility_penalty": 0.3,
+    "auto_scaling": {
+      "enable": true,
+      "target_range": 1.6,
+      "min_score_spread": 0.1
+    }
   },
 
   "signal_generation": {

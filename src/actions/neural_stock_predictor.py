@@ -142,8 +142,9 @@ class SimpleStockPredictor(nn.Module):
             layers.append(nn.Dropout(dropout_rate))
             prev_size = hidden_size
 
-        # 출력층 (활성화 함수 없음 - 회귀 문제)
+        # 출력층 (Tanh 활성화로 출력 범위 제한: -1 ~ +1)
         layers.append(nn.Linear(prev_size, output_size))
+        layers.append(nn.Tanh())  # -1 ~ +1 범위로 제한
 
         self.network = nn.Sequential(*layers)
 
@@ -1255,27 +1256,30 @@ class StockPredictionNetwork:
             # 데이터 스케일링
             X_scaled = self.universal_scaler.fit_transform(X_combined)
 
-            # 타겟 정규화 (클리핑 대신 표준화 사용)
+            # 타겟 MinMax 스케일링 (-1 ~ +1, Tanh 출력에 맞춤)
             logger.info(f"Universal model target stats - min: {y_combined.min():.4f}, max: {y_combined.max():.4f}, mean: {y_combined.mean():.4f}, std: {y_combined.std():.4f}")
             
-            # 극단값 클리핑 (정규화 전에 수행)
-            # target_22d (첫 번째 컬럼)은 -50% ~ 50%로 제한
+            # 현실적 범위로 클리핑 (target_22d: -30% ~ +30%, sigma: 0% ~ 50%)
             if y_combined.shape[1] > 0:
-                y_combined[:, 0] = np.clip(y_combined[:, 0], -0.5, 0.5)
-                logger.info(f"Target clipping applied - new min: {y_combined[:, 0].min():.4f}, max: {y_combined[:, 0].max():.4f}")
+                y_combined[:, 0] = np.clip(y_combined[:, 0], -0.3, 0.3)  # target_22d
+                if y_combined.shape[1] > 1:
+                    y_combined[:, 1] = np.clip(y_combined[:, 1], 0.0, 0.5)  # sigma_22d
+                logger.info(f"Target clipping applied - target_22d min: {y_combined[:, 0].min():.4f}, max: {y_combined[:, 0].max():.4f}")
             
-            # 표준화: (x - mean) / std
-            y_mean = np.mean(y_combined, axis=0)
-            y_std = np.std(y_combined, axis=0)
-            y_std[y_std == 0] = 1  # 0으로 나누기 방지
+            # MinMax 스케일링으로 -1 ~ +1 범위로 정규화
+            y_min = np.min(y_combined, axis=0)
+            y_max = np.max(y_combined, axis=0)
+            y_range = y_max - y_min
+            y_range[y_range == 0] = 1  # 0으로 나누기 방지
             
-            y_normalized = (y_combined - y_mean) / y_std
+            # -1 ~ +1 범위로 스케일링
+            y_normalized = 2 * (y_combined - y_min) / y_range - 1
             
             # 정규화 통계 저장 (예측 시 역변환용)
-            self.target_stats = {'mean': y_mean, 'std': y_std}
+            self.target_stats = {'min': y_min, 'max': y_max, 'range': y_range}
             
-            logger.info(f"Universal model normalization stats - mean: {y_mean}, std: {y_std}")
-            logger.info(f"After normalization - min: {y_normalized.min():.4f}, max: {y_normalized.max():.4f}, mean: {y_normalized.mean():.4f}, std: {y_normalized.std():.4f}")
+            logger.info(f"Universal model MinMax stats - min: {y_min}, max: {y_max}, range: {y_range}")
+            logger.info(f"After MinMax normalization - min: {y_normalized.min():.4f}, max: {y_normalized.max():.4f}, mean: {y_normalized.mean():.4f}, std: {y_normalized.std():.4f}")
 
             # 최종 NaN 검증
             if np.isnan(X_scaled).any() or np.isnan(y_normalized).any():
@@ -1298,9 +1302,9 @@ class StockPredictionNetwork:
             val_dataset = StockDataset(X_val, y_val)
 
             train_loader = DataLoader(
-                train_dataset, batch_size=batch_size, shuffle=True
+                train_dataset, batch_size=batch_size, shuffle=True, drop_last=True
             )
-            val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+            val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
 
             # 손실 함수 및 옵티마이저 (L2 정규화 추가)
             # HuberLoss 사용 - 이상치에 더 강건함
@@ -1473,28 +1477,29 @@ class StockPredictionNetwork:
                         symbol_iter.update(1)
                     continue
 
-                # 타겟 정규화 (통합 모델과 동일한 방식 적용)
+                # 타겟 정규화 (통합 모델과 동일한 MinMax 스케일링)
                 logger.info(f"{symbol} target stats - min: {y.min():.4f}, max: {y.max():.4f}, mean: {y.mean():.4f}, std: {y.std():.4f}")
                 
-                # 먼저 극단값 클리핑
-                y_clipped = np.clip(y, -0.3, 0.3)
-                logger.info(f"{symbol} after clipping - min: {y_clipped.min():.4f}, max: {y_clipped.max():.4f}")
+                # 현실적 범위로 클리핑 (target_22d: -30% ~ +30%, sigma: 0% ~ 50%)
+                if y.shape[1] > 0:
+                    y[:, 0] = np.clip(y[:, 0], -0.3, 0.3)  # target_22d
+                    if y.shape[1] > 1:
+                        y[:, 1] = np.clip(y[:, 1], 0.0, 0.5)  # sigma_22d
+                    logger.info(f"{symbol} after clipping - target_22d min: {y[:, 0].min():.4f}, max: {y[:, 0].max():.4f}")
                 
-                # 표준화 적용
-                y_mean = np.mean(y_clipped, axis=0)
-                y_std = np.std(y_clipped, axis=0)
-                if np.isscalar(y_std):
-                    if y_std == 0:
-                        y_std = 1
-                else:
-                    y_std[y_std == 0] = 1  # 0으로 나누기 방지
+                # MinMax 스케일링으로 -1 ~ +1 범위로 정규화 (Tanh 출력에 맞춤)
+                y_min = np.min(y, axis=0)
+                y_max = np.max(y, axis=0)
+                y_range = y_max - y_min
+                y_range[y_range == 0] = 1  # 0으로 나누기 방지
                 
-                y_normalized = (y_clipped - y_mean) / y_std
+                # -1 ~ +1 범위로 스케일링
+                y_normalized = 2 * (y - y_min) / y_range - 1
                 
-                # 개별 모델 타겟 통계 저장
+                # 개별 모델 타겟 통계 저장 (MinMax 정보)
                 if not hasattr(self, 'individual_target_stats'):
                     self.individual_target_stats = {}
-                self.individual_target_stats[symbol] = {'mean': y_mean, 'std': y_std}
+                self.individual_target_stats[symbol] = {'min': y_min, 'max': y_max, 'range': y_range}
                 
                 logger.info(f"{symbol} after normalization - min: {y_normalized.min():.4f}, max: {y_normalized.max():.4f}, mean: {y_normalized.mean():.4f}, std: {y_normalized.std():.4f}")
 
@@ -1514,10 +1519,10 @@ class StockPredictionNetwork:
                 val_dataset = StockDataset(X_val, y_val)
 
                 train_loader = DataLoader(
-                    train_dataset, batch_size=batch_size, shuffle=True
+                    train_dataset, batch_size=batch_size, shuffle=True, drop_last=True
                 )
                 val_loader = DataLoader(
-                    val_dataset, batch_size=batch_size, shuffle=False
+                    val_dataset, batch_size=batch_size, shuffle=False, drop_last=True
                 )
 
                 # 손실 함수 및 옵티마이저 (L2 정규화 추가)
@@ -1861,7 +1866,7 @@ class StockPredictionNetwork:
             예측 결과 (단일값 또는 멀티타겟 딕셔너리)
         """
         try:
-            logger.info(f"🎯 {symbol} 예측 시작...")
+            logger.debug(f"🎯 {symbol} 예측 시작...")
             logger.debug(f"입력 피처 shape: {features.shape}")
             logger.debug(f"입력 피처 컬럼 수: {len(features.columns)}")
             logger.debug(f"입력 피처 샘플 (첫 5개): {list(features.columns[:5])}")
@@ -1872,8 +1877,8 @@ class StockPredictionNetwork:
 
             # 피처 전처리 - 개별 종목 예측 시에는 피처명 필터링 스킵
             # 통합 모델용 feature_names는 모든 종목 피처를 포함하므로 개별 예측 시 사용 불가
-            logger.info(f"예측용 피처 입력: {features.shape}")
-            logger.info(f"피처 컬럼 샘플: {list(features.columns[:5])}")
+            logger.debug(f"예측용 피처 입력: {features.shape}")
+            logger.debug(f"피처 컬럼 샘플: {list(features.columns[:5])}")
 
             # 시계열 윈도우 데이터 생성
             features_config = self.neural_config.get("features", {})
@@ -1969,7 +1974,7 @@ class StockPredictionNetwork:
                     individual_pred = self._predict_with_model(
                         self.individual_models[symbol], X_individual, is_individual=True, symbol=symbol
                     )
-                    logger.info(f"✅ {symbol} 개별 모델 예측 성공: {individual_pred}")
+                    logger.debug(f"✅ {symbol} 개별 모델 예측 성공: {individual_pred}")
                 except Exception as e:
                     logger.warning(f"❌ {symbol} 개별 모델 예측 실패: {e}")
                     if 'X' in locals():
@@ -2058,7 +2063,7 @@ class StockPredictionNetwork:
                                     universal_pred = self._predict_with_model(
                                         self.universal_model, X_universal_scaled, is_individual=False
                                     )
-                                    logger.info(
+                                    logger.debug(
                                         f"🌐 {symbol} 통합 모델 예측 성공: {universal_pred}"
                                     )
                                 else:
@@ -2098,7 +2103,7 @@ class StockPredictionNetwork:
                         + dynamic_individual_weight * individual_pred
                     )
 
-                    logger.info(
+                    logger.debug(
                         f"🎯 {symbol} 앙상블 예측: Universal({dynamic_universal_weight:.3f}) + Individual({dynamic_individual_weight:.3f}) = {ensemble_pred:.4f}"
                     )
                     prediction_value = ensemble_pred
@@ -2111,12 +2116,12 @@ class StockPredictionNetwork:
 
             elif individual_pred is not None:
                 # 개별 모델 예측이 성공한 경우 우선 사용
-                logger.info(f"✅ {symbol} 개별 모델 예측 사용: {individual_pred}")
+                logger.debug(f"✅ {symbol} 개별 모델 예측 사용: {individual_pred}")
                 prediction_value = individual_pred
                 prediction_source = "individual"
             elif universal_pred is not None:
                 # 개별 모델이 없으면 통합 모델 사용
-                logger.info(f"🌐 {symbol} 통합 모델 예측 사용: {universal_pred}")
+                logger.debug(f"🌐 {symbol} 통합 모델 예측 사용: {universal_pred}")
                 prediction_value = universal_pred
                 prediction_source = "universal"
             else:
@@ -2130,12 +2135,11 @@ class StockPredictionNetwork:
             if isinstance(prediction_value, dict):
                 # 멀티타겟 예측에서 22일 타겟만 사용
                 target_22d_value = prediction_value.get("target_22d", prediction_value.get("target_0", 0.0))
-                logger.info(f"{symbol} 멀티타겟에서 target_22d 추출: {target_22d_value}")
+                logger.debug(f"{symbol} 멀티타겟에서 target_22d 추출: {target_22d_value}")
                 
                 # 디버깅: 전체 딕셔너리 내용 확인
                 logger.debug(f"{symbol} 전체 예측 딕셔너리: {prediction_value}")
                 if "sigma_22d" in prediction_value:
-                    logger.warning(f"{symbol} sigma_22d 값: {prediction_value['sigma_22d']}")
                     if abs(prediction_value.get('sigma_22d', 0)) > 0.5 and abs(target_22d_value) > 0.5:
                         logger.error(f"{symbol} 경고: sigma 값이 target 값으로 사용되고 있을 수 있습니다!")
             else:
@@ -2347,46 +2351,56 @@ class StockPredictionNetwork:
                 if is_individual and symbol and hasattr(self, 'individual_target_stats'):
                     if symbol in self.individual_target_stats:
                         stats = self.individual_target_stats[symbol]
-                        logger.debug(f"{symbol} 개별 모델 통계 - mean: {stats['mean']}, std: {stats['std']}")
+                        logger.debug(f"{symbol} 개별 모델 MinMax 통계 - min: {stats['min']}, max: {stats['max']}, range: {stats['range']}")
                         
+                        # MinMax 역변환: (normalized + 1) / 2 * range + min
                         # 멀티타겟인 경우 각 타겟별로 역변환
-                        if isinstance(stats['mean'], np.ndarray) and len(latest_pred.shape) > 0 and latest_pred.shape[0] > 1:
-                            logger.debug(f"{symbol} 멀티타겟 역변환 - mean shape: {stats['mean'].shape}, std shape: {stats['std'].shape}")
+                        if isinstance(stats['min'], np.ndarray) and len(latest_pred.shape) > 0 and latest_pred.shape[0] > 1:
+                            logger.debug(f"{symbol} 멀티타겟 MinMax 역변환 - min shape: {stats['min'].shape}, max shape: {stats['max'].shape}")
                             # 각 타겟별로 다른 통계값 적용
                             for i in range(len(latest_pred)):
                                 before = latest_pred[i]
-                                latest_pred[i] = latest_pred[i] * stats['std'][i] + stats['mean'][i]
-                                logger.debug(f"  타겟[{i}]: {before:.4f} -> {latest_pred[i]:.4f} (mean={stats['mean'][i]:.4f}, std={stats['std'][i]:.4f})")
+                                latest_pred[i] = (latest_pred[i] + 1) / 2 * stats['range'][i] + stats['min'][i]
+                                logger.debug(f"  타겟[{i}]: {before:.4f} -> {latest_pred[i]:.4f} (min={stats['min'][i]:.4f}, max={stats['max'][i]:.4f})")
                         else:
                             # 단일 타겟 또는 스칼라 통계값
-                            logger.debug(f"{symbol} 스칼라 역변환 - mean: {stats['mean']}, std: {stats['std']}")
+                            logger.debug(f"{symbol} 스칼라 MinMax 역변환 - min: {stats['min']}, max: {stats['max']}")
                             before = latest_pred if np.isscalar(latest_pred) else latest_pred.copy()
-                            latest_pred = latest_pred * stats['std'] + stats['mean']
+                            if np.isscalar(stats['min']):
+                                latest_pred = (latest_pred + 1) / 2 * stats['range'] + stats['min']
+                            else:
+                                # 배열인 경우 첫 번째 요소 사용
+                                latest_pred = (latest_pred + 1) / 2 * stats['range'][0] + stats['min'][0]
                             logger.debug(f"  역변환: {before} -> {latest_pred}")
                         
-                        logger.debug(f"{symbol} 개별 모델 역변환 후: {latest_pred}")
+                        logger.debug(f"{symbol} 개별 모델 MinMax 역변환 후: {latest_pred}")
                 elif hasattr(self, 'target_stats'):
-                    # Universal 모델의 경우
-                    logger.info(f"통합 모델 역정규화 시작")
-                    logger.info(f"통합 모델 통계 - mean: {self.target_stats['mean']}, std: {self.target_stats['std']}")
-                    logger.info(f"예측값 (정규화된 상태): {latest_pred}")
+                    # Universal 모델의 경우 MinMax 역변환
+                    logger.debug(f"통합 모델 MinMax 역정규화 시작")
+                    logger.debug(f"통합 모델 MinMax 통계 - min: {self.target_stats['min']}, max: {self.target_stats['max']}, range: {self.target_stats['range']}")
+                    logger.debug(f"예측값 (정규화된 상태): {latest_pred}")
                     
+                    # MinMax 역변환: (normalized + 1) / 2 * range + min
                     # 멀티타겟인 경우 각 타겟별로 역변환
-                    if isinstance(self.target_stats['mean'], np.ndarray) and len(latest_pred.shape) > 0 and latest_pred.shape[0] > 1:
-                        logger.debug(f"통합 멀티타겟 역변환 - mean shape: {self.target_stats['mean'].shape}, std shape: {self.target_stats['std'].shape}")
+                    if isinstance(self.target_stats['min'], np.ndarray) and len(latest_pred.shape) > 0 and latest_pred.shape[0] > 1:
+                        logger.debug(f"통합 멀티타겟 MinMax 역변환 - min shape: {self.target_stats['min'].shape}, max shape: {self.target_stats['max'].shape}")
                         # 각 타겟별로 다른 통계값 적용
                         for i in range(len(latest_pred)):
                             before = latest_pred[i]
-                            latest_pred[i] = latest_pred[i] * self.target_stats['std'][i] + self.target_stats['mean'][i]
-                            logger.debug(f"  타겟[{i}]: {before:.4f} -> {latest_pred[i]:.4f} (mean={self.target_stats['mean'][i]:.4f}, std={self.target_stats['std'][i]:.4f})")
+                            latest_pred[i] = (latest_pred[i] + 1) / 2 * self.target_stats['range'][i] + self.target_stats['min'][i]
+                            logger.debug(f"  타겟[{i}]: {before:.4f} -> {latest_pred[i]:.4f} (min={self.target_stats['min'][i]:.4f}, max={self.target_stats['max'][i]:.4f})")
                     else:
                         # 단일 타겟 또는 스칼라 통계값
-                        logger.debug(f"통합 스칼라 역변환 - mean: {self.target_stats['mean']}, std: {self.target_stats['std']}")
+                        logger.debug(f"통합 스칼라 MinMax 역변환 - min: {self.target_stats['min']}, max: {self.target_stats['max']}")
                         before = latest_pred if np.isscalar(latest_pred) else latest_pred.copy()
-                        latest_pred = latest_pred * self.target_stats['std'] + self.target_stats['mean']
+                        if np.isscalar(self.target_stats['min']):
+                            latest_pred = (latest_pred + 1) / 2 * self.target_stats['range'] + self.target_stats['min']
+                        else:
+                            # 배열인 경우 첫 번째 요소 사용
+                            latest_pred = (latest_pred + 1) / 2 * self.target_stats['range'][0] + self.target_stats['min'][0]
                         logger.debug(f"  역변환: {before} -> {latest_pred}")
                     
-                    logger.debug(f"통합 모델 역변환 후: {latest_pred}")
+                    logger.debug(f"통합 모델 MinMax 역변환 후: {latest_pred}")
                     
                 # 멀티타겟인 경우 처리
                 if isinstance(latest_pred, np.ndarray) and len(latest_pred.shape) > 0:
@@ -2400,14 +2414,14 @@ class StockPredictionNetwork:
                                 result_dict[col] = float(val)
                                 logger.debug(f"  컬럼[{i}] {col}: {val:.4f}")
                             
-                            logger.info(f"멀티타겟 딕셔너리 반환: {result_dict}")
-                            logger.info(f"target_columns 순서: {self.target_columns}")
+                            logger.debug(f"멀티타겟 딕셔너리 반환: {result_dict}")
+                            logger.debug(f"target_columns 순서: {self.target_columns}")
                             
-                            # 경고: sigma 값이 너무 크면 경고
+                            # 디버깅: 극단값 모니터링 (DEBUG 레벨로 변경)
                             if 'sigma_22d' in result_dict and result_dict['sigma_22d'] > 0.5:
-                                logger.warning(f"높은 sigma_22d 값 감지: {result_dict['sigma_22d']:.4f}")
+                                logger.debug(f"높은 sigma_22d 값 감지: {result_dict['sigma_22d']:.4f}")
                             if 'target_22d' in result_dict and abs(result_dict['target_22d']) > 0.5:
-                                logger.warning(f"극단적인 target_22d 값 감지: {result_dict['target_22d']:.4f}")
+                                logger.debug(f"극단적인 target_22d 값 감지: {result_dict['target_22d']:.4f}")
                             
                             return result_dict
                         else:
@@ -3010,9 +3024,9 @@ class StockPredictionNetwork:
             # 데이터로더 생성
             batch_size = self.weight_learning_config.get("batch_size", 32)
             train_loader = DataLoader(
-                train_dataset, batch_size=batch_size, shuffle=True
+                train_dataset, batch_size=batch_size, shuffle=True, drop_last=True
             )
-            val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+            val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
 
             # 가중치 학습기 모델 생성
             input_size = ensemble_inputs.shape[1]

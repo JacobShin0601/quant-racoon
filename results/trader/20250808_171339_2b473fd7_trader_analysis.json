@@ -1,0 +1,2536 @@
+{
+  "analysis_results": {
+    "market_regime": {
+      "current": "SIDEWAYS",
+      "predicted": "TRENDING_UP",
+      "current_confidence": 0.7,
+      "confidence": 0.3231965943627983,
+      "transition_probability": {},
+      "regime_change_expected": true
+    },
+    "predictions": {
+      "SPY": {
+        "target_22d": 0.0044615864753723145,
+        "target_22d_prob": 0.4071385383605957,
+        "risk_score": 0.19844109602224527,
+        "momentum_score": 0.008880317874890603,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "SQQQ": {
+        "target_22d": 0.05705995485186577,
+        "target_22d_prob": 0.49129592776298525,
+        "risk_score": 0.7405602948965863,
+        "momentum_score": -0.04851116416054842,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "AAPL": {
+        "target_22d": 0.018244028091430664,
+        "target_22d_prob": 0.4291904449462891,
+        "risk_score": 0.43952277508172655,
+        "momentum_score": 0.2011184624196106,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "MSFT": {
+        "target_22d": 0.002639687154442072,
+        "target_22d_prob": 0.40422349944710734,
+        "risk_score": 0.36035827798057074,
+        "momentum_score": 0.0993489251137503,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "NVDA": {
+        "target_22d": 0.01041022501885891,
+        "target_22d_prob": 0.41665636003017426,
+        "risk_score": 0.5482373188814491,
+        "momentum_score": 0.14292928043835912,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "GOOGL": {
+        "target_22d": 0.017240846529603004,
+        "target_22d_prob": 0.42758535444736484,
+        "risk_score": 0.45521485326941424,
+        "momentum_score": 0.2620948769500101,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "AMZN": {
+        "target_22d": 0.012982571497559547,
+        "target_22d_prob": 0.4207721143960953,
+        "risk_score": 0.531400834000598,
+        "momentum_score": -0.2819301141370376,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "TSLA": {
+        "target_22d": 0.05505477264523506,
+        "target_22d_prob": 0.4880876362323761,
+        "risk_score": 0.9025019222886335,
+        "momentum_score": -0.04132512426553599,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "META": {
+        "target_22d": -0.018872791901230812,
+        "target_22d_prob": 0.3698035329580307,
+        "risk_score": 0.6181832207523209,
+        "momentum_score": 0.3022106544217183,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "JPM": {
+        "target_22d": 0.00943912286311388,
+        "target_22d_prob": 0.41510259658098225,
+        "risk_score": 0.3521065720236158,
+        "momentum_score": -0.202125200509923,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "UNH": {
+        "target_22d": 0.08187514543533325,
+        "target_22d_prob": 0.5310002326965332,
+        "risk_score": 0.9231356792603209,
+        "momentum_score": -0.3123973166703198,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      },
+      "CONL": {
+        "target_22d": 0.005453216843307018,
+        "target_22d_prob": 0.40872514694929124,
+        "risk_score": 1.0,
+        "momentum_score": -0.8290102822002046,
+        "prediction_source": "universal",
+        "confidence": 0.8
+      }
+    },
+    "investment_scores": {
+      "SPY": {
+        "symbol": "SPY",
+        "final_score": 0.40639167938670445,
+        "confidence": 0.6347920916808667,
+        "position_size": 0.022806271679954297,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.0044615864753723145,
+          "base_score": 0.0044615864753723145,
+          "regime_adjusted_score": 0.003836964368820191,
+          "momentum_factor": 0.10320181401790934,
+          "technical_strength": 0.6435530395852634,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.23822349914832125
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.10165769326153902,
+          "recent_drawdown": 0.026460450156139133,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.192983",
+        "original_score": 0.23822349914832125,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "SQQQ": {
+        "symbol": "SQQQ",
+        "final_score": -0.7630470145613671,
+        "confidence": 0.5246814402723723,
+        "position_size": 0.008651468439633195,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.05705995485186577,
+          "base_score": 0.05705995485186577,
+          "regime_adjusted_score": 0.04907156117260457,
+          "momentum_factor": -0.4210793340172236,
+          "technical_strength": -0.6584795634734733,
+          "liquidity_factor": 0.5,
+          "integrated_score": -0.2002610999036324
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.36863015541731725,
+          "recent_drawdown": 0.277773352261242,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.195089",
+        "original_score": -0.16317621724391884,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "AAPL": {
+        "symbol": "AAPL",
+        "final_score": 0.44925110923236633,
+        "confidence": 0.5948558226267944,
+        "position_size": 0.01803349317550931,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.018244028091430664,
+          "base_score": 0.018244028091430664,
+          "regime_adjusted_score": 0.015689864158630374,
+          "momentum_factor": 0.08351790099084154,
+          "technical_strength": 0.703116827240192,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.2529346277212105
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.25439342820563265,
+          "recent_drawdown": 0.08293800315022035,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.197112",
+        "original_score": 0.2529346277212105,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "MSFT": {
+        "symbol": "MSFT",
+        "final_score": 0.5283542517685115,
+        "confidence": 0.6221295382192754,
+        "position_size": 0.02242109364369487,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.002639687154442072,
+          "base_score": 0.002639687154442072,
+          "regime_adjusted_score": 0.002270130952820182,
+          "momentum_factor": 0.25606851951711834,
+          "technical_strength": 0.6606436596684019,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.2800860971775081
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.19968300217242624,
+          "recent_drawdown": 0.02763047455049188,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.198852",
+        "original_score": 0.2800860971775081,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "NVDA": {
+        "symbol": "NVDA",
+        "final_score": 0.8,
+        "confidence": 0.6364574932624734,
+        "position_size": 0.025311917800243045,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.01041022501885891,
+          "base_score": 0.01041022501885891,
+          "regime_adjusted_score": 0.008952793516218664,
+          "momentum_factor": 0.5877636642966049,
+          "technical_strength": 0.6912164684816524,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.3733261506010518
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.27624322325982453,
+          "recent_drawdown": 0.03450867757631864,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.200643",
+        "original_score": 0.3733261506010518,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "GOOGL": {
+        "symbol": "GOOGL",
+        "final_score": 0.628076868679122,
+        "confidence": 0.6369258714226332,
+        "position_size": 0.025346340356558333,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.017240846529603004,
+          "base_score": 0.017240846529603004,
+          "regime_adjusted_score": 0.014827128015458586,
+          "momentum_factor": 0.28284610278435723,
+          "technical_strength": 0.7506905838323873,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.31431502286036955
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.1960004590717153,
+          "recent_drawdown": 0.07508400450074457,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.202407",
+        "original_score": 0.31431502286036955,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "AMZN": {
+        "symbol": "AMZN",
+        "final_score": -0.11803927801835337,
+        "confidence": 0.4828712283686736,
+        "position_size": 0.003092007998735422,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.012982571497559547,
+          "base_score": 0.012982571497559547,
+          "regime_adjusted_score": 0.011165011487901211,
+          "momentum_factor": 0.07461037833566148,
+          "technical_strength": -0.02291826462407886,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.06738903302305614
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.3680520510306526,
+          "recent_drawdown": 0.09593783544193489,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.204157",
+        "original_score": 0.05821710919467344,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "TSLA": {
+        "symbol": "TSLA",
+        "final_score": -0.13039253710922197,
+        "confidence": 0.4560938280536688,
+        "position_size": 0.0021590783945536047,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.05505477264523506,
+          "base_score": 0.05505477264523506,
+          "regime_adjusted_score": 0.04734710447490216,
+          "momentum_factor": 0.06328777567279488,
+          "technical_strength": -0.030603372182123452,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.07710994266262873
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.45165651963955744,
+          "recent_drawdown": 0.21546473941190025,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.205903",
+        "original_score": 0.05397695986384011,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "META": {
+        "symbol": "META",
+        "final_score": 0.28432464188477063,
+        "confidence": 0.50634452171884,
+        "position_size": 0.007853001774809755,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": -0.018872791901230812,
+          "base_score": -0.018872791901230812,
+          "regime_adjusted_score": -0.0162306010350585,
+          "momentum_factor": 0.2412275164689714,
+          "technical_strength": 0.7065988415885155,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.28046434910034834
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.4739516534308581,
+          "recent_drawdown": 0.05809590066607034,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.207673",
+        "original_score": 0.19632504437024384,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "JPM": {
+        "symbol": "JPM",
+        "final_score": -0.09773474403683197,
+        "confidence": 0.5459025376479145,
+        "position_size": 0.00555659688362209,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.00943912286311388,
+          "base_score": 0.00943912286311388,
+          "regime_adjusted_score": 0.008117645662277937,
+          "momentum_factor": 0.09722899557233404,
+          "technical_strength": -0.04947136920996957,
+          "liquidity_factor": 0.5,
+          "integrated_score": 0.0651864648555023
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.16724016098095468,
+          "recent_drawdown": 0.044662166286159204,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.209401",
+        "original_score": 0.0651864648555023,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "UNH": {
+        "symbol": "UNH",
+        "final_score": -0.8,
+        "confidence": 0.4958523727669678,
+        "position_size": 0.007034400394525041,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.08187514543533325,
+          "base_score": 0.08187514543533325,
+          "regime_adjusted_score": 0.0704126250743866,
+          "momentum_factor": -0.6128880844778948,
+          "technical_strength": -0.7486496941747405,
+          "liquidity_factor": 0.5,
+          "integrated_score": -0.2622193946334042
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 0.48163877059427523,
+          "recent_drawdown": 0.27095727726398433,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.211120",
+        "original_score": -0.17586000986312603,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      },
+      "CONL": {
+        "symbol": "CONL",
+        "final_score": -0.3052044305868548,
+        "confidence": 0.40741028420007747,
+        "position_size": 0.00024102842000774626,
+        "holding_period": 36,
+        "components": {
+          "neural_prediction": 0.005453216843307018,
+          "base_score": 0.005453216843307018,
+          "regime_adjusted_score": 0.0046897664852440365,
+          "momentum_factor": 0.025922700592941744,
+          "technical_strength": -0.3022915898286883,
+          "liquidity_factor": 0.5,
+          "integrated_score": -0.017216315714839017
+        },
+        "market_info": {
+          "regime": "SIDEWAYS",
+          "regime_confidence": 0.7,
+          "regime_multiplier": 0.8600000000000001
+        },
+        "risk_metrics": {
+          "volatility": 1.381368744817697,
+          "recent_drawdown": 0.5206752220966739,
+          "liquidity": 0.5
+        },
+        "timestamp": "2025-08-08T17:13:39.212895",
+        "original_score": -0.006025710500193656,
+        "scaling_info": {
+          "scale_factor": 2.9134018938999913,
+          "original_range": 0.5491861604641778,
+          "target_range": 1.6,
+          "original_center": 0.09873307036896288
+        }
+      }
+    },
+    "trading_signals": {
+      "SPY": {
+        "symbol": "SPY",
+        "timestamp": "2025-08-08T17:13:39.213558",
+        "action": "HOLD",
+        "action_strength": 0.5812783358773409,
+        "score": 0.40639167938670445,
+        "confidence": 0.6347920916808667,
+        "position_size": 0.009320878145778649,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.10165769326153902,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.05,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": -0.20319583969335223,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.15248653989230854
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.13215500124000074,
+            "drawdown_alert": 0.07646045015613914,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 15.2% 초과시",
+            "드로우다운 12.6% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "SPY 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "SQQQ": {
+        "symbol": "SQQQ",
+        "timestamp": "2025-08-08T17:13:39.213589",
+        "action": "SELL",
+        "action_strength": 0.3202852852764736,
+        "score": -0.7630470145613671,
+        "confidence": 0.5246814402723723,
+        "position_size": 0.0,
+        "execution_priority": 7,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.36863015541731725,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.06,
+              0.12,
+              0.2
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": 0.38152350728068357,
+              "drawdown_limit": 0.327773352261242,
+              "volatility_spike_threshold": 0.5529452331259759
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "HIGH",
+          "warnings": [
+            "중간 변동성 - 신중한 진입 필요",
+            "최근 드로우다운 27.8% - 추가 하락 리스크",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용",
+            "엄격한 손절선 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 0.47921920204251245,
+            "drawdown_alert": 0.327773352261242,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 55.3% 초과시",
+            "드로우다운 25.0% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "SQQQ 매도 권장 - 포지션 축소",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 약세 - 차트상 부정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용",
+            "최근 하락 - 추가 하락 리스크 존재"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "모멘텀 약화",
+              "기술적 약세"
+            ],
+            "risk_factors": [
+              "높은 변동성",
+              "최근 하락"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "AAPL": {
+        "symbol": "AAPL",
+        "timestamp": "2025-08-08T17:13:39.213610",
+        "action": "HOLD",
+        "action_strength": 0.5898502218464733,
+        "score": 0.44925110923236633,
+        "confidence": 0.5948558226267944,
+        "position_size": 0.007190205398315395,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.25439342820563265,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.08,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": -0.22462555461618317,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.381590142308449
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.3307114566673225,
+            "drawdown_alert": 0.13293800315022036,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 38.2% 초과시",
+            "드로우다운 18.3% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "AAPL 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "MSFT": {
+        "symbol": "MSFT",
+        "timestamp": "2025-08-08T17:13:39.213632",
+        "action": "HOLD",
+        "action_strength": 0.6056708503537023,
+        "score": 0.5283542517685115,
+        "confidence": 0.6221295382192754,
+        "position_size": 0.009092479569654473,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "GRADUAL",
+            "urgency": "MEDIUM",
+            "entry_phases": [
+              {
+                "phase": 1,
+                "ratio": 0.6,
+                "timing": "immediate"
+              },
+              {
+                "phase": 2,
+                "ratio": 0.4,
+                "timing": "2-3 days"
+              }
+            ],
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.19968300217242624,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.05,
+            "take_profit_levels": [
+              0.06,
+              0.12,
+              0.2
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": -0.26417712588425574,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.29952450325863933
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.2595879028241541,
+            "drawdown_alert": 0.07763047455049188,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 30.0% 초과시",
+            "드로우다운 12.8% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "MSFT 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "NVDA": {
+        "symbol": "NVDA",
+        "timestamp": "2025-08-08T17:13:39.213649",
+        "action": "STRONG_BUY",
+        "action_strength": 0.5091659946099787,
+        "score": 0.8,
+        "confidence": 0.6364574932624734,
+        "position_size": 0.024853126531830905,
+        "execution_priority": 5,
+        "timing": {
+          "entry": {
+            "type": "GRADUAL",
+            "urgency": "MEDIUM",
+            "entry_phases": [
+              {
+                "phase": 1,
+                "ratio": 0.4,
+                "timing": "immediate"
+              },
+              {
+                "phase": 2,
+                "ratio": 0.35,
+                "timing": "1-2 days"
+              },
+              {
+                "phase": 3,
+                "ratio": 0.25,
+                "timing": "3-5 days"
+              }
+            ],
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.27624322325982453,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.08,
+            "take_profit_levels": [
+              0.06,
+              0.12,
+              0.2
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": -0.4,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.4143648348897368
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.3591161902377719,
+            "drawdown_alert": 0.08450867757631864,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 41.4% 초과시",
+            "드로우다운 13.5% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "NVDA 강력 매수 권장 - 적극적 포지션 구축",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "모멘텀 강화 중 - 추세 추종 전략 유효",
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [],
+          "key_factors": {
+            "score_drivers": [
+              "모멘텀 강화",
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": [
+              "기술적/모멘텀 동조"
+            ]
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "GOOGL": {
+        "symbol": "GOOGL",
+        "timestamp": "2025-08-08T17:13:39.213667",
+        "action": "BUY",
+        "action_strength": 0.3200307255230789,
+        "score": 0.628076868679122,
+        "confidence": 0.6369258714226332,
+        "position_size": 0.020745040137766953,
+        "execution_priority": 7,
+        "timing": {
+          "entry": {
+            "type": "GRADUAL",
+            "urgency": "MEDIUM",
+            "entry_phases": [
+              {
+                "phase": 1,
+                "ratio": 0.6,
+                "timing": "immediate"
+              },
+              {
+                "phase": 2,
+                "ratio": 0.4,
+                "timing": "2-3 days"
+              }
+            ],
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.1960004590717153,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.05,
+            "take_profit_levels": [
+              0.06,
+              0.12,
+              0.2
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": -0.314038434339561,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.29400068860757295
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.25480059679322986,
+            "drawdown_alert": 0.12508400450074458,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 29.4% 초과시",
+            "드로우다운 17.5% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "GOOGL 매수 권장 - 점진적 포지션 증대",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "AMZN": {
+        "symbol": "AMZN",
+        "timestamp": "2025-08-08T17:13:39.213684",
+        "action": "HOLD",
+        "action_strength": 0.4763921443963293,
+        "score": -0.11803927801835337,
+        "confidence": 0.4828712283686736,
+        "position_size": 0.0011462624248026398,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "WAIT",
+            "urgency": "NONE",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.3680520510306526,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": 0.059019639009176686,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.5520780765459788
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "MEDIUM",
+          "warnings": [
+            "중간 변동성 - 신중한 진입 필요",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 0.4784676663398484,
+            "drawdown_alert": 0.1459378354419349,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 55.2% 초과시",
+            "드로우다운 19.6% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "AMZN 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용"
+          ],
+          "key_factors": {
+            "score_drivers": [],
+            "risk_factors": [
+              "높은 변동성"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "TSLA": {
+        "symbol": "TSLA",
+        "timestamp": "2025-08-08T17:13:39.213702",
+        "action": "HOLD",
+        "action_strength": 0.47392149257815563,
+        "score": -0.13039253710922197,
+        "confidence": 0.4560938280536688,
+        "position_size": 0.000785955181148382,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "WAIT",
+            "urgency": "NONE",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.45165651963955744,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": 0.06519626855461098,
+              "drawdown_limit": 0.26546473941190024,
+              "volatility_spike_threshold": 0.6774847794593362
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "HIGH",
+          "warnings": [
+            "높은 변동성 - 포지션 크기 축소 권장",
+            "최근 드로우다운 21.5% - 추가 하락 리스크",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용",
+            "엄격한 손절선 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 0.5871534755314247,
+            "drawdown_alert": 0.26546473941190024,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 67.7% 초과시",
+            "드로우다운 25.0% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "TSLA 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용",
+            "최근 하락 - 추가 하락 리스크 존재"
+          ],
+          "key_factors": {
+            "score_drivers": [],
+            "risk_factors": [
+              "높은 변동성",
+              "최근 하락"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "META": {
+        "symbol": "META",
+        "timestamp": "2025-08-08T17:13:39.213717",
+        "action": "HOLD",
+        "action_strength": 0.5568649283769541,
+        "score": 0.28432464188477063,
+        "confidence": 0.50634452171884,
+        "position_size": 0.0029573315506332505,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "WAIT",
+            "urgency": "NONE",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.4739516534308581,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": -0.14216232094238532,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.7109274801462871
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "HIGH",
+          "warnings": [
+            "높은 변동성 - 포지션 크기 축소 권장",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 0.6161371494601156,
+            "drawdown_alert": 0.10809590066607033,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 71.1% 초과시",
+            "드로우다운 15.8% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "META 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "기술적 강세 - 차트상 긍정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 강세"
+            ],
+            "risk_factors": [
+              "높은 변동성"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "JPM": {
+        "symbol": "JPM",
+        "timestamp": "2025-08-08T17:13:39.213731",
+        "action": "HOLD",
+        "action_strength": 0.4804530511926336,
+        "score": -0.09773474403683197,
+        "confidence": 0.5459025376479145,
+        "position_size": 0.0021474893057694708,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "WAIT",
+            "urgency": "NONE",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.16724016098095468,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.05,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.03,
+            "exit_signals": {
+              "score_reversal_threshold": 0.04886737201841598,
+              "drawdown_limit": 0.15,
+              "volatility_spike_threshold": 0.25086024147143204
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "LOW",
+          "warnings": [
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [],
+          "monitoring_points": {
+            "volatility_threshold": 0.21741220927524108,
+            "drawdown_alert": 0.0946621662861592,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 25.1% 초과시",
+            "드로우다운 14.5% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "JPM 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요"
+          ],
+          "key_factors": {
+            "score_drivers": [],
+            "risk_factors": [],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "UNH": {
+        "symbol": "UNH",
+        "timestamp": "2025-08-08T17:13:39.213747",
+        "action": "SELL",
+        "action_strength": 0.3173455185708594,
+        "score": -0.8,
+        "confidence": 0.4958523727669678,
+        "position_size": 0.0,
+        "execution_priority": 7,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 0.48163877059427523,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.06,
+              0.12,
+              0.2
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": 0.4,
+              "drawdown_limit": 0.3209572772639843,
+              "volatility_spike_threshold": 0.7224581558914128
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "HIGH",
+          "warnings": [
+            "높은 변동성 - 포지션 크기 축소 권장",
+            "최근 드로우다운 27.1% - 추가 하락 리스크",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용",
+            "엄격한 손절선 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 0.6261304017725579,
+            "drawdown_alert": 0.3209572772639843,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 72.2% 초과시",
+            "드로우다운 25.0% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "UNH 매도 권장 - 포지션 축소",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [
+            "모멘텀 약화 중 - 신중한 진입 필요",
+            "기술적 약세 - 차트상 부정적"
+          ],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용",
+            "최근 하락 - 추가 하락 리스크 존재"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "모멘텀 약화",
+              "기술적 약세"
+            ],
+            "risk_factors": [
+              "높은 변동성",
+              "최근 하락"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      },
+      "CONL": {
+        "symbol": "CONL",
+        "timestamp": "2025-08-08T17:13:39.213762",
+        "action": "HOLD",
+        "action_strength": 0.43895911388262904,
+        "score": -0.3052044305868548,
+        "confidence": 0.40741028420007747,
+        "position_size": 8.480646927584945e-05,
+        "execution_priority": 10,
+        "timing": {
+          "entry": {
+            "type": "PATIENT",
+            "urgency": "LOW",
+            "entry_phases": null,
+            "regime_considerations": {
+              "wait_factor": 1.2,
+              "patience_required": true
+            },
+            "optimal_time_windows": [
+              "장 중반 (11:00-14:00)",
+              "장 마감 1시간 전"
+            ],
+            "risk_factors": {
+              "volatility_level": 1.381368744817697,
+              "regime_stability": 0.7
+            }
+          },
+          "exit": {
+            "stop_loss": -0.12,
+            "take_profit_levels": [
+              0.04,
+              0.08,
+              0.15
+            ],
+            "max_holding_days": 54.0,
+            "trailing_stop": 0.05,
+            "exit_signals": {
+              "score_reversal_threshold": 0.1526022152934274,
+              "drawdown_limit": 0.570675222096674,
+              "volatility_spike_threshold": 2.0720531172265453
+            },
+            "partial_exit_strategy": {
+              "first_target_ratio": 0.3,
+              "second_target_ratio": 0.5,
+              "final_target_ratio": 1.0
+            }
+          }
+        },
+        "risk_management": {
+          "risk_level": "HIGH",
+          "warnings": [
+            "높은 변동성 - 포지션 크기 축소 권장",
+            "최근 드로우다운 52.1% - 추가 하락 리스크",
+            "횡보 시장 - 방향성 부족으로 위험"
+          ],
+          "mitigation_strategies": [
+            "변동성 기반 포지션 사이징 적용",
+            "엄격한 손절선 적용"
+          ],
+          "monitoring_points": {
+            "volatility_threshold": 1.795779368263006,
+            "drawdown_alert": 0.570675222096674,
+            "liquidity_minimum": 0.4
+          },
+          "emergency_exit_conditions": [
+            "변동성 207.2% 초과시",
+            "드로우다운 25.0% 초과시",
+            "시장 체제 급변시"
+          ]
+        },
+        "recommendations": {
+          "primary_recommendation": "CONL 현 포지션 유지 - 추가 신호 대기",
+          "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+          "timing_advice": [],
+          "cautions": [
+            "신뢰도 보통 - 포지션 크기 조절 필요",
+            "높은 변동성 - 손절선 엄격 적용",
+            "최근 하락 - 추가 하락 리스크 존재"
+          ],
+          "key_factors": {
+            "score_drivers": [
+              "기술적 약세"
+            ],
+            "risk_factors": [
+              "높은 변동성",
+              "최근 하락"
+            ],
+            "opportunity_factors": []
+          }
+        },
+        "holding_period": 36,
+        "market_regime": "SIDEWAYS",
+        "regime_confidence": 0.7
+      }
+    },
+    "portfolio_summary": {
+      "timestamp": "2025-08-08T17:13:39.214300",
+      "market_regime": "SIDEWAYS",
+      "regime_confidence": 0.7,
+      "portfolio_score": 0.5758349830255588,
+      "portfolio_action": "PORTFOLIO_HOLD",
+      "signal_distribution": {
+        "STRONG_BUY": 1,
+        "BUY": 1,
+        "HOLD": 8,
+        "SELL": 2,
+        "STRONG_SELL": 0
+      },
+      "total_position_size": 0.07832357471497597,
+      "high_priority_count": 0,
+      "risk_assessment": {
+        "overall_risk": "MEDIUM",
+        "regime_risk": "MEDIUM",
+        "high_risk_stock_ratio": 0.4166666666666667,
+        "risk_factors": [
+          "고위험 종목 비율: 41.7%",
+          "시장 체제: SIDEWAYS",
+          "체제 신뢰도: 70.0%"
+        ]
+      },
+      "concentration_risk": {
+        "concentration_risk": "LOW",
+        "max_position_size": 0.024853126531830905,
+        "top_3_concentration": 0.05491904481537651,
+        "total_position_size": 0.07832357471497597,
+        "warnings": [
+          "양호한 분산 수준"
+        ]
+      },
+      "execution_plan": {
+        "immediate_actions": [],
+        "planned_actions": []
+      },
+      "recommendations": {
+        "primary_recommendations": [
+          "혼재된 신호 - 선별적 접근 필요",
+          "횡보 시장 - 단기 매매 전략 고려",
+          "중간 리스크 - 신중한 포지션 관리"
+        ],
+        "action_summary": "매수 2개, 매도 2개, 보유 8개",
+        "risk_guidance": "포트폴리오 리스크: MEDIUM",
+        "regime_guidance": "시장 체제: SIDEWAYS (신뢰도: 70.0%)"
+      },
+      "top_opportunities": [
+        {
+          "symbol": "NVDA",
+          "timestamp": "2025-08-08T17:13:39.213649",
+          "action": "STRONG_BUY",
+          "action_strength": 0.5091659946099787,
+          "score": 0.8,
+          "confidence": 0.6364574932624734,
+          "position_size": 0.024853126531830905,
+          "execution_priority": 5,
+          "timing": {
+            "entry": {
+              "type": "GRADUAL",
+              "urgency": "MEDIUM",
+              "entry_phases": [
+                {
+                  "phase": 1,
+                  "ratio": 0.4,
+                  "timing": "immediate"
+                },
+                {
+                  "phase": 2,
+                  "ratio": 0.35,
+                  "timing": "1-2 days"
+                },
+                {
+                  "phase": 3,
+                  "ratio": 0.25,
+                  "timing": "3-5 days"
+                }
+              ],
+              "regime_considerations": {
+                "wait_factor": 1.2,
+                "patience_required": true
+              },
+              "optimal_time_windows": [
+                "장 중반 (11:00-14:00)",
+                "장 마감 1시간 전"
+              ],
+              "risk_factors": {
+                "volatility_level": 0.27624322325982453,
+                "regime_stability": 0.7
+              }
+            },
+            "exit": {
+              "stop_loss": -0.08,
+              "take_profit_levels": [
+                0.06,
+                0.12,
+                0.2
+              ],
+              "max_holding_days": 54.0,
+              "trailing_stop": 0.05,
+              "exit_signals": {
+                "score_reversal_threshold": -0.4,
+                "drawdown_limit": 0.15,
+                "volatility_spike_threshold": 0.4143648348897368
+              },
+              "partial_exit_strategy": {
+                "first_target_ratio": 0.3,
+                "second_target_ratio": 0.5,
+                "final_target_ratio": 1.0
+              }
+            }
+          },
+          "risk_management": {
+            "risk_level": "LOW",
+            "warnings": [
+              "횡보 시장 - 방향성 부족으로 위험"
+            ],
+            "mitigation_strategies": [],
+            "monitoring_points": {
+              "volatility_threshold": 0.3591161902377719,
+              "drawdown_alert": 0.08450867757631864,
+              "liquidity_minimum": 0.4
+            },
+            "emergency_exit_conditions": [
+              "변동성 41.4% 초과시",
+              "드로우다운 13.5% 초과시",
+              "시장 체제 급변시"
+            ]
+          },
+          "recommendations": {
+            "primary_recommendation": "NVDA 강력 매수 권장 - 적극적 포지션 구축",
+            "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+            "timing_advice": [
+              "모멘텀 강화 중 - 추세 추종 전략 유효",
+              "기술적 강세 - 차트상 긍정적"
+            ],
+            "cautions": [],
+            "key_factors": {
+              "score_drivers": [
+                "모멘텀 강화",
+                "기술적 강세"
+              ],
+              "risk_factors": [],
+              "opportunity_factors": [
+                "기술적/모멘텀 동조"
+              ]
+            }
+          },
+          "holding_period": 36,
+          "market_regime": "SIDEWAYS",
+          "regime_confidence": 0.7
+        },
+        {
+          "symbol": "GOOGL",
+          "timestamp": "2025-08-08T17:13:39.213667",
+          "action": "BUY",
+          "action_strength": 0.3200307255230789,
+          "score": 0.628076868679122,
+          "confidence": 0.6369258714226332,
+          "position_size": 0.020745040137766953,
+          "execution_priority": 7,
+          "timing": {
+            "entry": {
+              "type": "GRADUAL",
+              "urgency": "MEDIUM",
+              "entry_phases": [
+                {
+                  "phase": 1,
+                  "ratio": 0.6,
+                  "timing": "immediate"
+                },
+                {
+                  "phase": 2,
+                  "ratio": 0.4,
+                  "timing": "2-3 days"
+                }
+              ],
+              "regime_considerations": {
+                "wait_factor": 1.2,
+                "patience_required": true
+              },
+              "optimal_time_windows": [
+                "장 중반 (11:00-14:00)",
+                "장 마감 1시간 전"
+              ],
+              "risk_factors": {
+                "volatility_level": 0.1960004590717153,
+                "regime_stability": 0.7
+              }
+            },
+            "exit": {
+              "stop_loss": -0.05,
+              "take_profit_levels": [
+                0.06,
+                0.12,
+                0.2
+              ],
+              "max_holding_days": 54.0,
+              "trailing_stop": 0.03,
+              "exit_signals": {
+                "score_reversal_threshold": -0.314038434339561,
+                "drawdown_limit": 0.15,
+                "volatility_spike_threshold": 0.29400068860757295
+              },
+              "partial_exit_strategy": {
+                "first_target_ratio": 0.3,
+                "second_target_ratio": 0.5,
+                "final_target_ratio": 1.0
+              }
+            }
+          },
+          "risk_management": {
+            "risk_level": "LOW",
+            "warnings": [
+              "횡보 시장 - 방향성 부족으로 위험"
+            ],
+            "mitigation_strategies": [],
+            "monitoring_points": {
+              "volatility_threshold": 0.25480059679322986,
+              "drawdown_alert": 0.12508400450074458,
+              "liquidity_minimum": 0.4
+            },
+            "emergency_exit_conditions": [
+              "변동성 29.4% 초과시",
+              "드로우다운 17.5% 초과시",
+              "시장 체제 급변시"
+            ]
+          },
+          "recommendations": {
+            "primary_recommendation": "GOOGL 매수 권장 - 점진적 포지션 증대",
+            "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+            "timing_advice": [
+              "기술적 강세 - 차트상 긍정적"
+            ],
+            "cautions": [],
+            "key_factors": {
+              "score_drivers": [
+                "기술적 강세"
+              ],
+              "risk_factors": [],
+              "opportunity_factors": []
+            }
+          },
+          "holding_period": 36,
+          "market_regime": "SIDEWAYS",
+          "regime_confidence": 0.7
+        },
+        {
+          "symbol": "MSFT",
+          "timestamp": "2025-08-08T17:13:39.213632",
+          "action": "HOLD",
+          "action_strength": 0.6056708503537023,
+          "score": 0.5283542517685115,
+          "confidence": 0.6221295382192754,
+          "position_size": 0.009092479569654473,
+          "execution_priority": 10,
+          "timing": {
+            "entry": {
+              "type": "GRADUAL",
+              "urgency": "MEDIUM",
+              "entry_phases": [
+                {
+                  "phase": 1,
+                  "ratio": 0.6,
+                  "timing": "immediate"
+                },
+                {
+                  "phase": 2,
+                  "ratio": 0.4,
+                  "timing": "2-3 days"
+                }
+              ],
+              "regime_considerations": {
+                "wait_factor": 1.2,
+                "patience_required": true
+              },
+              "optimal_time_windows": [
+                "장 중반 (11:00-14:00)",
+                "장 마감 1시간 전"
+              ],
+              "risk_factors": {
+                "volatility_level": 0.19968300217242624,
+                "regime_stability": 0.7
+              }
+            },
+            "exit": {
+              "stop_loss": -0.05,
+              "take_profit_levels": [
+                0.06,
+                0.12,
+                0.2
+              ],
+              "max_holding_days": 54.0,
+              "trailing_stop": 0.03,
+              "exit_signals": {
+                "score_reversal_threshold": -0.26417712588425574,
+                "drawdown_limit": 0.15,
+                "volatility_spike_threshold": 0.29952450325863933
+              },
+              "partial_exit_strategy": {
+                "first_target_ratio": 0.3,
+                "second_target_ratio": 0.5,
+                "final_target_ratio": 1.0
+              }
+            }
+          },
+          "risk_management": {
+            "risk_level": "LOW",
+            "warnings": [
+              "횡보 시장 - 방향성 부족으로 위험"
+            ],
+            "mitigation_strategies": [],
+            "monitoring_points": {
+              "volatility_threshold": 0.2595879028241541,
+              "drawdown_alert": 0.07763047455049188,
+              "liquidity_minimum": 0.4
+            },
+            "emergency_exit_conditions": [
+              "변동성 30.0% 초과시",
+              "드로우다운 12.8% 초과시",
+              "시장 체제 급변시"
+            ]
+          },
+          "recommendations": {
+            "primary_recommendation": "MSFT 현 포지션 유지 - 추가 신호 대기",
+            "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+            "timing_advice": [
+              "기술적 강세 - 차트상 긍정적"
+            ],
+            "cautions": [],
+            "key_factors": {
+              "score_drivers": [
+                "기술적 강세"
+              ],
+              "risk_factors": [],
+              "opportunity_factors": []
+            }
+          },
+          "holding_period": 36,
+          "market_regime": "SIDEWAYS",
+          "regime_confidence": 0.7
+        },
+        {
+          "symbol": "AAPL",
+          "timestamp": "2025-08-08T17:13:39.213610",
+          "action": "HOLD",
+          "action_strength": 0.5898502218464733,
+          "score": 0.44925110923236633,
+          "confidence": 0.5948558226267944,
+          "position_size": 0.007190205398315395,
+          "execution_priority": 10,
+          "timing": {
+            "entry": {
+              "type": "PATIENT",
+              "urgency": "LOW",
+              "entry_phases": null,
+              "regime_considerations": {
+                "wait_factor": 1.2,
+                "patience_required": true
+              },
+              "optimal_time_windows": [
+                "장 중반 (11:00-14:00)",
+                "장 마감 1시간 전"
+              ],
+              "risk_factors": {
+                "volatility_level": 0.25439342820563265,
+                "regime_stability": 0.7
+              }
+            },
+            "exit": {
+              "stop_loss": -0.08,
+              "take_profit_levels": [
+                0.04,
+                0.08,
+                0.15
+              ],
+              "max_holding_days": 54.0,
+              "trailing_stop": 0.05,
+              "exit_signals": {
+                "score_reversal_threshold": -0.22462555461618317,
+                "drawdown_limit": 0.15,
+                "volatility_spike_threshold": 0.381590142308449
+              },
+              "partial_exit_strategy": {
+                "first_target_ratio": 0.3,
+                "second_target_ratio": 0.5,
+                "final_target_ratio": 1.0
+              }
+            }
+          },
+          "risk_management": {
+            "risk_level": "LOW",
+            "warnings": [
+              "횡보 시장 - 방향성 부족으로 위험"
+            ],
+            "mitigation_strategies": [],
+            "monitoring_points": {
+              "volatility_threshold": 0.3307114566673225,
+              "drawdown_alert": 0.13293800315022036,
+              "liquidity_minimum": 0.4
+            },
+            "emergency_exit_conditions": [
+              "변동성 38.2% 초과시",
+              "드로우다운 18.3% 초과시",
+              "시장 체제 급변시"
+            ]
+          },
+          "recommendations": {
+            "primary_recommendation": "AAPL 현 포지션 유지 - 추가 신호 대기",
+            "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+            "timing_advice": [
+              "기술적 강세 - 차트상 긍정적"
+            ],
+            "cautions": [
+              "신뢰도 보통 - 포지션 크기 조절 필요"
+            ],
+            "key_factors": {
+              "score_drivers": [
+                "기술적 강세"
+              ],
+              "risk_factors": [],
+              "opportunity_factors": []
+            }
+          },
+          "holding_period": 36,
+          "market_regime": "SIDEWAYS",
+          "regime_confidence": 0.7
+        },
+        {
+          "symbol": "SPY",
+          "timestamp": "2025-08-08T17:13:39.213558",
+          "action": "HOLD",
+          "action_strength": 0.5812783358773409,
+          "score": 0.40639167938670445,
+          "confidence": 0.6347920916808667,
+          "position_size": 0.009320878145778649,
+          "execution_priority": 10,
+          "timing": {
+            "entry": {
+              "type": "PATIENT",
+              "urgency": "LOW",
+              "entry_phases": null,
+              "regime_considerations": {
+                "wait_factor": 1.2,
+                "patience_required": true
+              },
+              "optimal_time_windows": [
+                "장 중반 (11:00-14:00)",
+                "장 마감 1시간 전"
+              ],
+              "risk_factors": {
+                "volatility_level": 0.10165769326153902,
+                "regime_stability": 0.7
+              }
+            },
+            "exit": {
+              "stop_loss": -0.05,
+              "take_profit_levels": [
+                0.04,
+                0.08,
+                0.15
+              ],
+              "max_holding_days": 54.0,
+              "trailing_stop": 0.03,
+              "exit_signals": {
+                "score_reversal_threshold": -0.20319583969335223,
+                "drawdown_limit": 0.15,
+                "volatility_spike_threshold": 0.15248653989230854
+              },
+              "partial_exit_strategy": {
+                "first_target_ratio": 0.3,
+                "second_target_ratio": 0.5,
+                "final_target_ratio": 1.0
+              }
+            }
+          },
+          "risk_management": {
+            "risk_level": "LOW",
+            "warnings": [
+              "횡보 시장 - 방향성 부족으로 위험"
+            ],
+            "mitigation_strategies": [],
+            "monitoring_points": {
+              "volatility_threshold": 0.13215500124000074,
+              "drawdown_alert": 0.07646045015613914,
+              "liquidity_minimum": 0.4
+            },
+            "emergency_exit_conditions": [
+              "변동성 15.2% 초과시",
+              "드로우다운 12.6% 초과시",
+              "시장 체제 급변시"
+            ]
+          },
+          "recommendations": {
+            "primary_recommendation": "SPY 현 포지션 유지 - 추가 신호 대기",
+            "regime_advice": "횡보 구간 - 단기 매매 전략 고려",
+            "timing_advice": [
+              "기술적 강세 - 차트상 긍정적"
+            ],
+            "cautions": [],
+            "key_factors": {
+              "score_drivers": [
+                "기술적 강세"
+              ],
+              "risk_factors": [],
+              "opportunity_factors": []
+            }
+          },
+          "holding_period": 36,
+          "market_regime": "SIDEWAYS",
+          "regime_confidence": 0.7
+        }
+      ],
+      "immediate_actions": []
+    },
+    "metadata": {
+      "timestamp": "2025-08-08T17:13:39.214305",
+      "model_version": "v1.0",
+      "config": {
+        "trader_name": "HMM-Neural Hybrid Trader",
+        "description": "HMM 시장 체제 분류 + 신경망 예측 기반 하이브리드 트레이더",
+        "version": "1.0.0",
+        "data": {
+          "symbols": [
+            "SPY",
+            "SQQQ",
+            "AAPL",
+            "MSFT",
+            "NVDA",
+            "GOOGL",
+            "AMZN",
+            "TSLA",
+            "META",
+            "JPM",
+            "UNH",
+            "CONL"
+          ],
+          "interval": "1d",
+          "lookback_days": 520,
+          "end_date": "2025-08-07",
+          "train_ratio": 0.7,
+          "min_data_points": 50
+        },
+        "data_sources": {
+          "macro": {
+            "symbols": [
+              "^VIX",
+              "^TNX",
+              "^IRX",
+              "UUP",
+              "GLD",
+              "TLT",
+              "QQQ",
+              "IWM",
+              "TIP",
+              "XRT",
+              "GOEX",
+              "XLK",
+              "XLF",
+              "XLE",
+              "XLV",
+              "XLI",
+              "XLP",
+              "XLU",
+              "XLB",
+              "XLRE"
+            ],
+            "output_dir": "data/macro"
+          },
+          "stocks": {
+            "output_dir": "data/trader"
+          }
+        },
+        "hmm_regime": {
+          "n_states": 4,
+          "state_names": [
+            "TRENDING_UP",
+            "TRENDING_DOWN",
+            "SIDEWAYS",
+            "VOLATILE"
+          ],
+          "covariance_type": "diag",
+          "n_iter": 1000,
+          "random_state": 42,
+          "min_training_days": 252,
+          "feature_config": {
+            "use_vix": true,
+            "use_yield_spread": true,
+            "use_dollar_strength": true,
+            "use_market_momentum": true,
+            "use_volatility_regime": true,
+            "rolling_periods": {
+              "vix_ma": 20,
+              "yield_ma": 10,
+              "momentum": 20,
+              "volatility_std": 20,
+              "vix_percentile": 252,
+              "vix_percentile_min": 60
+            },
+            "thresholds": {
+              "vix_volatile": 28,
+              "vol_regime_threshold": 0.6,
+              "uncertainty_factor_short": 0.8,
+              "uncertainty_factor_long": 0.6,
+              "confidence_min": 0.3,
+              "confidence_max": 0.9,
+              "confidence_adjustment": 0.1,
+              "min_validation_data": 100
+            }
+          },
+          "model_path": "models/trader/hmm_regime_model.pkl"
+        },
+        "neural_network": {
+          "architecture": {
+            "hidden_layers": [
+              32,
+              16
+            ],
+            "activation": "relu",
+            "dropout_rate": 0.2,
+            "output_activation": "tanh"
+          },
+          "target_forward_days": 22,
+          "include_sigma": true,
+          "ensemble": {
+            "universal_weight": 0.7,
+            "individual_weight": 0.3,
+            "enable_individual_models": true,
+            "enable_weight_learning": true,
+            "weight_learning_config": {
+              "learning_rate": 0.0005,
+              "epochs": 200,
+              "batch_size": 16,
+              "validation_split": 0.2,
+              "min_samples_for_weight_learning": 50,
+              "early_stopping_patience": 25,
+              "min_delta": 1e-06
+            }
+          },
+          "training": {
+            "epochs": 200,
+            "batch_size": 16,
+            "learning_rate": 0.0005,
+            "validation_split": 0.2,
+            "early_stopping_patience": 20,
+            "reduce_lr_patience": 10
+          },
+          "features": {
+            "lookback_days": 20,
+            "use_swing_strategies": true,
+            "use_macro_features": true,
+            "use_regime_features": true,
+            "use_technical_indicators": true
+          },
+          "regularization": {
+            "l2_lambda": 0.001,
+            "clip_target": true,
+            "target_range": [
+              -1,
+              1
+            ]
+          },
+          "model_path": "models/trader/neural_predictor_meta.pkl"
+        },
+        "scoring": {
+          "regime_multipliers": {
+            "TRENDING_UP": 1.2,
+            "TRENDING_DOWN": 0.3,
+            "SIDEWAYS": 0.8,
+            "VOLATILE": 0.6
+          },
+          "factor_weights": {
+            "neural": 0.4,
+            "momentum": 0.25,
+            "technical": 0.25,
+            "liquidity": 0.1
+          },
+          "volatility_penalty": 0.3,
+          "auto_scaling": {
+            "enable": true,
+            "target_range": 1.6,
+            "min_score_spread": 0.1
+          }
+        },
+        "signal_generation": {
+          "thresholds": {
+            "strong_buy": 0.6911694009191099,
+            "buy": 0.598776201476081,
+            "hold_upper": 0.40525956078439973,
+            "hold_lower": -0.1369311556212784,
+            "sell": -0.5798873008445458,
+            "strong_sell": -0.8898656417395595
+          },
+          "min_confidence": 0.3,
+          "position_management": {
+            "max_position_size": 0.15,
+            "min_position_size": 0.01,
+            "default_position_size": 0.05,
+            "risk_scaling": true
+          }
+        },
+        "portfolio": {
+          "symbols": [
+            "SPY",
+            "SQQQ",
+            "AAPL",
+            "MSFT",
+            "NVDA",
+            "GOOGL",
+            "AMZN",
+            "TSLA",
+            "META",
+            "JPM",
+            "UNH",
+            "CONL"
+          ],
+          "optimization_method": "sortino_maximization",
+          "fallback_method": "equal_weight",
+          "rebalance_period": 30,
+          "risk_free_rate": 0.02,
+          "min_weight": 0.0,
+          "max_weight": 0.3,
+          "cash_weight": 0.05,
+          "leverage": 1.0,
+          "target_return": null,
+          "target_volatility": null,
+          "max_drawdown": null
+        },
+        "optimization": {
+          "enable": false,
+          "method": "optuna",
+          "objective_metric": "sharpe_ratio",
+          "n_trials": 100,
+          "threshold_ranges": {
+            "strong_buy": [
+              0.4,
+              0.7
+            ],
+            "buy": [
+              0.2,
+              0.5
+            ],
+            "hold_upper": [
+              0.0,
+              0.3
+            ],
+            "hold_lower": [
+              -0.3,
+              0.0
+            ],
+            "sell": [
+              -0.5,
+              -0.2
+            ],
+            "strong_sell": [
+              -0.7,
+              -0.4
+            ]
+          },
+          "volatility_penalty": 0.3
+        },
+        "neural_config": {
+          "architecture": {
+            "hidden_layers": [
+              128,
+              64,
+              32
+            ],
+            "dropout_rate": 0.2
+          },
+          "training": {
+            "learning_rate": 0.001,
+            "batch_size": 32,
+            "epochs": 500,
+            "early_stopping_patience": 50,
+            "weight_decay": 0.0001
+          }
+        },
+        "logging": {
+          "level": "INFO",
+          "enable_file": true,
+          "enable_console": true,
+          "file_rotation": {
+            "max_size": "10MB",
+            "backup_count": 5
+          },
+          "format": {
+            "console": "colored",
+            "file": "json"
+          },
+          "filters": {
+            "exclude_debug_from_production": true,
+            "min_level_for_file": "INFO"
+          },
+          "log_components": {
+            "hmm_regime": true,
+            "neural_predictions": true,
+            "investment_scores": true,
+            "trading_signals": true,
+            "portfolio_updates": true,
+            "performance_metrics": true,
+            "data_collection": true,
+            "model_training": true,
+            "backtesting": true
+          }
+        },
+        "output": {
+          "results_folder": "results/trader",
+          "logs_folder": "log",
+          "reports": {
+            "daily_summary": true,
+            "performance_analysis": true,
+            "portfolio_optimization": true,
+            "backtest_report": true
+          },
+          "export_formats": [
+            "csv",
+            "json"
+          ]
+        }
+      }
+    }
+  },
+  "optimization": {
+    "weights": {
+      "GOOGL": 0.11434268938827792,
+      "NVDA": 0.1338506864847124,
+      "CONL": 0.02776648096792317,
+      "AMZN": 0.05245391907722424,
+      "JPM": 0.05639930586983619,
+      "TSLA": 0.04479519905831815,
+      "META": 0.07391878825446123,
+      "UNH": 0.011131495135055586,
+      "MSFT": 0.11799299354868056,
+      "AAPL": 0.10498903382087749,
+      "SPY": 0.1775710787846418,
+      "SQQQ": 0.08478832960999128
+    },
+    "neural_weights": {
+      "SPY": 0.12129644657553164,
+      "SQQQ": 0.016891498119768637,
+      "AAPL": 0.11712932504381302,
+      "MSFT": 0.1291859054709545,
+      "NVDA": 0.1556510989724692,
+      "GOOGL": 0.14088802405444426,
+      "AMZN": 0.057861655541731956,
+      "TSLA": 0.053887462765922434,
+      "META": 0.08835501667174518,
+      "JPM": 0.06692056970130292,
+      "UNH": 0.01347387995555444,
+      "CONL": 0.03845911712676186
+    },
+    "optimized_weights": {
+      "TSLA": 0.021340157120992256,
+      "GOOGL": 0.04668644069780924,
+      "META": 0.03653831586807561,
+      "CONL": 0.0014286725489033912,
+      "JPM": 0.029029724969588677,
+      "UNH": 0.0051093557971388145,
+      "SQQQ": 0.23897485327334447,
+      "AMZN": 0.03721317137284503,
+      "AAPL": 0.07141223594298408,
+      "NVDA": 0.0762905230223776,
+      "SPY": 0.3,
+      "MSFT": 0.0859765493859407
+    },
+    "method": "combined_sortino_maximization",
+    "performance": {
+      "sharpe_ratio": 1.0146359896576382,
+      "expected_return": 0.00021146747676099913,
+      "volatility": 0.0020668107262169747,
+      "sortino_ratio": 1.6287292806484936,
+      "max_drawdown": -0.0207623627731495
+    },
+    "optimization_result": "OptimizationResult(weights=array([0.02134016, 0.04668644, 0.03653832, 0.00142867, 0.02902972,\n       0.00510936, 0.23897485, 0.03721317, 0.07141224, 0.07629052,\n       0.3       , 0.08597655]), expected_return=np.float64(0.00021146747676099913), volatility=np.float64(0.0020668107262169747), sharpe_ratio=np.float64(1.0146359896576382), sortino_ratio=np.float64(1.6287292806484936), max_drawdown=np.float64(-0.0207623627731495), var_95=np.float64(-0.003176652127979675), cvar_95=np.float64(-0.004166710822360787), diversification_ratio=np.float64(11.76193441167106), method='Sharpe Maximization', constraints=OptimizationConstraints(min_weight=0.0, max_weight=0.3, cash_weight=0.05, leverage=1.0, enable_short_position=False, short_weight_limit=0.5, group_constraints=None, sector_constraints=None, target_return=None, target_volatility=None, max_drawdown=None), metadata={'optimization_status': 'optimal'})"
+  },
+  "backtest": {
+    "status": "success",
+    "period": "2024-03-07 ~ 2025-08-07",
+    "days": 356,
+    "performance": {
+      "total_return": 0.4410065788894211,
+      "annualized_return": 0.2951322237707521,
+      "volatility": 0.19442332188496161,
+      "sharpe_ratio": 1.517987764581962,
+      "max_drawdown": -0.1926636004814258
+    },
+    "benchmark": {
+      "total_return": 0.40554770097099446,
+      "excess_return": 0.03545887791842661
+    },
+    "weights_used": {
+      "GOOGL": 0.11434268938827792,
+      "NVDA": 0.1338506864847124,
+      "CONL": 0.02776648096792317,
+      "AMZN": 0.05245391907722424,
+      "JPM": 0.05639930586983619,
+      "TSLA": 0.04479519905831815,
+      "META": 0.07391878825446123,
+      "UNH": 0.011131495135055586,
+      "MSFT": 0.11799299354868056,
+      "AAPL": 0.10498903382087749,
+      "SPY": 0.1775710787846418,
+      "SQQQ": 0.08478832960999128
+    }
+  },
+  "timestamp": "2025-08-08T17:13:39.307815"
+}

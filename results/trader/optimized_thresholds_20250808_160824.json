@@ -1,0 +1,32 @@
+{
+  "timestamp": "20250808_160824",
+  "optimization_method": "optuna",
+  "objective_metric": "sharpe_ratio",
+  "thresholds": {
+    "strong_buy": 0.6911694009191099,
+    "buy": 0.598776201476081,
+    "hold_upper": 0.40525956078439973,
+    "hold_lower": -0.1369311556212784,
+    "sell": -0.5798873008445458,
+    "strong_sell": -0.8898656417395595
+  },
+  "metadata": {
+    "train_ratio": 0.7,
+    "n_trials": 100,
+    "symbols": [
+      "SPY",
+      "SQQQ",
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "GOOGL",
+      "AMZN",
+      "TSLA",
+      "META",
+      "JPM",
+      "UNH",
+      "CONL"
+    ],
+    "description": "Optuna 최적화로 찾은 최적 threshold 값들"
+  }
+}

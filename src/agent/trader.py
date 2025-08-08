@@ -423,21 +423,25 @@ class HybridTrader:
 
             # 1. 시장 체제 분류
             self.logger.step("[1/4] 시장 체제 분류")
-            # 매크로 데이터 로드
-            macro_data = self._load_macro_data()
+            # 매크로 데이터 로드 (config의 날짜 설정 사용)
+            macro_data = self._load_macro_data_with_config()
             # 22일 후 시장체제 예측 (신경망과 동기화)
             regime_result = self.regime_classifier.predict_regime(macro_data, forecast_days=22)
             
             # 현재 체제와 22일 후 예측 체제 구분
             actual_current_regime = regime_result.get("current_regime", "SIDEWAYS")
             predicted_regime = regime_result.get("regime", "SIDEWAYS")
-            regime_confidence = regime_result.get("confidence", 0.5)
+            
+            # 현재 체제와 예측 체제의 신뢰도 분리
+            current_regime_confidence = regime_result.get("current_confidence", 0.5)
+            predicted_regime_confidence = regime_result.get("confidence", 0.5)
             transition_prob = {}  # TODO: transition probability 계산 로직 추가
 
             results["market_regime"] = {
                 "current": actual_current_regime,  # 실제 현재 체제
                 "predicted": predicted_regime,     # 22일 후 예측 체제
-                "confidence": regime_confidence,
+                "current_confidence": current_regime_confidence,  # 현재 체제 신뢰도
+                "confidence": predicted_regime_confidence,        # 예측 체제 신뢰도
                 "transition_probability": transition_prob,
                 "regime_change_expected": regime_result.get("regime_change_expected", False),
             }
@@ -464,10 +468,10 @@ class HybridTrader:
                     if pred:
                         prediction_summary.append([
                             symbol,
-                            f"{pred.get('target_22d', 0):.4f}" if pred.get('target_22d') is not None else "N/A",
+                            f"{pred.get('target_22d', 0):.2%}" if pred.get('target_22d') is not None else "N/A",
                             f"{pred.get('target_22d_prob', 0):.1%}" if pred.get('target_22d_prob') is not None else "N/A",
-                            f"{pred.get('risk_score', 0):.2f}" if pred.get('risk_score') is not None else "N/A",
-                            f"{pred.get('momentum_score', 0):.2f}" if pred.get('momentum_score') is not None else "N/A"
+                            f"{pred.get('risk_score', 0):.1%}" if pred.get('risk_score') is not None else "N/A",
+                            f"{pred.get('momentum_score', 0):.1%}" if pred.get('momentum_score') is not None else "N/A"
                         ])
                 else:
                     self.logger.warning(f"{symbol} 데이터가 없습니다")
@@ -501,7 +505,7 @@ class HybridTrader:
                 # 실제 주식 데이터 사용 (이미 로드됨)
                 symbol_data = stock_data.get(symbol, pd.DataFrame())
                 score = self.score_generator.generate_investment_score(
-                    predictions[symbol], symbol_data, symbol, {"regime": actual_current_regime, "confidence": regime_confidence}
+                    predictions[symbol], symbol_data, symbol, {"regime": actual_current_regime, "confidence": current_regime_confidence}
                 )
                 scores[symbol] = score
                 
@@ -510,8 +514,30 @@ class HybridTrader:
                     symbol,
                     f"{score.get('final_score', 0):.4f}",
                     f"{score.get('confidence', 0):.1%}",
-                    f"{predictions.get(symbol, {}).get('target_22d', 0) if predictions.get(symbol) else 0:.4f}"
+                    f"{predictions.get(symbol, {}).get('target_22d', 0) if predictions.get(symbol) else 0:.2%}"
                 ])
+
+            # 자동 스케일링 적용
+            scores_list = list(scores.values())
+            if scores_list and hasattr(self.score_generator, 'auto_scale_scores'):
+                self.logger.debug(f"자동 스케일링 적용 - 원본 점수 수: {len(scores_list)}")
+                scaled_scores = self.score_generator.auto_scale_scores(scores_list)
+                
+                # 스케일링된 점수들로 scores 딕셔너리 업데이트
+                for i, symbol in enumerate(symbols):
+                    if i < len(scaled_scores):
+                        scores[symbol] = scaled_scores[i]
+                
+                # 스케일링 후 score_summary 재생성
+                score_summary = []
+                for symbol in symbols:
+                    score = scores[symbol]
+                    score_summary.append([
+                        symbol,
+                        f"{score.get('final_score', 0):.4f}",
+                        f"{score.get('confidence', 0):.1%}",
+                        f"{predictions.get(symbol, {}).get('target_22d', 0) if predictions.get(symbol) else 0:.2%}"
+                    ])
 
             results["investment_scores"] = scores
             
@@ -581,7 +607,7 @@ class HybridTrader:
             # 5. 포트폴리오 종합
             individual_signals = list(signals.values())
             portfolio_summary = self.portfolio_aggregator.aggregate_portfolio_signals(
-                individual_signals, {"regime": actual_current_regime, "confidence": regime_confidence}
+                individual_signals, {"regime": actual_current_regime, "confidence": current_regime_confidence}
             )
             results["portfolio_summary"] = portfolio_summary
 
@@ -603,6 +629,89 @@ class HybridTrader:
         except Exception as e:
             self.logger.error(f"분석 실패: {e}", exc_info=True)
             return {}
+
+    def _load_macro_data_with_config(self) -> pd.DataFrame:
+        """
+        config의 날짜 설정을 사용하여 매크로 데이터 수집/로드
+        
+        Returns:
+            매크로 데이터 DataFrame
+        """
+        try:
+            from datetime import datetime, timedelta
+            
+            # config에서 날짜 설정 가져오기
+            data_config = self.config.get("data", {})
+            end_date = data_config.get("end_date", datetime.now().strftime("%Y-%m-%d"))
+            lookback_days = data_config.get("lookback_days", 730)  # 기본 2년
+            
+            # 시작 날짜 계산
+            if isinstance(end_date, str):
+                end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
+            else:
+                end_date_obj = datetime.now()
+                end_date = end_date_obj.strftime("%Y-%m-%d")
+            
+            start_date = (end_date_obj - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+            
+            self.logger.info(f"매크로 데이터 수집 기간: {start_date} ~ {end_date} ({lookback_days}일)")
+            
+            # 매크로 데이터 수집
+            _, macro_data_dict, _ = self.macro_collector.collect_all_data(
+                start_date=start_date, 
+                end_date=end_date, 
+                use_cache=True
+            )
+            
+            # 딕셔너리를 DataFrame으로 변환
+            if macro_data_dict:
+                macro_data = pd.DataFrame()
+                for symbol, df in macro_data_dict.items():
+                    if not df.empty:
+                        # 컬럼명에 심볼 prefix 추가
+                        df_copy = df.copy()
+                        df_copy.columns = [f"{symbol}_{col}" for col in df_copy.columns]
+                        
+                        # 데이터 병합
+                        if macro_data.empty:
+                            macro_data = df_copy
+                        else:
+                            macro_data = macro_data.join(df_copy, how='outer')
+                
+                if not macro_data.empty:
+                    # 결측값 처리
+                    macro_data = macro_data.fillna(method='ffill').fillna(method='bfill')
+                    self.logger.info(f"매크로 데이터 수집 완료: {len(macro_data.columns)}개 컬럼, {len(macro_data)}개 행")
+                    
+                    # 파일 저장도 함께 수행
+                    self._save_macro_data_to_files(macro_data_dict)
+                    
+                    return macro_data
+            
+            # 수집 실패 시 기존 파일 로드 시도
+            self.logger.warning("새 매크로 데이터 수집 실패, 기존 파일 로드 시도")
+            return self._load_macro_data()
+            
+        except Exception as e:
+            self.logger.error(f"config 기반 매크로 데이터 로드 실패: {e}")
+            # 실패 시 기존 방식으로 폴백
+            return self._load_macro_data()
+
+    def _save_macro_data_to_files(self, macro_data_dict: Dict[str, pd.DataFrame]):
+        """매크로 데이터를 파일로 저장"""
+        try:
+            import os
+            macro_dir = "data/macro"
+            os.makedirs(macro_dir, exist_ok=True)
+            
+            for symbol, df in macro_data_dict.items():
+                if not df.empty:
+                    file_path = f"{macro_dir}/{symbol.lower()}_data.csv"
+                    df.to_csv(file_path)
+                    self.logger.debug(f"매크로 데이터 저장: {file_path}")
+                    
+        except Exception as e:
+            self.logger.error(f"매크로 데이터 파일 저장 실패: {e}")
 
     def _load_macro_data(self) -> pd.DataFrame:
         """
@@ -834,9 +943,7 @@ class HybridTrader:
                 )
 
                 if optimization_results and "weights" in optimization_results:
-                    self.logger.info("💼 최적 포트폴리오 비중:")
-                    for symbol, weight in optimization_results["weights"].items():
-                        self.logger.info(f"  {symbol}: {weight:.1%}")
+                    self.logger.debug("최적화 결과 받음 - 테이블은 포트폴리오 매니저에서 출력")
                 else:
                     self.logger.warning("포트폴리오 최적화 실패 - 기본 가중치 사용")
                     optimization_results = {"weights": {s: 1.0 / len(symbols) for s in symbols}}
@@ -918,14 +1025,17 @@ class HybridTrader:
             
             # 주요 성과 지표 테이블 (세로 배치)
             self.logger.info("\n📈 주요 성과 지표:")
-            self.logger.info("-" * 90)
+            table_width = 98
+            self.logger.info("-" * table_width)
             
-            # 헤더 (지표명들)
-            self.logger.info(f"{'구분':<12} {'수익률':>10} {'변동성':>10} {'샤프비율':>10} {'소르티노':>10} {'칼마비율':>10} {'최대낙폭':>10}")
-            self.logger.info("-" * 90)
+            # 헤더 (지표명들) - 각 컬럼 폭 조정
+            header = f"{'구분':<14} {'수익률':>12} {'변동성':>12} {'샤프비율':>12} {'소르티노':>12} {'칼마비율':>12} {'최대낙폭':>12}"
+            self.logger.info(header)
+            self.logger.info("-" * table_width)
             
             # 전략 행
-            self.logger.info(f"{'전략':<12} {portfolio_return:>9.2%} {volatility:>9.2%} {sharpe_ratio:>10.2f} {sortino_ratio:>10.2f} {calmar_ratio:>10.2f} {max_drawdown:>9.2%}")
+            strategy_row = f"{'전략':<14} {portfolio_return:>11.2%} {volatility:>11.2%} {sharpe_ratio:>12.2f} {sortino_ratio:>12.2f} {calmar_ratio:>12.2f} {max_drawdown:>11.2%}"
+            self.logger.info(strategy_row)
             
             # Buy & Hold 행  
             buy_hold_volatility = volatility * 1.1  # 근사값 (실제로는 계산되어야 함)
@@ -934,7 +1044,8 @@ class HybridTrader:
             buy_hold_calmar = abs(buy_hold_return / (max_drawdown * 1.1)) if max_drawdown != 0 else 0
             buy_hold_mdd = max_drawdown * 1.1  # 근사값
             
-            self.logger.info(f"{'Buy & Hold':<12} {buy_hold_return:>9.2%} {buy_hold_volatility:>9.2%} {buy_hold_sharpe:>10.2f} {buy_hold_sortino:>10.2f} {buy_hold_calmar:>10.2f} {buy_hold_mdd:>9.2%}")
+            buyhold_row = f"{'Buy & Hold':<14} {buy_hold_return:>11.2%} {buy_hold_volatility:>11.2%} {buy_hold_sharpe:>12.2f} {buy_hold_sortino:>12.2f} {buy_hold_calmar:>12.2f} {buy_hold_mdd:>11.2%}"
+            self.logger.info(buyhold_row)
             
             # 차이 행
             return_diff = portfolio_return - buy_hold_return
@@ -944,9 +1055,10 @@ class HybridTrader:
             calmar_diff = calmar_ratio - buy_hold_calmar
             mdd_diff = max_drawdown - buy_hold_mdd
             
-            self.logger.info(f"{'차이':<12} {return_diff:>+9.2%} {volatility_diff:>+9.2%} {sharpe_diff:>+10.2f} {sortino_diff:>+10.2f} {calmar_diff:>+10.2f} {mdd_diff:>+9.2%}")
+            diff_row = f"{'차이':<14} {return_diff:>+11.2%} {volatility_diff:>+11.2%} {sharpe_diff:>+12.2f} {sortino_diff:>+12.2f} {calmar_diff:>+12.2f} {mdd_diff:>+11.2%}"
+            self.logger.info(diff_row)
             
-            self.logger.info("-" * 90)
+            self.logger.info("-" * table_width)
 
             # 포트폴리오 비중
             self.logger.debug("\n포트폴리오 비중:")
