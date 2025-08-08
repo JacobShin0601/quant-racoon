@@ -243,6 +243,13 @@ class TechnicalIndicators:
         )
 
     @staticmethod
+    def calculate_adx(df: pd.DataFrame, period: int = 14) -> Tuple[pd.Series, pd.Series, pd.Series]:
+        """ADX (Average Directional Index) 계산 - 공개 메서드"""
+        return TechnicalIndicators._calculate_adx(
+            df["high"], df["low"], df["close"], period
+        )
+
+    @staticmethod
     def _calculate_donchian_channels(
         high: pd.Series, low: pd.Series, period: int = 20
     ) -> Tuple[pd.Series, pd.Series, pd.Series]:

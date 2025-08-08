@@ -36,6 +36,14 @@ except ImportError as e:
     # LangChain이 없을 때를 위한 대체 클래스들
     BaseModel = object
     Field = lambda **kwargs: lambda x: x
+    ChatPromptTemplate = object
+    JsonOutputParser = object
+    ChatBedrock = object
+    ChatOpenAI = object
+    ChatAnthropic = object
+    InMemoryCache = object
+    HumanMessage = object
+    SystemMessage = object
 
 from .llm_insights import LLMPrivilegedInformationSystem
 

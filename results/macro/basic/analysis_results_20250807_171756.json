@@ -1,0 +1,293 @@
+{
+  "session_uuid": "8aa6cdae-152a-4616-871a-c2b75e76e613",
+  "timestamp": "2025-08-07T17:17:56.654095",
+  "analysis_type": "basic",
+  "data_period": "2_years",
+  "current_regime": "SIDEWAYS",
+  "confidence": 0.48838112037409526,
+  "probabilities": {
+    "TRENDING_UP": 0.17903343384065742,
+    "TRENDING_DOWN": 0.28256992092300803,
+    "VOLATILE": 0.0,
+    "SIDEWAYS": 0.5383966452363343
+  },
+  "macro_analysis": {
+    "market_condition": "recession_fear",
+    "confidence": 0.8999999999999999,
+    "key_indicators": {
+      "tips_spread_tip_tlt": -0.004666233884568771,
+      "tips_spread_tip_tlt_ma_50": 0.004041176815169167,
+      "tips_spread_composite": -0.004666233884568771,
+      "tips_spread_composite_ma_50": 0.0013470589383897224,
+      "inflation_expectation": "stable",
+      "inflation_trend": "decreasing",
+      "rate_environment": "unknown",
+      "rate_trend": "unknown",
+      "qqq_momentum": 0.019901136762640492,
+      "iwm_momentum": -0.013816214720402842,
+      "growth_outlook_confidence": 0.4,
+      "growth_indicators_count": 2,
+      "growth_outlook": "neutral",
+      "market_sentiment": "neutral",
+      "risk_on_score": 0,
+      "risk_off_score": 0
+    },
+    "sector_rotation": {
+      "XLK": "leading",
+      "XLF": "cyclical",
+      "XLE": "lagging",
+      "XLV": "lagging",
+      "XLI": "cyclical",
+      "XLP": "cyclical",
+      "XLU": "leading",
+      "XLB": "lagging",
+      "XLRE": "cyclical"
+    },
+    "recommendations": {
+      "overweight_sectors": [],
+      "underweight_sectors": [],
+      "neutral_sectors": [
+        "XLK",
+        "XLF",
+        "XLE",
+        "XLV",
+        "XLI",
+        "XLP",
+        "XLU",
+        "XLB",
+        "XLRE"
+      ],
+      "strategy": "Recession hedge - 방어적 섹터 + 국채 비중 확대",
+      "risk_level": "low"
+    }
+  },
+  "optimal_params": {
+    "sma_short": 14,
+    "sma_medium": 45,
+    "sma_long": 124,
+    "ema_short": 7,
+    "ema_long": 27,
+    "adx_period": 13,
+    "adx_threshold": 26,
+    "supertrend_period": 12,
+    "supertrend_multiplier": 3.33509371644558,
+    "rsi_period": 22,
+    "rsi_overbought": 80,
+    "rsi_oversold": 34,
+    "macd_fast": 9,
+    "macd_slow": 27,
+    "macd_signal": 5,
+    "stoch_k_period": 15,
+    "stoch_d_period": 4,
+    "cci_period": 10,
+    "williams_r_period": 15,
+    "bb_period": 21,
+    "bb_std": 2.9683631638042907,
+    "atr_period": 21,
+    "keltner_period": 15,
+    "keltner_multiplier": 2.1834007889962948,
+    "donchian_period": 29,
+    "volume_ma_period": 18,
+    "obv_ma_period": 24,
+    "vwap_period": 10,
+    "money_flow_period": 16,
+    "pivot_period": 15,
+    "fibonacci_levels": 5,
+    "support_tolerance": 0.008127973055981706,
+    "resistance_tolerance": 0.0067882535937294946,
+    "trend_weight": 0.49096185890903365,
+    "momentum_weight": 0.1583993022550778,
+    "volatility_weight": 0.2770080282186651,
+    "macro_weight": 0.10062621424409887,
+    "volume_weight": 0.13549349209735573,
+    "support_resistance_weight": 0.1016986045335645,
+    "base_position": 0.8500744964128195,
+    "volatile_reduction": 0.4224863441524113,
+    "trending_boost": 1.4509186820928768,
+    "momentum_boost": 1.0506489485651158,
+    "volume_boost": 1.0132632492357554,
+    "stop_atr_multiplier": 1.8160680090909826,
+    "stop_fixed_percentage": 0.07991817617899007,
+    "profit_atr_multiplier": 3.668214130205386,
+    "profit_fixed_percentage": 0.12623568379521435,
+    "trailing_stop_percentage": 0.024199937108584556,
+    "max_position_size": 0.8397335009936677,
+    "max_drawdown_limit": 0.08292893507486251,
+    "entry_confirmation_periods": 1,
+    "exit_confirmation_periods": 1,
+    "trend_confirmation_periods": 2,
+    "volume_confirmation_threshold": 1.858799833810713,
+    "momentum_confirmation_threshold": 0.88834110217033
+  },
+  "optimization_performance": {
+    "total_return": 0.2841548749188092,
+    "log_return": 0.25010081708951704,
+    "buy_hold_return": 0.15440117432496936,
+    "buy_hold_log_return": 0.14358174573702862,
+    "excess_return": 0.12975370059383984,
+    "sharpe_ratio": 3.003322560665266,
+    "sortino_ratio": 3.3246388978173673,
+    "calmar_ratio": 2.809370379294651,
+    "max_drawdown": -0.10114539436062253,
+    "win_rate": 0.594059405940594,
+    "avg_win": 0.00929155603133567,
+    "avg_loss": -0.00744247588408172,
+    "profit_factor": 1.8726743981546867,
+    "max_consecutive_wins": 9,
+    "max_consecutive_losses": 5,
+    "win_rate_weighted_return": 0.0024985331745820756,
+    "trade_frequency": 0.9900990099009901,
+    "total_trades": "100",
+    "buyhold_return": 0.4476270850851293,
+    "buyhold_sharpe": 1.0894027674201854,
+    "buyhold_drawdown": 0.187552359777473
+  },
+  "validation_results": {
+    "data_quality": {
+      "spy_data_points": 501,
+      "macro_indicators": 12,
+      "data_completeness": 0.95
+    },
+    "regime_consistency": {
+      "confidence_threshold_met": false,
+      "probability_sum": 0.9999999999999998
+    }
+  },
+  "rlmf_analysis": {
+    "statistical_arbitrage": {
+      "overall_signal": 0.41000000000000003,
+      "confidence": 0.41000000000000003,
+      "individual_signals": {
+        "XRT": {
+          "signal": 0.0,
+          "return": 0.02519208987751642,
+          "weight": 0.32,
+          "symbol": "xrt_data"
+        },
+        "GOEX": {
+          "signal": 1.0,
+          "return": 0.10748963722368687,
+          "weight": 0.25,
+          "symbol": "goex_data"
+        },
+        "VIX": {
+          "signal": 1.0,
+          "return": 0.08333339494020309,
+          "weight": 0.16,
+          "symbol": "^vix_data"
+        }
+      },
+      "signal_strength": 0.41000000000000003,
+      "direction": "BULLISH"
+    },
+    "market_feedback": {
+      "prediction_accuracy": 0.7,
+      "return_alignment": 0.9524255634284512,
+      "volatility_prediction": 0.3,
+      "regime_persistence": 0.8,
+      "macro_consistency": 0.4
+    },
+    "adaptation_status": {
+      "status": "adapting",
+      "weights": {
+        "trend_strength": 1.0,
+        "volatility_regime": 1.0,
+        "momentum_persistence": 1.0,
+        "macro_alignment": 1.0,
+        "correlation_shift": 1.0
+      },
+      "performance": 0.7,
+      "feedback_count": 1,
+      "last_update": "2025-08-07T17:17:56.580721"
+    },
+    "learning_rate": 0.01
+  },
+  "confidence_analysis": {
+    "total_confidence": 0.5627442064450917,
+    "adjusted_confidence": 0.48838112037409526,
+    "component_confidences": {
+      "technical": 0.1345991613090836,
+      "macro": 0.18,
+      "statistical_arb": 0.10250000000000001,
+      "rlmf_feedback": 0.12609702253713803,
+      "cross_validation": 0.019548022598870056
+    },
+    "consistency_score": 0.735712655166172,
+    "confidence_distribution": {
+      "mean": 0.11254884128901835,
+      "std": 0.052857468966765596,
+      "min": 0.019548022598870056,
+      "max": 0.18
+    }
+  },
+  "regime_detection": {},
+  "llm_insights": {},
+  "llm_api_insights": {},
+  "final_confidence": {
+    "final_confidence": 0.48838112037409526
+  },
+  "enhanced_recommendations": {
+    "primary_strategy": "RANGE_TRADING",
+    "risk_level": "low",
+    "position_sizing": "MODERATE",
+    "time_horizon": "MEDIUM",
+    "overweight_sectors": [],
+    "underweight_sectors": [],
+    "neutral_sectors": [
+      "XLK",
+      "XLF",
+      "XLE",
+      "XLV",
+      "XLI",
+      "XLP",
+      "XLU",
+      "XLB",
+      "XLRE"
+    ],
+    "key_actions": [
+      "범위 내 거래",
+      "지지/저항선 활용",
+      "국채 비중 확대"
+    ],
+    "risk_warnings": [
+      "경기침체 우려 - 현금 비중 확대 고려"
+    ],
+    "sector_rotation": [
+      "OVERWEIGHT: XLK",
+      "UNDERWEIGHT: XLE",
+      "UNDERWEIGHT: XLV",
+      "OVERWEIGHT: XLU",
+      "UNDERWEIGHT: XLB"
+    ],
+    "position_size_percentage": 60.0,
+    "stop_loss_percentage": 3.5,
+    "take_profit_percentage": 7.0,
+    "trailing_stop_percentage": 2.0,
+    "hedging_strategy": "CALL/PUT 스프레드 (10% 비중)",
+    "entry_points": [
+      "지지선 근처 매수",
+      "저항선 근처 매도"
+    ],
+    "exit_strategy": "범위 내 익절 + 스탑로스",
+    "risk_management": {
+      "max_drawdown": 5.5,
+      "position_limit": 20.0,
+      "correlation_limit": 0.6
+    },
+    "portfolio_allocation": {
+      "equity": 30.0,
+      "bonds_short": 7.5,
+      "bonds_intermediate": 15.0,
+      "bonds_long": 25.0,
+      "gold": 7.5,
+      "commodities": 7.5,
+      "cash": 7.5
+    },
+    "strategy": "Recession hedge - 방어적 섹터 + 국채 비중 확대"
+  },
+  "random_forest_info": {
+    "model_used": true,
+    "accuracy": null,
+    "trained_at": "2025-07-24T16:02:56.022593"
+  }
+}

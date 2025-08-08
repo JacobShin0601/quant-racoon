@@ -6499,7 +6499,7 @@ class BullMarketMomentumStrategy(BaseStrategy):
         df["rsi"] = TechnicalIndicators.calculate_rsi(df["close"], period=14)
         
         # ADX
-        df["adx"] = TechnicalIndicators.calculate_adx(df, period=14)
+        df["adx"], df["plus_di"], df["minus_di"] = TechnicalIndicators.calculate_adx(df, period=14)
         
         # 트렌드 확인 (SMA)
         df["sma_short"] = df["close"].rolling(window=20).mean()

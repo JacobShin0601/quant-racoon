@@ -1,8 +1,8 @@
 {
-  "session_uuid": "8aa6cdae-152a-4616-871a-c2b75e76e613",
+  "session_uuid": "97e9bc6f-d3f1-4427-8ad3-4e6412f8272b",
   "start_date": "2023-08-08",
   "end_date": "2025-08-07",
-  "created_at": "2025-08-07T17:17:37.378549",
+  "created_at": "2025-08-07T14:32:26.438578",
   "data_sources": [
     "SPY",
     "^VIX",
