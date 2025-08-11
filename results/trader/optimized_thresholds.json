@@ -1,14 +1,14 @@
 {
-  "timestamp": "20250808_165442",
+  "timestamp": "20250808_200010",
   "optimization_method": "optuna",
   "objective_metric": "sharpe_ratio",
   "thresholds": {
-    "strong_buy": 0.6911694009191099,
-    "buy": 0.598776201476081,
-    "hold_upper": 0.40525956078439973,
-    "hold_lower": -0.1369311556212784,
-    "sell": -0.5798873008445458,
-    "strong_sell": -0.8898656417395595
+    "strong_buy": 0.6743011393044852,
+    "buy": 0.6093385043273976,
+    "hold_upper": 0.26025695762583745,
+    "hold_lower": -0.2918223330477283,
+    "sell": -0.49912443512739396,
+    "strong_sell": -0.8665838298132441
   },
   "metadata": {
     "train_ratio": 0.7,

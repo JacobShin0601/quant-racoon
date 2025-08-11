@@ -3,13 +3,24 @@
 set -e
 
 # Conda 환경 활성화
-# CONDA_ENV="quant"
-CONDA_ENV="bedrock_manus"
+CONDA_ENV="quant"
+# CONDA_ENV="bedrock_manus"
 PYTHON_PATH="python3"
 
 # Conda 환경 활성화
-source $(conda info --base)/etc/profile.d/conda.sh
-conda activate $CONDA_ENV
+if [ -n "$CONDA_EXE" ]; then
+    # Use existing conda executable
+    eval "$($CONDA_EXE shell.bash hook)"
+    conda activate $CONDA_ENV
+elif [ -f "/Users/jacob/opt/anaconda3/etc/profile.d/conda.sh" ]; then
+    # Use anaconda3 conda
+    source /Users/jacob/opt/anaconda3/etc/profile.d/conda.sh
+    conda activate $CONDA_ENV
+else
+    # Fallback to system conda
+    source $(conda info --base)/etc/profile.d/conda.sh 2>/dev/null || true
+    conda activate $CONDA_ENV
+fi
 
 # Python 경로 확인
 if ! command -v python3 &> /dev/null; then
@@ -68,7 +79,7 @@ debug() { _log DEBUG "$@"; }
 show_help() {
     cat << EOF
 
-🧠 HMM-Neural 하이브리드 트레이더 시스템
+🧠 RF-XGBoost-Neural 하이브리드 트레이더 시스템
 
 사용법: $0 [옵션]
 
@@ -83,7 +94,7 @@ show_help() {
 
 실행 단계:
   1. 데이터 수집 (매크로 + 개별 종목)
-  2. HMM 시장 체제 분류 모델 학습
+  2. RF-XGBoost 앙상블 시장 체제 분류 모델 학습
   3. 신경망 개별 종목 예측 모델 학습
   4. 임계점 최적화 (선택사항)
   5. 트레이딩 분석 및 신호 생성
@@ -160,7 +171,7 @@ if [[ ! -f "config/config_trader.json" ]]; then
     exit 1
 fi
 
-log "HMM-Neural 하이브리드 트레이더 시스템 시작"
+log "RF-XGBoost-Neural 하이브리드 트레이더 시스템 시작"
 debug "옵션: optimize-threshold=$OPTIMIZE_THRESHOLD, cached=$USE_CACHED_DATA, retrain=$FORCE_RETRAIN"
 
 # ============================================================================
@@ -243,31 +254,31 @@ print(lookback_days)
 fi
 
 # ============================================================================
-# 2단계: HMM 시장 체제 분류 모델 학습
+# 2단계: RF-XGBoost 앙상블 시장 체제 분류 모델 학습
 # ============================================================================
-step "[2/6] HMM 시장 체제 분류 모델 학습"
+step "[2/6] RF-XGBoost 앙상블 시장 체제 분류 모델 학습"
 
-log "HMM 시장 체제 모델 학습 중..."
+log "RF-XGBoost 앙상블 시장 체제 모델 학습 중..."
 if [[ "$FORCE_RETRAIN" == true ]]; then
     log "강제 재학습 모드 활성화"
-    cmd="$PYTHON_PATH src/actions/hmm_regime_classifier.py --train --force --data-dir data/macro"
+    cmd="$PYTHON_PATH -m src.actions.rf_xgb_ensemble_classifier --train --force-retrain"
 else
     log "기존 모델 확인 후 필요시 학습"
-    cmd="$PYTHON_PATH src/actions/hmm_regime_classifier.py --train --data-dir data/macro"
+    cmd="$PYTHON_PATH -m src.actions.rf_xgb_ensemble_classifier --train"
 fi
 
 if [[ "$QUIET_MODE" == true ]]; then
     $cmd > /dev/null 2>&1
 else
-    $cmd
+    $cmd 2>&1 | grep -E "(✅|❌|📊|🔄|RF-XGBoost|앙상블|학습|완료|실패)" || true
 fi
 
 if [[ $? -ne 0 ]]; then
-    error "HMM 모델 학습 실패"
+    error "RF-XGBoost 앙상블 모델 학습 실패"
     exit 1
 fi
 
-success "HMM 시장 체제 분류 모델 학습 완료"
+success "RF-XGBoost 앙상블 시장 체제 분류 모델 학습 완료"
 
 # ============================================================================
 # 3단계: 신경망 개별 종목 예측 모델 학습
@@ -399,7 +410,7 @@ else
         grep -v "Predicted state idx:" | \
         grep -v "상태 확률:" | \
         grep -v "StockPredictionNetwork" | \
-        grep -v "MarketRegimeHMM" | \
+        grep -v "RFXGBEnsembleRegimeClassifier" | \
         grep -v "InvestmentScoreGenerator" | \
         grep -v "TradingSignalGenerator" | \
         grep -v "GlobalMacroDataCollector" | \
@@ -421,7 +432,7 @@ else
         grep -v "최적화된 임계점" | \
         grep -v "임계점 업데이트 완료" | \
         grep -v "기본 임계점 사용" | \
-        grep -v "HMM 시장 체제 분석 결과" | \
+        grep -v "RF-XGBoost 앙상블 체제 분석 결과" | \
         grep -v "=====" | \
         grep -v "❌.*개별 모델 예측 실패" | \
         grep -v "🌐.*통합 모델 예측" | \

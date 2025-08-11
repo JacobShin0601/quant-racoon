@@ -29,7 +29,8 @@
     "n_states": 4,
     "state_names": ["TRENDING_UP", "TRENDING_DOWN", "SIDEWAYS", "VOLATILE"],
     "covariance_type": "diag",
-    "n_iter": 1000,
+    "n_iter": 500,
+    "tol": 1e-2,
     "random_state": 42,
     "min_training_days": 252,
     "feature_config": {
@@ -58,6 +59,30 @@
       }
     },
     "model_path": "models/trader/hmm_regime_model.pkl"
+  },
+
+  "ml_regime": {
+    "n_estimators": 100,
+    "max_depth": 10, 
+    "min_samples_split": 20,
+    "min_samples_leaf": 10,
+    "random_state": 42,
+    "adaptive": {
+      "enable": true,
+      "window_days": 252,
+      "recalibration_days": 22,
+      "volatility_memory_days": 66
+    },
+    "min_duration_days": 66,
+    "model_path": "models/trader/ml_regime_model.pkl"
+  },
+
+  "ensemble_regime": {
+    "voting_strategy": "weighted",
+    "enable_dynamic_weights": true,
+    "rf_weight": 0.5,
+    "gbm_weight": 0.5,
+    "model_path": "models/trader/rf_xgb_ensemble_model.pkl"
   },
 
   "neural_network": {

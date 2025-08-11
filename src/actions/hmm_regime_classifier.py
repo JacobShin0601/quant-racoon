@@ -46,7 +46,8 @@ class MarketRegimeHMM:
         self.model = hmm.GaussianHMM(
             n_components=self.n_states,
             covariance_type=self.hmm_config.get("covariance_type", "diag"),
-            n_iter=self.hmm_config.get("n_iter", 1000),
+            n_iter=self.hmm_config.get("n_iter", 500),
+            tol=self.hmm_config.get("tol", 1e-2),
             random_state=self.hmm_config.get("random_state", 42),
         )
 
@@ -488,7 +489,8 @@ class MarketRegimeHMM:
                 temp_model = hmm.GaussianHMM(
                     n_components=self.n_states,
                     covariance_type=self.model.covariance_type,
-                    n_iter=self.hmm_config.get("n_iter", 1000),
+                    n_iter=self.hmm_config.get("n_iter", 500),
+                    tol=self.hmm_config.get("tol", 1e-2),
                     random_state=self.hmm_config.get("random_state", 42),
                 )
                 

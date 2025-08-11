@@ -1,15 +1,15 @@
 {
   "optimization_results": {
     "best_thresholds": {
-      "strong_buy": 0.6911694009191099,
-      "buy": 0.598776201476081,
-      "hold_upper": 0.40525956078439973,
-      "hold_lower": -0.1369311556212784,
-      "sell": -0.5798873008445458,
-      "strong_sell": -0.8898656417395595
+      "strong_buy": 0.6743011393044852,
+      "buy": 0.6093385043273976,
+      "hold_upper": 0.26025695762583745,
+      "hold_lower": -0.2918223330477283,
+      "sell": -0.49912443512739396,
+      "strong_sell": -0.8665838298132441
     },
-    "best_score": 3.374153142509049,
-    "study": "<optuna.study.study.Study object at 0x7f06acf1ce30>",
+    "best_score": 3.3638209920224056,
+    "study": "<optuna.study.study.Study object at 0x1419bf080>",
     "optimization_method": "optuna"
   },
   "final_train_results": {
@@ -18,15 +18,15 @@
         "trades": [
           {
             "entry_date": "2024-05-21 00:00:00-04:00",
-            "exit_date": "2025-03-04 00:00:00-05:00",
+            "exit_date": "2025-03-05 00:00:00-05:00",
             "entry_price": 523.1355590820312,
-            "exit_price": 573.4346313476562,
+            "exit_price": 579.5978393554688,
             "position": "LONG",
-            "pnl": 0.09614921293801357
+            "pnl": 0.10793049582122523
           }
         ],
         "performance": {
-          "total_return": 0.09614921293801348,
+          "total_return": 0.10793049582122527,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
@@ -40,15 +40,15 @@
         "trades": [
           {
             "entry_date": "2024-05-21 00:00:00-04:00",
-            "exit_date": "2025-03-04 00:00:00-05:00",
-            "entry_price": 44.256797790527344,
-            "exit_price": 32.91813659667969,
+            "exit_date": "2025-03-05 00:00:00-05:00",
+            "entry_price": 44.25679397583008,
+            "exit_price": 31.652427673339844,
             "position": "SHORT",
-            "pnl": 0.2562015726378325
+            "pnl": 0.28480070900241544
           }
         ],
         "performance": {
-          "total_return": 0.2562015726378326,
+          "total_return": 0.2848007090024154,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
@@ -61,16 +61,16 @@
       "AAPL": {
         "trades": [
           {
-            "entry_date": "2024-12-06 00:00:00-05:00",
-            "exit_date": "2025-03-04 00:00:00-05:00",
-            "entry_price": 242.25559997558597,
-            "exit_price": 235.6210174560547,
+            "entry_date": "2024-12-09 00:00:00-05:00",
+            "exit_date": "2025-03-05 00:00:00-05:00",
+            "entry_price": 246.1562042236328,
+            "exit_price": 235.4312744140625,
             "position": "LONG",
-            "pnl": -0.027386704456779938
+            "pnl": -0.043569609969394546
           }
         ],
         "performance": {
-          "total_return": -0.02738670445677993,
+          "total_return": -0.04356960996939452,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
@@ -107,17 +107,26 @@
         "signal_count": 0
       },
       "GOOGL": {
-        "trades": [],
+        "trades": [
+          {
+            "entry_date": "2025-02-25 00:00:00-05:00",
+            "exit_date": "2025-03-05 00:00:00-05:00",
+            "entry_price": 175.00633239746094,
+            "exit_price": 172.61199951171875,
+            "position": "SHORT",
+            "pnl": 0.0136814071407677
+          }
+        ],
         "performance": {
-          "total_return": 0.0,
+          "total_return": 0.013681407140767599,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
-          "win_rate": 0.0,
-          "profit_factor": 0.0,
-          "total_trades": 0
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
         },
-        "signal_count": 0
+        "signal_count": 1
       },
       "AMZN": {
         "trades": [],
@@ -133,40 +142,31 @@
         "signal_count": 0
       },
       "TSLA": {
-        "trades": [
-          {
-            "entry_date": "2024-07-10 00:00:00-04:00",
-            "exit_date": "2025-03-04 00:00:00-05:00",
-            "entry_price": 263.260009765625,
-            "exit_price": 272.0400085449219,
-            "position": "LONG",
-            "pnl": 0.03335105391477243
-          }
-        ],
+        "trades": [],
         "performance": {
-          "total_return": 0.03335105391477233,
+          "total_return": 0.0,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
-          "win_rate": 1.0,
-          "profit_factor": Infinity,
-          "total_trades": 1
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
         },
-        "signal_count": 1
+        "signal_count": 0
       },
       "META": {
         "trades": [
           {
             "entry_date": "2024-09-26 00:00:00-04:00",
-            "exit_date": "2025-03-04 00:00:00-05:00",
+            "exit_date": "2025-03-05 00:00:00-05:00",
             "entry_price": 566.4421997070312,
-            "exit_price": 638.9395141601562,
+            "exit_price": 655.3822021484375,
             "position": "LONG",
-            "pnl": 0.12798713529927896
+            "pnl": 0.15701514203462733
           }
         ],
         "performance": {
-          "total_return": 0.12798713529927896,
+          "total_return": 0.1570151420346273,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
@@ -180,15 +180,15 @@
         "trades": [
           {
             "entry_date": "2024-08-23 00:00:00-04:00",
-            "exit_date": "2025-03-04 00:00:00-05:00",
+            "exit_date": "2025-03-05 00:00:00-05:00",
             "entry_price": 213.5153350830078,
-            "exit_price": 247.5255279541016,
+            "exit_price": 248.7915954589844,
             "position": "LONG",
-            "pnl": 0.1592868861520964
+            "pnl": 0.16521651881473678
           }
         ],
         "performance": {
-          "total_return": 0.1592868861520964,
+          "total_return": 0.16521651881473676,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
@@ -226,12 +226,12 @@
       }
     },
     "portfolio_performance": {
-      "total_return": 0.645589156485214,
-      "sharpe_ratio": 1.1902203262076005,
+      "total_return": 0.6850746628443779,
+      "sharpe_ratio": 1.0680202410049269,
       "sortino_ratio": 0.0,
-      "max_drawdown": 0.02738670445677993,
+      "max_drawdown": 0.04356960996939452,
       "win_rate": 0.8333333333333334,
-      "profit_factor": 24.573086623257073,
+      "profit_factor": 16.72368133030358,
       "total_trades": 6
     },
     "total_trades": 6
@@ -252,17 +252,26 @@
         "signal_count": 0
       },
       "SQQQ": {
-        "trades": [],
+        "trades": [
+          {
+            "entry_date": "2025-05-16 00:00:00-04:00",
+            "exit_date": "2025-08-07 00:00:00-04:00",
+            "entry_price": 23.09536361694336,
+            "exit_price": 17.950000762939453,
+            "position": "SHORT",
+            "pnl": 0.22278769623826725
+          }
+        ],
         "performance": {
-          "total_return": 0.0,
+          "total_return": 0.22278769623826733,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
-          "win_rate": 0.0,
-          "profit_factor": 0.0,
-          "total_trades": 0
+          "win_rate": 1.0,
+          "profit_factor": Infinity,
+          "total_trades": 1
         },
-        "signal_count": 0
+        "signal_count": 1
       },
       "AAPL": {
         "trades": [],
@@ -278,26 +287,17 @@
         "signal_count": 0
       },
       "MSFT": {
-        "trades": [
-          {
-            "entry_date": "2025-05-16 00:00:00-04:00",
-            "exit_date": "2025-08-07 00:00:00-04:00",
-            "entry_price": 454.2699890136719,
-            "exit_price": 520.8400268554688,
-            "position": "LONG",
-            "pnl": 0.14654289178630586
-          }
-        ],
+        "trades": [],
         "performance": {
-          "total_return": 0.14654289178630586,
+          "total_return": 0.0,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
-          "win_rate": 1.0,
-          "profit_factor": Infinity,
-          "total_trades": 1
+          "win_rate": 0.0,
+          "profit_factor": 0.0,
+          "total_trades": 0
         },
-        "signal_count": 1
+        "signal_count": 0
       },
       "NVDA": {
         "trades": [],
@@ -380,16 +380,16 @@
       "UNH": {
         "trades": [
           {
-            "entry_date": "2025-05-15 00:00:00-04:00",
+            "entry_date": "2025-05-16 00:00:00-04:00",
             "exit_date": "2025-08-07 00:00:00-04:00",
-            "entry_price": 272.4161682128906,
+            "entry_price": 289.8523864746094,
             "exit_price": 244.6699981689453,
             "position": "SHORT",
-            "pnl": 0.10185214125125623
+            "pnl": 0.15588068414824652
           }
         ],
         "performance": {
-          "total_return": 0.1018521412512563,
+          "total_return": 0.15588068414824652,
           "sharpe_ratio": 0.0,
           "sortino_ratio": 0.0,
           "max_drawdown": 0.0,
@@ -414,8 +414,8 @@
       }
     },
     "portfolio_performance": {
-      "total_return": 0.2483950330375621,
-      "sharpe_ratio": 5.558085958810498,
+      "total_return": 0.37866838038651374,
+      "sharpe_ratio": 5.659621743039884,
       "sortino_ratio": Infinity,
       "max_drawdown": 0.0,
       "win_rate": 1.0,
@@ -425,12 +425,12 @@
     "total_trades": 2
   },
   "best_thresholds": {
-    "strong_buy": 0.6911694009191099,
-    "buy": 0.598776201476081,
-    "hold_upper": 0.40525956078439973,
-    "hold_lower": -0.1369311556212784,
-    "sell": -0.5798873008445458,
-    "strong_sell": -0.8898656417395595
+    "strong_buy": 0.6743011393044852,
+    "buy": 0.6093385043273976,
+    "hold_upper": 0.26025695762583745,
+    "hold_lower": -0.2918223330477283,
+    "sell": -0.49912443512739396,
+    "strong_sell": -0.8665838298132441
   },
   "symbols": [
     "SPY",
@@ -446,5 +446,5 @@
     "UNH",
     "CONL"
   ],
-  "timestamp": "2025-08-08T16:08:24.924433"
+  "timestamp": "2025-08-08T20:00:10.994470"
 }

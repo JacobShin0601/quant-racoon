@@ -115,7 +115,7 @@ def print_results_summary(results: Dict) -> None:
 from src.utils.centralized_logger import get_logger
 
 # Actions 컴포넌트 임포트
-from src.actions.hmm_regime_classifier import MarketRegimeHMM, RegimeTransitionAnalyzer
+from src.actions.rf_xgb_ensemble_classifier import RFXGBEnsembleRegimeClassifier
 from src.actions.neural_stock_predictor import StockPredictionNetwork
 from src.actions.investment_scorer import (
     InvestmentScoreGenerator,
@@ -203,11 +203,90 @@ class HybridTrader:
         self.use_cached_data = self.config.get("data", {}).get("use_cached_data", True)
         self.model_version = "v1.0"  # 모델 버전 정보
 
+    def _create_unified_summary_table(self, predictions, scores, signals):
+        """예측, 점수, 신호를 통합한 요약 표 생성"""
+        try:
+            from tabulate import tabulate
+            
+            # 통합 데이터 준비
+            unified_data = []
+            headers = ["종목", "22일 예측", "예측확률", "위험도", "투자점수", "신뢰도", "매매신호", "신호강도", "우선순위"]
+            
+            # 각 종목별로 데이터 수집
+            symbols = list(predictions.keys()) if predictions else list(scores.keys()) if scores else list(signals.keys())
+            
+            for symbol in symbols:
+                row = [symbol]
+                
+                # 예측 데이터
+                if symbol in predictions and predictions[symbol]:
+                    pred = predictions[symbol]
+                    # 예측 수익률 추출 (여러 키 형태 시도)
+                    predicted_return = pred.get('target_22d', pred.get('predicted_return', pred.get('prediction', 0)))
+                    confidence = pred.get('confidence', pred.get('probability', 0))
+                    risk_score = pred.get('risk_score', pred.get('volatility', 0))
+                    
+                    row.extend([
+                        f"{predicted_return*100:.2f}%",
+                        f"{confidence*100:.1f}%", 
+                        f"{risk_score*100:.1f}%"
+                    ])
+                else:
+                    row.extend(["N/A", "N/A", "N/A"])
+                
+                # 투자 점수 데이터  
+                if symbol in scores:
+                    score = scores[symbol]
+                    row.extend([
+                        f"{score.get('final_score', 0):.4f}",
+                        f"{score.get('confidence', 0)*100:.1f}%"
+                    ])
+                else:
+                    row.extend(["N/A", "N/A"])
+                
+                # 매매 신호 데이터
+                if symbol in signals and signals[symbol]:
+                    signal = signals[symbol]
+                    signal_text = signal.get('action', signal.get('signal', 'HOLD'))
+                    strength = signal.get('action_strength', signal.get('strength', 0))
+                    priority = signal.get('execution_priority', signal.get('priority', 10))
+                    
+                    # 신호 아이콘 매핑
+                    signal_icons = {
+                        'STRONG_BUY': '🟢🟢 STRONG_BUY',
+                        'BUY': '🟢 BUY',
+                        'HOLD': '🟡 HOLD', 
+                        'SELL': '🔴 SELL',
+                        'STRONG_SELL': '🔴🔴 STRONG_SELL'
+                    }
+                    row.extend([
+                        signal_icons.get(signal_text, f"🟡 {signal_text}"),
+                        f"{strength:.2f}",
+                        str(priority)
+                    ])
+                else:
+                    row.extend(["N/A", "N/A", "N/A"])
+                
+                unified_data.append(row)
+            
+            # 테이블 생성 및 출력
+            table_str = tabulate(unified_data, headers=headers, tablefmt="grid")
+            self.logger.info(f"\n📊 통합 분석 요약 ({len(unified_data)}개 종목):")
+            self.logger.info("\n" + table_str)
+            
+            return True
+            
+        except ImportError:
+            self.logger.warning("tabulate 모듈이 없어 통합 표 출력을 건너뜁니다")
+            return False
+        except Exception as e:
+            self.logger.error(f"통합 표 생성 실패: {e}")
+            return False
+
     def _full_initialization(self):
         """전체 초기화 (1-4단계용)"""
         # 컴포넌트 초기화
-        self.regime_classifier = MarketRegimeHMM(self.config)
-        self.regime_analyzer = RegimeTransitionAnalyzer(self.config)
+        self.regime_classifier = RFXGBEnsembleRegimeClassifier(self.config)
         self.neural_predictor = StockPredictionNetwork(self.config)
         self.score_generator = InvestmentScoreGenerator(self.config)
         self.signal_generator = TradingSignalGenerator(self.config)
@@ -362,14 +441,19 @@ class HybridTrader:
                 self.logger.info("분석 모드 - 모델 초기화 건너뛰기")
                 return True
 
-            # 1. HMM 모델 로드
-            hmm_model_path = "models/trader/hmm_regime_model.pkl"
-            if os.path.exists(hmm_model_path):
-                if not self.regime_classifier.load_model(hmm_model_path):
-                    self.logger.warning("HMM 모델 로드 실패 - 학습 필요")
+            # 1. RF-XGBoost 앙상블 모델 로드
+            ensemble_model_path = "models/trader/rf_xgb_ensemble_model.pkl"
+            if os.path.exists(ensemble_model_path):
+                try:
+                    import pickle
+                    with open(ensemble_model_path, 'rb') as f:
+                        self.regime_classifier = pickle.load(f)
+                    self.logger.info("RF-XGBoost 앙상블 모델 로드 완료")
+                except Exception as e:
+                    self.logger.warning(f"RF-XGBoost 앙상블 모델 로드 실패: {e}")
                     return False
             else:
-                self.logger.warning(f"HMM 모델 파일 없음: {hmm_model_path}")
+                self.logger.warning(f"RF-XGBoost 앙상블 모델 파일 없음: {ensemble_model_path}")
                 return False
 
             # 2. 신경망 모델 로드
@@ -425,17 +509,28 @@ class HybridTrader:
             self.logger.step("[1/4] 시장 체제 분류")
             # 매크로 데이터 로드 (config의 날짜 설정 사용)
             macro_data = self._load_macro_data_with_config()
-            # 22일 후 시장체제 예측 (신경망과 동기화)
-            regime_result = self.regime_classifier.predict_regime(macro_data, forecast_days=22)
+            # RF-XGBoost 앙상블 시장체제 예측
+            regime_result = self.regime_classifier.predict(macro_data)
             
-            # 현재 체제와 22일 후 예측 체제 구분
-            actual_current_regime = regime_result.get("current_regime", "SIDEWAYS")
-            predicted_regime = regime_result.get("regime", "SIDEWAYS")
+            # 현재 체제 (RF-XGBoost 앙상블 예측 결과)
+            predicted_regime = regime_result.get("predicted_regime", "SIDEWAYS")
+            predicted_confidence = regime_result.get("confidence", 0.5)
             
-            # 현재 체제와 예측 체제의 신뢰도 분리
-            current_regime_confidence = regime_result.get("current_confidence", 0.5)
-            predicted_regime_confidence = regime_result.get("confidence", 0.5)
-            transition_prob = {}  # TODO: transition probability 계산 로직 추가
+            # RF-XGBoost에서는 현재 체제와 예측이 동일 (실시간 예측)
+            actual_current_regime = predicted_regime
+            current_regime_confidence = predicted_confidence
+            predicted_regime_confidence = predicted_confidence
+            
+            # 개별 모델 예측 정보 로깅
+            individual_preds = regime_result.get("individual_predictions", {})
+            rf_pred = individual_preds.get("rf", {}).get("regime", "UNKNOWN")
+            gbm_pred = individual_preds.get("gbm", {}).get("regime", "UNKNOWN")
+            voting_strategy = regime_result.get("voting_strategy", "weighted")
+            
+            self.logger.info(f"RF-XGBoost 앙상블 예측: {predicted_regime} (신뢰도: {predicted_confidence:.3f})")
+            self.logger.info(f"개별 모델 - RF: {rf_pred}, GBM: {gbm_pred}, 투표방식: {voting_strategy}")
+            
+            transition_prob = {}
 
             results["market_regime"] = {
                 "current": actual_current_regime,  # 실제 현재 체제
@@ -446,7 +541,7 @@ class HybridTrader:
                 "regime_change_expected": regime_result.get("regime_change_expected", False),
             }
 
-            self.logger.info(f"현재 시장 체제: {actual_current_regime} → 22일 후 예상: {predicted_regime}")
+            self.logger.info(f"RF-XGBoost 앙상블 시장 체제: {actual_current_regime}")
 
             # 2. 개별 종목 예측
             self.logger.step("[2/4] 개별 종목 예측")
@@ -479,22 +574,6 @@ class HybridTrader:
                     prediction_summary.append([symbol, "N/A", "N/A", "N/A", "N/A"])
 
             results["predictions"] = predictions
-            
-            # 개별 종목 예측 표 출력
-            if prediction_summary:
-                self.logger.info("\n📊 개별 종목 예측 요약:")
-                try:
-                    from tabulate import tabulate
-                    headers = ["종목", "22일 예측", "확률", "위험도", "모멘텀"]
-                    table_str = tabulate(prediction_summary, headers=headers, tablefmt="grid")
-                    self.logger.info("\n" + table_str)
-                except ImportError:
-                    self.logger.warning("tabulate 모듈이 없어 표 출력을 건너뜁니다")
-                    # 간단한 텍스트 형식으로 출력
-                    self.logger.info("종목 | 22일 예측 | 확률 | 위험도 | 모멘텀")
-                    self.logger.info("-" * 50)
-                    for row in prediction_summary:
-                        self.logger.info(" | ".join(row))
 
             # 3. 투자 점수 생성
             self.logger.step("[3/4] 투자 점수 생성")
@@ -540,21 +619,6 @@ class HybridTrader:
                     ])
 
             results["investment_scores"] = scores
-            
-            # 투자 점수 표 출력
-            if score_summary:
-                self.logger.info("\n📊 투자 점수 요약:")
-                try:
-                    from tabulate import tabulate
-                    headers = ["종목", "최종점수", "신뢰도", "22일 예측"]
-                    table_str = tabulate(score_summary, headers=headers, tablefmt="grid")
-                    self.logger.info("\n" + table_str)
-                except ImportError:
-                    self.logger.warning("tabulate 모듈이 없어 표 출력을 건너뜁니다")
-                    self.logger.info("종목 | 최종점수 | 신뢰도 | 22일 예측")
-                    self.logger.info("-" * 50)
-                    for row in score_summary:
-                        self.logger.info(" | ".join(row))
 
             # 4. 매매 신호 생성
             self.logger.step("[4/4] 매매 신호 생성")
@@ -589,20 +653,8 @@ class HybridTrader:
 
             results["trading_signals"] = signals
             
-            # 매매 신호 표 출력
-            if signal_summary:
-                self.logger.info("\n📊 매매 신호 요약:")
-                try:
-                    from tabulate import tabulate
-                    headers = ["종목", "신호", "강도", "점수", "우선순위"]
-                    table_str = tabulate(signal_summary, headers=headers, tablefmt="grid")
-                    self.logger.info("\n" + table_str)
-                except ImportError:
-                    self.logger.warning("tabulate 모듈이 없어 표 출력을 건너뜁니다")
-                    self.logger.info("종목 | 신호 | 강도 | 점수 | 우선순위")
-                    self.logger.info("-" * 60)
-                    for row in signal_summary:
-                        self.logger.info(" | ".join(str(x) for x in row))
+            # 통합 요약 표 출력
+            self._create_unified_summary_table(predictions, scores, signals)
 
             # 5. 포트폴리오 종합
             individual_signals = list(signals.values())
@@ -633,11 +685,20 @@ class HybridTrader:
     def _load_macro_data_with_config(self) -> pd.DataFrame:
         """
         config의 날짜 설정을 사용하여 매크로 데이터 수집/로드
+        --use-cached-data 옵션 존중
         
         Returns:
             매크로 데이터 DataFrame
         """
         try:
+            # 먼저 기존 캐시된 파일 로드 시도
+            cached_data = self._load_macro_data()
+            if cached_data is not None and not cached_data.empty:
+                self.logger.info("✅ 캐시된 매크로 데이터 사용 (새 수집 건너뛰기)")
+                return cached_data
+            
+            self.logger.info("⚠️ 캐시된 매크로 데이터가 없어서 새로 수집합니다")
+            
             from datetime import datetime, timedelta
             
             # config에서 날짜 설정 가져오기
@@ -715,7 +776,7 @@ class HybridTrader:
 
     def _load_macro_data(self) -> pd.DataFrame:
         """
-        매크로 데이터 로드
+        매크로 데이터 로드 (UUID 디렉토리와 일반 파일 모두 지원)
         
         Returns:
             매크로 데이터 DataFrame
@@ -723,12 +784,41 @@ class HybridTrader:
         try:
             import glob
             
-            # 매크로 데이터 디렉토리에서 CSV 파일들 로드
+            # RF-XGBoost 앙상블과 동일한 로직 사용
             macro_dir = "data/macro"
-            csv_files = glob.glob(f"{macro_dir}/*.csv")
+            
+            # 1. UUID 디렉토리 우선 확인
+            all_items = os.listdir(macro_dir) if os.path.exists(macro_dir) else []
+            uuid_dirs = [item for item in all_items if len(item) == 36 and '-' in item]
+            
+            if uuid_dirs:
+                # UUID 디렉토리가 있으면 가장 많은 CSV 파일을 가진 디렉토리 선택
+                best_dir = None
+                max_files = 0
+                
+                for uuid_dir in sorted(uuid_dirs, reverse=True):
+                    uuid_path = os.path.join(macro_dir, uuid_dir)
+                    if os.path.isdir(uuid_path):
+                        files = os.listdir(uuid_path)
+                        csv_files_count = len([f for f in files if f.endswith('.csv')])
+                        if csv_files_count > max_files:
+                            max_files = csv_files_count
+                            best_dir = uuid_dir
+                
+                if best_dir and max_files > 0:
+                    target_dir = os.path.join(macro_dir, best_dir)
+                    csv_files = glob.glob(f"{target_dir}/*.csv")
+                    self.logger.info(f"✅ UUID 디렉토리 사용: {best_dir} ({max_files}개 CSV)")
+                else:
+                    csv_files = []
+            else:
+                # UUID 디렉토리가 없으면 일반 CSV 파일 로드
+                csv_files = glob.glob(f"{macro_dir}/*.csv")
+                if csv_files:
+                    self.logger.info(f"✅ 일반 매크로 파일 사용: {len(csv_files)}개")
             
             if not csv_files:
-                self.logger.warning("매크로 데이터 파일이 없습니다. 빈 DataFrame 반환")
+                self.logger.warning("매크로 데이터 파일이 없습니다")
                 return pd.DataFrame()
             
             macro_data = pd.DataFrame()
@@ -1134,14 +1224,19 @@ class HybridTrader:
     def _train_models(self):
         """모델 로드 (이미 학습된 모델 사용)"""
         try:
-            # HMM 모델 로드
-            self.logger.debug("HMM 모델 로드 중")
-            hmm_model_path = "models/trader/hmm_regime_model.pkl"
-            if os.path.exists(hmm_model_path):
-                if not self.regime_classifier.load_model(hmm_model_path):
-                    self.logger.warning("HMM 모델 로드 실패 - 기본 모델 사용")
+            # RF-XGBoost 앙상블 모델 로드
+            self.logger.debug("RF-XGBoost 앙상블 모델 로드 중")
+            ensemble_model_path = "models/trader/rf_xgb_ensemble_model.pkl"
+            if os.path.exists(ensemble_model_path):
+                try:
+                    import pickle
+                    with open(ensemble_model_path, 'rb') as f:
+                        self.regime_classifier = pickle.load(f)
+                    self.logger.info("RF-XGBoost 앙상블 모델 로드 완료")
+                except Exception as e:
+                    self.logger.warning(f"RF-XGBoost 앙상블 모델 로드 실패: {e}")
             else:
-                self.logger.warning(f"HMM 모델 파일 없음: {hmm_model_path}")
+                self.logger.warning(f"RF-XGBoost 앙상블 모델 파일 없음: {ensemble_model_path}")
 
             # 신경망 모델 로드
             self.logger.debug("신경망 모델 로드 중")

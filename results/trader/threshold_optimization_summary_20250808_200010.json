@@ -1,0 +1,17 @@
+{
+  "timestamp": "20250808_200010",
+  "optimization_method": "optuna",
+  "objective_metric": "sharpe_ratio",
+  "best_thresholds": {
+    "strong_buy": 0.6743011393044852,
+    "buy": 0.6093385043273976,
+    "hold_upper": 0.26025695762583745,
+    "hold_lower": -0.2918223330477283,
+    "sell": -0.49912443512739396,
+    "strong_sell": -0.8665838298132441
+  },
+  "best_score": 3.3638209920224056,
+  "train_score": 1.0680202410049269,
+  "test_score": 5.659621743039884,
+  "total_combinations_tested": 1
+}
